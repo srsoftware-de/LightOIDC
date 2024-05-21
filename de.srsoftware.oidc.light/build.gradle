@@ -13,12 +13,11 @@ repositories {
 dependencies {
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
     implementation 'ch.qos.logback:logback-core:1.5.6'
+    implementation 'ch.qos.logback:logback-classic:1.5.6'
     implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation project(':de.srsoftware.oidc.api')
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'ch.qos.logback:logback-classic:1.5.6'
-    implementation project(':de.srsoftware.oidc.api')
-    implementation('org.antlr:ST4:4.3.3')
 }
 
 test {

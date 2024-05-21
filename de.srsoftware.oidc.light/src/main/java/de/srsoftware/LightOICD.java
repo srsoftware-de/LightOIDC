@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -13,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.stringtemplate.v4.ST;
 
 @WebServlet(urlPatterns = "/")
 public class LightOICD extends HttpServlet {
@@ -57,8 +57,8 @@ public class LightOICD extends HttpServlet {
 
 	private void landingPage(HttpServletRequest req, HttpServletResponse resp, User user) throws IOException {
 		LOG.debug("landingPage(…)");
-		ST st = templates.getInstanceOf("index");
+		var index = templates.get("index.html", Map.of("user","Darling"));
 		resp.setContentType("text/html");
-		resp.getWriter().println(st.render());
+		resp.getWriter().println(index.get());
 	}
 }
