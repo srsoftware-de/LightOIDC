@@ -1,0 +1,2 @@
+title_login LightOIDC Login
+title_welcome Willkommen bei LightOIDC!
