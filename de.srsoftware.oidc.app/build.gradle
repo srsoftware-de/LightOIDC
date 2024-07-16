@@ -12,8 +12,9 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation project(':de.srsoftware.oidc.web')
     implementation project(':de.srsoftware.oidc.api')
+    implementation project(':de.srsoftware.oidc.backend')
+    implementation project(':de.srsoftware.oidc.web')
 }
 
 test {
@@ -22,7 +23,7 @@ test {
 
 jar {
     manifest {
-        attributes "Main-Class": "de.srsoftware.oidc.server.Application"
+        attributes "Main-Class": "de.srsoftware.oidc.app.Application"
     }
 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {

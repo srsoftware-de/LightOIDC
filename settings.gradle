@@ -1,6 +1,6 @@
 rootProject.name = 'LightOIDC'
 include 'de.srsoftware.oidc.api'
-include 'de.srsoftware.oidc.light'
-include 'de.srsoftware.oidc.server'
+include 'de.srsoftware.oidc.app'
 include 'de.srsoftware.oidc.web'
+include 'de.srsoftware.oidc.backend'
 
