@@ -5,22 +5,23 @@ import static de.srsoftware.oidc.light.Constants.*;
 import static de.srsoftware.oidc.light.Templates.braced;
 
 import de.srsoftware.oidc.api.User;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@WebServlet(urlPatterns = "/")
+@WebServlet("/web")
 public class LightOICD extends HttpServlet {
-	private static final Logger LOG = LoggerFactory.getLogger(LightOICD.class);
+	private static final Logger    LOG = LoggerFactory.getLogger(LightOICD.class);
 	private static final Templates templates;
+
 	static {
 		try {
 			templates = Templates.singleton();
@@ -31,26 +32,26 @@ public class LightOICD extends HttpServlet {
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-		var uri = req.getRequestURI();
-		var path = Arrays.stream(uri.split("/")).skip(1).collect(Collectors.toList());
-		if (path.isEmpty()) {
-			path.add(PAGE_START);
-		}
-
+		var path    = relativePath(req);
 		var optUser = loadUser(req);
 		handleGet(path, optUser, req, resp).ifPresent(resp.getWriter()::println);
 	}
 
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		var uri = req.getRequestURI();
-		var path = Arrays.stream(uri.split("/")).skip(1).collect(Collectors.toList());
-		if (path.isEmpty()) {
-			path.add(PAGE_START);
-		}
-
+		var path    = relativePath(req);
 		var optUser = loadUser(req);
 		handlePost(path, optUser, req, resp).ifPresent(resp.getWriter()::println);
+	}
+
+	public List<String> relativePath(HttpServletRequest req) {
+		var cp  = req.getContextPath();
+		var uri = req.getRequestURI();
+		if (uri.startsWith(cp)) uri = uri.substring(cp.length());  // strip context path → relative path!
+		var path = Arrays.stream(uri.split("/")).skip(1).collect(Collectors.toList());
+		if (path.isEmpty()) path.add(PAGE_START);
+		return path;
 	}
 
 	private Optional<String> handleGet(List<String> path, Optional<User> optUser, HttpServletRequest req, HttpServletResponse resp) {
@@ -61,7 +62,7 @@ public class LightOICD extends HttpServlet {
 				case PAGE_START:
 					return pageStart(user, req, resp);
 				case PAGE_WELCOME:
-					return pageWelcome(user,req, resp);
+					return pageWelcome(user, req, resp);
 			}
 		}
 
@@ -74,7 +75,6 @@ public class LightOICD extends HttpServlet {
 		}
 		return templates.message(ERR_PAGE_NOT_FOUND);
 	}
-
 
 
 	private Optional<String> handlePost(List<String> path, Optional<User> optUser, HttpServletRequest req, HttpServletResponse resp) {
@@ -98,21 +98,18 @@ public class LightOICD extends HttpServlet {
 
 	private Optional<User> loadUser(HttpServletRequest req) {
 		HttpSession session = req.getSession();
-		if (session.getAttribute(USER) instanceof User user) {
-			return Optional.of(user);
-		}
+		if (session.getAttribute(USER) instanceof User user) return Optional.of(user);
 		return Optional.empty();
 	}
-
 
 
 	private Optional<String> pageLogin(HttpServletRequest req, HttpServletResponse resp) {
 		LOG.debug("pageLogin(…)");
 		try {
 			var title = templates.message(TITLE_LOGIN).orElse(TITLE_LOGIN);
-			var head = templates.get("head.snippet", Map.of(TITLE, title)).get();
+			var head  = templates.get("head.snippet", Map.of(TITLE, title)).get();
 			var login = templates.get("login.snippet", Map.of(USER, "Darling", EMAIL, "", PASSWORD, "")).get();
-			var page = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
+			var page  = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
 			resp.setContentType("text/html");
 			resp.getWriter().println(page);
 			return Optional.empty();
@@ -130,9 +127,9 @@ public class LightOICD extends HttpServlet {
 		LOG.debug("pageWelcome(…)");
 		try {
 			var title = templates.message(TITLE_WELCOME).orElse(TITLE_WELCOME);
-			var head = templates.get("head.snippet", Map.of(TITLE, title)).get();
+			var head  = templates.get("head.snippet", Map.of(TITLE, title)).get();
 			var login = templates.get("welcome.snippet", Map.of(USER, "Darling", EMAIL, "", PASSWORD, "")).get();
-			var page = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
+			var page  = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
 			resp.setContentType("text/html");
 			resp.getWriter().println(page);
 			return Optional.empty();
@@ -153,9 +150,9 @@ public class LightOICD extends HttpServlet {
 		}
 		try {
 			var title = templates.message(TITLE_LOGIN).orElse(TITLE_LOGIN);
-			var head = templates.get("head.snippet", Map.of(TITLE, title)).get();
+			var head  = templates.get("head.snippet", Map.of(TITLE, title)).get();
 			var login = templates.get("login.snippet", Map.of(USER, "Darling", EMAIL, email, PASSWORD, "")).get();
-			var page = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
+			var page  = templates.get("scaffold.html", Map.of(BODY, login, HEAD, head)).get();
 			resp.setContentType("text/html");
 			resp.getWriter().println(page);
 			return Optional.empty();

@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+group = 'de.srsoftware'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation 'org.eclipse.jetty:jetty-server:11.0.14'
+    implementation 'org.eclipse.jetty:jetty-webapp:11.0.22'
+    implementation project(':de.srsoftware.oidc.light')
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "de.srsoftware.oidc.server.Application"
+    }
+duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

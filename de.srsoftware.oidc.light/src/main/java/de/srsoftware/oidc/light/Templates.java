@@ -15,12 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Templates {
-	private static Templates singleton = null;
-	private static Logger LOG = LoggerFactory.getLogger(Templates.class);
-	private Path dir = searchTemplates();
-	private Map<String, String> messages = null;
+	private static Templates    singleton = null;
+	private static Logger       LOG	      = LoggerFactory.getLogger(Templates.class);
+	private Path	            dir	      = searchTemplates();
+	private Map<String, String> messages  = null;
 
-	public Templates() throws FileNotFoundException {}
+	public Templates() throws FileNotFoundException {
+	}
 
 	private static Path searchTemplates() throws FileNotFoundException {
 		return searchTemplates(new File(System.getProperty("user.dir"))).map(File::toPath).orElseThrow(() -> new FileNotFoundException("Missing template directory"));
@@ -57,12 +58,10 @@ public class Templates {
 			LOG.warn("Failed to read {}", path, e);
 			return Optional.empty();
 		}
-
 	}
 
 	private String replaceKeys(String text, Map<String, String> replacements) {
-		for (Map.Entry<String, String> replacement : replacements.entrySet())
-			text = text.replace(braced(replacement.getKey()), replacement.getValue());
+		for (Map.Entry<String, String> replacement : replacements.entrySet()) text = text.replace(braced(replacement.getKey()), replacement.getValue());
 		return text;
 	}
 

@@ -113,7 +113,7 @@
         <setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="2"/>
         <setting id="org.eclipse.jdt.core.formatter.disabling_tag" value="@formatter:off"/>
         <setting id="org.eclipse.jdt.core.formatter.enabling_tag" value="@formatter:on"/>
-        <setting id="org.eclipse.jdt.core.formatter.force_if_else_statement_brace" value="true"/>
+        <setting id="org.eclipse.jdt.core.formatter.force_if_else_statement_brace" value="false"/>
         <setting id="org.eclipse.jdt.core.formatter.format_guardian_clause_on_one_line" value="false"/>
         <setting id="org.eclipse.jdt.core.formatter.format_line_comment_starting_on_first_column" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.indentation.size" value="2"/>
@@ -310,7 +310,7 @@
         <setting id="org.eclipse.jdt.core.formatter.join_lines_in_comments" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.join_wrapped_lines" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line" value="false"/>
-        <setting id="org.eclipse.jdt.core.formatter.keep_empty_array_initializer_on_one_line" value="false"/>
+        <setting id="org.eclipse.jdt.core.formatter.keep_empty_array_initializer_on_one_line" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.keep_imple_if_on_one_line" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line" value="false"/>
         <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="999"/>
