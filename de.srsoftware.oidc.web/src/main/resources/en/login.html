@@ -6,7 +6,7 @@
     </head>
     <body>
         <h1>Login</h1>
-        <form id="form">
+        <form id="login">
             <fieldset>
                 <legend>User credentials</legend>
             <label>
@@ -17,8 +17,9 @@
                 Password
                 <input type="password" name="pass" />
             </label>
-            <button type="button" onClick="submitForm('form')">Login</button>
+            <button type="button" onClick="tryLogin()">Login</button>
             </fieldset>
         </form>
+        <div id="error"></div>
     </body>
 </html>

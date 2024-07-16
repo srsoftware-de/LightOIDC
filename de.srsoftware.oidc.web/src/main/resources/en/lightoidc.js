@@ -12,8 +12,26 @@ function checkUser(){
         .then(handleCheckUser)
         .catch((err) => console.log(err));
 }
-function submitForm(formId){
-    var data = Object.fromEntries(new FormData(document.getElementById(formId)));
+
+function handleLogin(response){
+    if (response.status == 401){
+        loadError("login-failed");
+        return;
+    }
+    console.log(response);
+}
+
+function loadError(page){
+    fetch(web+"/"+page+".txt").then(resp => resp.text()).then(showError);
+}
+
+function showError(content){
+      document.getElementById("error").innerHTML = content;
+}
+
+function tryLogin(){
+    document.getElementById("error").innerHTML = "";
+    var data = Object.fromEntries(new FormData(document.getElementById('login')));
     fetch(api+"/login",{
         headers: {
           'login-username': data.user,
@@ -21,5 +39,5 @@ function submitForm(formId){
           Accept: 'application/json',
           'Content-Type': 'application/json'
         }
-    });
+    }).then(handleLogin);
 }

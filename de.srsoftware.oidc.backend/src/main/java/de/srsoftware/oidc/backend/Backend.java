@@ -17,7 +17,7 @@ public class Backend extends PathHandler {
 		System.out.printf("%s %s…", method, path);
 
 		if ("login".equals(path)) {
-			doLogin(ex);
+			doLogin(ex); // TODO: prevent brute force
 			return;
 		}
 		var token = getAuthToken(ex);
