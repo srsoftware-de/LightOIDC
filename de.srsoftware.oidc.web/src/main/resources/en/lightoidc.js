@@ -33,11 +33,11 @@ function tryLogin(){
     document.getElementById("error").innerHTML = "";
     var data = Object.fromEntries(new FormData(document.getElementById('login')));
     fetch(api+"/login",{
+        method: 'POST',
         headers: {
-          'login-username': data.user,
-          'login-password': data.pass, // TODO: send via body?
           Accept: 'application/json',
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(data)
     }).then(handleLogin);
 }

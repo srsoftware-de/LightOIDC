@@ -28,7 +28,7 @@ public class StaticPages extends PathHandler {
 			System.out.printf("Loading %s for lagnuage %s…", path, lang);
 			var response = loadTemplate(lang, path).orElseThrow(() -> new FileNotFoundException());
 
-			ex.getResponseHeaders().add("Content-Type", response.contentType);
+			ex.getResponseHeaders().add(CONTENT_TYPE, response.contentType);
 			ex.sendResponseHeaders(200, response.content.length);
 			OutputStream os = ex.getResponseBody();
 			os.write(response.content);

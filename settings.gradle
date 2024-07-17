@@ -3,4 +3,5 @@ include 'de.srsoftware.oidc.api'
 include 'de.srsoftware.oidc.app'
 include 'de.srsoftware.oidc.web'
 include 'de.srsoftware.oidc.backend'
+include 'de.srsoftware.oidc.datastore.file'
 
