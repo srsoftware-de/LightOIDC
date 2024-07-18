@@ -6,22 +6,20 @@ import static de.srsoftware.oidc.api.User.USERNAME;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.jar.Attributes.Name.CONTENT_TYPE;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.oidc.api.PathHandler;
-import de.srsoftware.oidc.api.SessionToken;
-import de.srsoftware.oidc.api.User;
-import de.srsoftware.oidc.api.UserService;
+import de.srsoftware.oidc.api.*;
 import java.io.IOException;
 import java.util.Optional;
 import org.json.JSONObject;
 
 public class Backend extends PathHandler {
-	private final UserService users;
+	private final SessionService sessions;
+	private final UserService    users;
 
-	public Backend(UserService userService) {
-		users = userService;
+	public Backend(SessionService sessionService, UserService userService) {
+		sessions = sessionService;
+		users    = userService;
 	}
 
 	private void doLogin(HttpExchange ex) throws IOException {
@@ -32,7 +30,8 @@ public class Backend extends PathHandler {
 
 		Optional<User> user = users.load(username, password);
 		if (user.isPresent()) {
-			sendUserAndCookie(ex, user.get());
+			var session = sessions.createSession(user.get());
+			sendUserAndCookie(ex, session);
 			return;
 		}
 		sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
@@ -44,12 +43,12 @@ public class Backend extends PathHandler {
 		String method = ex.getRequestMethod();
 		System.out.printf("%s %s…", method, path);
 
+		var user = getSession(ex).map(Session::user);
 		if ("login".equals(path) && POST.equals(method)) {
 			doLogin(ex);  // TODO: prevent brute force
 			return;
 		}
-		var token = getAuthToken(ex);
-		if (token.isEmpty()) {
+		if (user.isEmpty()) {
 			sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 			System.err.println("unauthorized");
 			return;
@@ -59,12 +58,16 @@ public class Backend extends PathHandler {
 		ex.getResponseBody().close();
 	}
 
-	private void sendUserAndCookie(HttpExchange ex, User user) throws IOException {
-		var bytes   = new JSONObject(user.map(false)).toString().getBytes(UTF_8);
+	private Optional<Session> getSession(HttpExchange ex) {
+		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessions::retrieve);
+	}
+
+	private void sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
+		var bytes   = new JSONObject(session.user().map(false)).toString().getBytes(UTF_8);
 		var headers = ex.getResponseHeaders();
 
 		headers.add(CONTENT_TYPE, JSON);
-		new SessionToken("Test").addTo(headers);
+		new SessionToken(session.id()).addTo(headers);
 		ex.sendResponseHeaders(200, bytes.length);
 		ex.getResponseBody().write(bytes);
 	}

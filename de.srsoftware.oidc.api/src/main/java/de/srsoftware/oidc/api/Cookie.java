@@ -3,6 +3,7 @@ package de.srsoftware.oidc.api;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import java.util.List;
 import java.util.Map;
 
 public abstract class Cookie implements Map.Entry<String, String> {
@@ -31,6 +32,10 @@ public abstract class Cookie implements Map.Entry<String, String> {
 	@Override
 	public String getValue() {
 		return value;
+	}
+
+	protected static List<String> of(HttpExchange ex) {
+		return ex.getRequestHeaders().get("Cookie");
 	}
 
 	@Override

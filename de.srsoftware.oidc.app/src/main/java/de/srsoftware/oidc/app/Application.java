@@ -3,6 +3,7 @@ package de.srsoftware.oidc.app;
 
 
 import com.sun.net.httpserver.HttpServer;
+import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.User;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.backend.Backend;
@@ -23,15 +24,17 @@ public class Application {
 	public static final String INDEX           = STATIC_PATH + "/index.html";
 
 	public static void main(String[] args) throws Exception {
-		var         storageFile    = new File("/tmp/lightoidc.json");
-		var         passwordHasher = new UuidHasher();
-		var         firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var         firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID);
-		UserService userService    = new FileStore(storageFile, passwordHasher).init(firstUser);
-		HttpServer  server         = HttpServer.create(new InetSocketAddress(8080), 0);
+		var            storageFile    = new File("/tmp/lightoidc.json");
+		var            passwordHasher = new UuidHasher();
+		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID);
+		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
+		UserService    userService    = fileStore;
+		SessionService sessionService = fileStore;
+		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages().bindPath(STATIC_PATH).on(server);
 		new Forward(INDEX).bindPath("/").on(server);
-		new Backend(userService).bindPath("/api").on(server);
+		new Backend(sessionService, userService).bindPath("/api").on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}
