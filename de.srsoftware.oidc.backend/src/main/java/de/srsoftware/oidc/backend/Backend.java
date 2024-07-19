@@ -8,6 +8,7 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.sun.net.httpserver.HttpExchange;
+import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
 import java.util.Optional;
@@ -43,19 +44,23 @@ public class Backend extends PathHandler {
 		String method = ex.getRequestMethod();
 		System.out.printf("%s %s…", method, path);
 
-		var user = getSession(ex).map(Session::user);
+		var session = getSession(ex);
 		if ("login".equals(path) && POST.equals(method)) {
 			doLogin(ex);  // TODO: prevent brute force
 			return;
 		}
-		if (user.isEmpty()) {
+		if (session.isEmpty()) {
 			sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 			System.err.println("unauthorized");
 			return;
 		}
+		switch (path) {
+			case "user":
+				sendUserAndCookie(ex, session.get());
+				return;
+		}
 		System.err.println("not implemented");
-		ex.sendResponseHeaders(HTTP_NOT_FOUND, 0);
-		ex.getResponseBody().close();
+		sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
 	private Optional<Session> getSession(HttpExchange ex) {

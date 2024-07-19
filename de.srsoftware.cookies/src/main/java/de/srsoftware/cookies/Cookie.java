@@ -1,10 +1,11 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.oidc.api;
+package de.srsoftware.cookies;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class Cookie implements Map.Entry<String, String> {
 	private final String key;
@@ -34,8 +35,8 @@ public abstract class Cookie implements Map.Entry<String, String> {
 		return value;
 	}
 
-	protected static List<String> of(HttpExchange ex) {
-		return ex.getRequestHeaders().get("Cookie");
+	protected static Optional<List<String>> of(HttpExchange ex) {
+		return Optional.ofNullable(ex.getRequestHeaders().get("Cookie"));
 	}
 
 	@Override
