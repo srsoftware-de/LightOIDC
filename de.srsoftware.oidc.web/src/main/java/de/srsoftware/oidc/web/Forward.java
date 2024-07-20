@@ -14,10 +14,10 @@ public class Forward extends PathHandler {
 	}
 
 	@Override
-	public void handle(HttpExchange ex) throws IOException {
-		System.out.printf("Forwarding (%d) %s to %s…\n", CODE, ex.getRequestURI(), toPath);
+	public boolean doGet(String path, HttpExchange ex) throws IOException {
+		System.out.printf("Forwarding (%d) %s to %s…\n", CODE, path, toPath);
 		ex.getResponseHeaders().add("Location", toPath);
 		ex.sendResponseHeaders(CODE, 0);
-		ex.getResponseBody().close();
+		return true;
 	}
 }

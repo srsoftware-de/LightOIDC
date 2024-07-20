@@ -18,7 +18,11 @@ import java.util.*;
 import java.util.concurrent.Executors;
 
 public class Application {
+	public static final String  BACKEND         = "/api";
+	private static final String FAVICON         = "/favicon.ico";
+	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
+	private static final String WELL_KNOWN      = "/.well-known";
 	public static final String  FIRST_USER      = "admin";
 	public static final String  FIRST_USER_PASS = "admin";
 	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
@@ -36,9 +40,9 @@ public class Application {
 		UserService    userService    = fileStore;
 		SessionService sessionService = fileStore;
 		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
-		new StaticPages(basePath).bindPath(STATIC_PATH).on(server);
-		new Forward(INDEX).bindPath("/").on(server);
-		new Backend(sessionService, userService).bindPath("/api").on(server);
+		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
+		new Forward(INDEX).bindPath(ROOT).on(server);
+		new Backend(sessionService, userService).bindPath(BACKEND, WELL_KNOWN).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}

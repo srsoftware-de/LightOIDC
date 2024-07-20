@@ -1,11 +1,12 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.web;
 
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.PathHandler;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 public class StaticPages extends PathHandler {
 	private static final String DEFAULT_LANGUAGE = "en";
+	private static final String FAVICON          = "favicon.ico";
 	private final Optional<Path> base;
 	private ClassLoader          loader;
 
@@ -27,27 +29,22 @@ public class StaticPages extends PathHandler {
 	private static final String INDEX = "en/index.html";
 
 	@Override
-	public void handle(HttpExchange ex) throws IOException {
-		String relativePath = relativePath(ex);
-		String lang	    = language(ex).orElse(DEFAULT_LANGUAGE);
-		String method	    = ex.getRequestMethod();
-
-		if (relativePath.isBlank()) relativePath = INDEX;
-		System.out.printf("%s %s: ", method, ex.getRequestURI());
+	public boolean doGet(String relativePath, HttpExchange ex) throws IOException {
+		String lang = language(ex).orElse(DEFAULT_LANGUAGE);
+		if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
+		if (relativePath.isBlank()) {
+			relativePath = ex.getRequestURI().toString().endsWith(FAVICON) ? FAVICON : INDEX;
+		}
 		try {
-			System.out.printf("Loading %s for lagnuage %s…", relativePath, lang);
+			System.out.printf("Loading %s for language %s…", relativePath, lang);
 			Response response = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
 
 			ex.getResponseHeaders().add(CONTENT_TYPE, response.contentType);
-			ex.sendResponseHeaders(200, response.content.length);
-			OutputStream os = ex.getResponseBody();
-			os.write(response.content);
-			os.close();
 			System.out.println("success.");
+			return sendContent(ex, response.content);
 		} catch (FileNotFoundException fnf) {
-			ex.sendResponseHeaders(404, 0);
-			ex.getResponseBody().close();
 			System.err.println("failed!");
+			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 		}
 	}
 

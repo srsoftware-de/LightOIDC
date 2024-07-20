@@ -1,25 +1,24 @@
 <html>
     <head>
+        <meta charset="utf-8">
         <title>Light OIDC</title>
         <script src="config.js"></script>
-        <script src="index.js"></script>
+        <script src="login.js"></script>
     </head>
     <body>
         <h1>Login</h1>
-        <form id="login">
-            <fieldset>
-                <legend>User credentials</legend>
+        <fieldset id="login">
+            <legend>User credentials</legend>
             <label>
                 Username
-                <input type="text" name="username" />
+                <input type="text" id="username" />
             </label>
             <label>
                 Password
-                <input type="password" name="password" />
+                <input type="password" id="password" />
             </label>
             <button type="button" onClick="tryLogin()">Login</button>
-            </fieldset>
-        </form>
+        </fieldset>
         <div id="error"></div>
     </body>
 </html>
