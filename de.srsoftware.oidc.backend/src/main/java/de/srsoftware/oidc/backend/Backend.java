@@ -19,8 +19,10 @@ public class Backend extends PathHandler {
 	private static final String REDIRECT_URI = "redirect_uri";
 	private final SessionService sessions;
 	private final UserService    users;
+	private final ClientService clients;
 
-	public Backend(SessionService sessionService, UserService userService) {
+	public Backend(ClientService clientService, SessionService sessionService, UserService userService) {
+		clients = clientService;
 		sessions = sessionService;
 		users    = userService;
 	}

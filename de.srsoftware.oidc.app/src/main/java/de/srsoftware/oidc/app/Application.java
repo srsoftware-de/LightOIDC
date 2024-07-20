@@ -3,6 +3,7 @@ package de.srsoftware.oidc.app;
 
 
 import com.sun.net.httpserver.HttpServer;
+import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.User;
 import de.srsoftware.oidc.api.UserService;
@@ -16,6 +17,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executors;
+
+import static de.srsoftware.oidc.api.Permission.CREATE_CLIENT;
 
 public class Application {
 	public static final String  BACKEND         = "/api";
@@ -35,14 +38,15 @@ public class Application {
 		var            storageFile    = new File("/tmp/lightoidc.json");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(CREATE_CLIENT);
 		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
-		UserService    userService    = fileStore;
+		ClientService clientService = fileStore;
 		SessionService sessionService = fileStore;
+		UserService    userService    = fileStore;
 		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
-		new Backend(sessionService, userService).bindPath(BACKEND, WELL_KNOWN).on(server);
+		new Backend(clientService, sessionService, userService).bindPath(BACKEND, WELL_KNOWN).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}

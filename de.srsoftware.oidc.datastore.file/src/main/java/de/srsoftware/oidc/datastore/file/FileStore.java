@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.json.JSONObject;
 
-public class FileStore implements SessionService, UserService {
+public class FileStore implements ClientService, SessionService, UserService {
 	private static final String EXPIRATION = "expiration";
 	private static final String SESSIONS   = "sessions";
 	private static final String USERS      = "users";
@@ -54,6 +54,7 @@ public class FileStore implements SessionService, UserService {
 		return null;
 	}
 
+
 	@Override
 	public FileStore init(User defaultUser) {
 		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
@@ -71,8 +72,8 @@ public class FileStore implements SessionService, UserService {
 	public Optional<User> load(String userId) {
 		try {
 			var users = json.getJSONObject(USERS);
-			var user  = users.getJSONObject(userId);
-			return Optional.of(new User(user.getString(USERNAME), user.getString(PASSWORD), user.getString(REALNAME), user.getString(EMAIL), userId));
+			var userData = users.getJSONObject(userId);
+			return userOf(userData,userId);
 		} catch (Exception ignored) {
 		}
 		return Optional.empty();
@@ -83,12 +84,12 @@ public class FileStore implements SessionService, UserService {
 		try {
 			var users = json.getJSONObject(USERS);
 			var uuids = users.keySet();
-			for (String uuid : uuids) {
-				var user = users.getJSONObject(uuid);
-				if (!user.getString(USERNAME).equals(username)) continue;
-				var hashedPass = user.getString(PASSWORD);
+			for (String userId : uuids) {
+				var userData = users.getJSONObject(userId);
+				if (!userData.getString(USERNAME).equals(username)) continue;
+				var hashedPass = userData.getString(PASSWORD);
 				if (passwordHasher.matches(password, hashedPass)) {
-					return Optional.of(new User(username, hashedPass, user.getString(REALNAME), user.getString(EMAIL), uuid));
+					return userOf(userData,userId);
 				}
 			}
 			return Optional.empty();
@@ -108,6 +109,21 @@ public class FileStore implements SessionService, UserService {
 		users.put(user.uuid(), user.map(true));
 		return save();
 	}
+
+	private Optional<User> userOf(JSONObject json, String userId){
+		var user = new User(json.getString(USERNAME), json.getString(PASSWORD), json.getString(REALNAME), json.getString(EMAIL), userId);
+		var perms = json.getJSONArray(PERMISSIONS);
+		for (Object perm : perms){
+			try {
+				if (perm instanceof String s) user.add(Permission.valueOf(s));
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+		}
+
+		return Optional.of(user);
+	}
+
 
 	/*** Session Service Methods ***/
 
@@ -151,6 +167,27 @@ public class FileStore implements SessionService, UserService {
 
 	@Override
 	public SessionService setDuration(Duration duration) {
+		return null;
+	}
+
+	/** client service methods **/
+	@Override
+	public Optional<Client> getClient(String clientId) {
+		return Optional.empty();
+	}
+
+	@Override
+	public ClientService add(Client client) {
+		return null;
+	}
+
+	@Override
+	public ClientService remove(Client client) {
+		return null;
+	}
+
+	@Override
+	public ClientService update(Client client) {
 		return null;
 	}
 }

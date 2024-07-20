@@ -1,14 +1,16 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public final class User {
 	public static final String EMAIL    = "email";
 	public static final String PASSWORD = "password";
+	public static final String PERMISSIONS = "permissions";
 	public static final String REALNAME = "realname";
 	public static final String USERNAME = "username";
+
+	private final Set<Permission> permissions = new HashSet<>();
 
 	private String email, hashedPassword, realName, uuid, username;
 
@@ -18,6 +20,11 @@ public final class User {
 		this.email	    = email;
 		this.hashedPassword = hashedPassword;
 		this.uuid	    = uuid;
+	}
+
+	public User add(Permission permission) {
+		permissions.add(permission);
+		return this;
 	}
 
 	public String email() {
@@ -37,6 +44,10 @@ public final class User {
 		return Objects.equals(this.uuid, that.uuid);
 	}
 
+	public boolean hasPermission(Permission permission){
+		return permissions.contains(permission);
+	}
+
 	public String hashedPassword() {
 		return hashedPassword;
 	}
@@ -52,8 +63,10 @@ public final class User {
 	}
 
 
-	public Map<String, String> map(boolean includePassword) {
-		return includePassword ? Map.of(USERNAME, username, REALNAME, realName, PASSWORD, hashedPassword, EMAIL, email) : Map.of(USERNAME, username, REALNAME, realName, EMAIL, email);
+	public Map<String, Object> map(boolean includePassword) {
+		return includePassword
+				? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, PASSWORD, hashedPassword)
+				: Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions);
 	}
 
 	public String realName() {
