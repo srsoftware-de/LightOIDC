@@ -115,7 +115,8 @@ public class FileStore implements ClientService, SessionService, UserService {
 		var perms = json.getJSONArray(PERMISSIONS);
 		for (Object perm : perms){
 			try {
-				if (perm instanceof String s) user.add(Permission.valueOf(s));
+				if (perm instanceof String s) perm = Permission.valueOf(s);
+				if (perm instanceof Permission p) user.add(p);
 			} catch (Exception e){
 				e.printStackTrace();
 			}
@@ -171,14 +172,20 @@ public class FileStore implements ClientService, SessionService, UserService {
 	}
 
 	/** client service methods **/
+
+	@Override
+	public ClientService add(Client client) {
+		return null;
+	}
+
 	@Override
 	public Optional<Client> getClient(String clientId) {
 		return Optional.empty();
 	}
 
 	@Override
-	public ClientService add(Client client) {
-		return null;
+	public List<Client> listClients() {
+		return List.of();
 	}
 
 	@Override

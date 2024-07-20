@@ -1,4 +1,3 @@
-const UNAUTHORIZED = 401;
 
 async function handleUser(response){
     if (response.status == UNAUTHORIZED) {

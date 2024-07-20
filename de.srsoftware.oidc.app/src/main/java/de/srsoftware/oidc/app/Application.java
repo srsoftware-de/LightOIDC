@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executors;
 
-import static de.srsoftware.oidc.api.Permission.CREATE_CLIENT;
+import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 
 public class Application {
 	public static final String  BACKEND         = "/api";
@@ -38,7 +38,7 @@ public class Application {
 		var            storageFile    = new File("/tmp/lightoidc.json");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(CREATE_CLIENT);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS);
 		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
 		ClientService clientService = fileStore;
 		SessionService sessionService = fileStore;

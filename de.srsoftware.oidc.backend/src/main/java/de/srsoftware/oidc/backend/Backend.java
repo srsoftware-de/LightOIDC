@@ -1,17 +1,20 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
+import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.oidc.api.User.PASSWORD;
 import static de.srsoftware.oidc.api.User.USERNAME;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Backend extends PathHandler {
@@ -35,6 +38,14 @@ public class Backend extends PathHandler {
 		return sendEmptyResponse(HTTP_NOT_FOUND,ex);
 	}
 
+	private boolean clients(HttpExchange ex, Session session) throws IOException {
+		var user = session.user();
+		if (!user.hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN,ex);
+		var json = new JSONObject();
+		clients.listClients().forEach(client -> json.put(client.id(), Map.of("name",client.name(),"redirect_uris",client.redirectUris())));
+		return sendContent(ex,json);
+	}
+
 	private boolean doLogin(HttpExchange ex) throws IOException {
 		var body = json(ex);
 
@@ -48,7 +59,6 @@ public class Backend extends PathHandler {
 
 	@Override
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
-		System.out.printf("GET %s…\n", path);
 		switch (path) {
 			case "/openid-configuration":
 				return openidConfig(ex);
@@ -58,8 +68,6 @@ public class Backend extends PathHandler {
 
 	@Override
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
-		System.out.printf("POST %s…\n", path);
-
 		// pre-login paths
 		switch (path) {
 			case "/login":
@@ -73,6 +81,8 @@ public class Backend extends PathHandler {
 		switch (path) {
 			case "/authorize":
 				return authorize(ex,session);
+			case "/clients":
+				return clients(ex,session);
 			case "/user":
 				return sendUserAndCookie(ex, session);
 		}
