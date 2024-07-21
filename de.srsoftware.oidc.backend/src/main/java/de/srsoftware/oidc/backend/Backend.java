@@ -2,8 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
-import static de.srsoftware.oidc.api.User.PASSWORD;
-import static de.srsoftware.oidc.api.User.USERNAME;
+import static de.srsoftware.oidc.api.User.*;
 import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -11,6 +10,7 @@ import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -83,6 +83,10 @@ public class Backend extends PathHandler {
 				return authorize(ex,session);
 			case "/clients":
 				return clients(ex,session);
+			case "/update/password":
+					return updatePassword(ex,session);
+			case "/update/user":
+				return updateUser(ex,session);
 			case "/user":
 				return sendUserAndCookie(ex, session);
 		}
@@ -113,5 +117,36 @@ public class Backend extends PathHandler {
 		var out = ex.getResponseBody();
 		out.write(bytes);
 		return true;
+	}
+
+	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
+		var user =session.user();
+		var json = json(ex);
+		var uuid = json.getString(UUID);
+		if (!uuid.equals(user.uuid())) {
+			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		}
+		var oldPass = json.getJSONArray("oldpass");
+		var oldPass1 = oldPass.getString(0);
+		if (!oldPass1.equals(oldPass.getString(1))){
+			return sendError(ex,"password mismatch");
+		}
+		if (!users.passwordMatches(oldPass1,user.hashedPassword())) return sendError(ex,"wrong password");
+		users.updatePassword(user,json.getString("newpass"));
+		return sendContent(ex,new JSONObject(user.map(false)));
+	}
+
+	private boolean updateUser(HttpExchange ex, Session session) throws IOException {
+		var user =session.user();
+		var json = json(ex);
+		var uuid = json.getString(UUID);
+		if (!uuid.equals(user.uuid())){
+			return sendEmptyResponse(HTTP_FORBIDDEN,ex);
+		}
+		user.username(json.getString(USERNAME));
+		user.email(json.getString(EMAIL));
+		users.save(user);
+		JSONObject response = new JSONObject(user.map(false));
+		return sendContent(ex,response);
 	}
 }

@@ -16,8 +16,8 @@ function doRedirect(){
 
 function tryLogin(){
     document.getElementById("error").innerHTML = "";
-    var username = document.getElementById('username').value;
-    var password = document.getElementById('password').value;
+    var username = getValue('username');
+    var password = getValue('password');
     fetch(api+"/login",{
         method: 'POST',
         headers: {

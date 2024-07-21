@@ -62,6 +62,8 @@ public class FileStore implements ClientService, SessionService, UserService {
 		return this;
 	}
 
+
+
 	@Override
 	public List<User> list() {
 		return List.of();
@@ -99,6 +101,11 @@ public class FileStore implements ClientService, SessionService, UserService {
 	}
 
 	@Override
+	public boolean passwordMatches(String password, String hashedPassword) {
+		return passwordHasher.matches(password,hashedPassword);
+	}
+
+	@Override
 	public FileStore save(User user) {
 		JSONObject users;
 		if (!json.has(USERS)) {
@@ -108,6 +115,14 @@ public class FileStore implements ClientService, SessionService, UserService {
 		}
 		users.put(user.uuid(), user.map(true));
 		return save();
+	}
+
+	@Override
+	public FileStore updatePassword(User user, String plaintextPassword) {
+		var oldHashedPassword = user.hashedPassword();
+		var salt = passwordHasher.salt(oldHashedPassword);
+		user.hashedPassword(passwordHasher.hash(plaintextPassword,salt));
+		return save(user);
 	}
 
 	private Optional<User> userOf(JSONObject json, String userId){
@@ -132,7 +147,7 @@ public class FileStore implements ClientService, SessionService, UserService {
 	public Session createSession(User user) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(sessionDuration);
-		return save(new Session(user, endOfSession, UUID.randomUUID().toString()));
+		return save(new Session(user, endOfSession, java.util.UUID.randomUUID().toString()));
 	}
 
 	@Override

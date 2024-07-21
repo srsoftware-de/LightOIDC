@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -8,6 +9,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -106,13 +108,25 @@ public abstract class PathHandler implements HttpHandler {
 			return false;
 		}
 
-		public static boolean sendContent(HttpExchange ex, byte[] bytes) throws IOException {
-			ex.sendResponseHeaders(HTTP_OK, bytes.length);
+		public static boolean sendContent(HttpExchange ex, int status, byte[] bytes) throws IOException {
+			ex.sendResponseHeaders(status, bytes.length);
 			ex.getResponseBody().write(bytes);
 			return true;
 		}
 
+		public static boolean sendContent(HttpExchange ex, byte[] bytes) throws IOException {
+			return sendContent(ex,HTTP_OK,bytes);
+		}
+
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
-			return sendContent(ex, o.toString().getBytes(UTF_8));
+			return sendContent(ex, HTTP_OK, o.toString().getBytes(UTF_8));
+		}
+
+		public static boolean sendError(HttpExchange ex, byte[] bytes) throws IOException {
+			return sendContent(ex,HTTP_BAD_REQUEST,bytes);
+		}
+
+		public static boolean sendError(HttpExchange ex, Object o) throws IOException {
+			return sendContent(ex,HTTP_BAD_REQUEST,o.toString().getBytes(UTF_8));
 		}
 	}

@@ -9,6 +9,7 @@ public final class User {
 	public static final String PERMISSIONS = "permissions";
 	public static final String REALNAME = "realname";
 	public static final String USERNAME = "username";
+	public static final String UUID = "uuid";
 
 	private final Set<Permission> permissions = new HashSet<>();
 
@@ -65,8 +66,8 @@ public final class User {
 
 	public Map<String, Object> map(boolean includePassword) {
 		return includePassword
-				? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, PASSWORD, hashedPassword)
-				: Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions);
+				? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, PASSWORD, hashedPassword)
+				: Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid);
 	}
 
 	public String realName() {
