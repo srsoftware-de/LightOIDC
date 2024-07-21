@@ -1,0 +1,12 @@
+body {
+    background: black;
+    color: white;
+}
+
+body fieldset {
+    border-radius: 10px;
+}
+
+a {
+  color: yellow;
+}
