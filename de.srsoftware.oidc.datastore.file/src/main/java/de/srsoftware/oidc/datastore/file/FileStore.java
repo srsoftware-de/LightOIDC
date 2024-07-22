@@ -207,7 +207,7 @@ public class FileStore implements ClientService, SessionService, UserService {
 	@Override
 	public Optional<Client> getClient(String clientId) {
 		var clients = json.getJSONObject(CLIENTS);
-		if (clients.has(clientId)) return Optional.of(toClient(clientId,clients.getJSONObject(clientId)));
+		if (clients.has(clientId)) return Optional.of(toClient(clientId, clients.getJSONObject(clientId)));
 		return Optional.empty();
 	}
 
@@ -217,14 +217,13 @@ public class FileStore implements ClientService, SessionService, UserService {
 			if (o instanceof String s) redirectUris.add(s);
 		}
 		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
-
 	}
 
 	@Override
 	public List<Client> listClients() {
 		var clients = json.getJSONObject(CLIENTS);
 		var list    = new ArrayList<Client>();
-		for (var clientId : clients.keySet()) list.add(toClient(clientId,clients.getJSONObject(clientId)));
+		for (var clientId : clients.keySet()) list.add(toClient(clientId, clients.getJSONObject(clientId)));
 		return list;
 	}
 

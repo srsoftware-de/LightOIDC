@@ -59,7 +59,7 @@ public class Backend extends PathHandler {
 		var json = json(ex);
 		var id   = json.getString(CLIENT_ID);
 		clients.getClient(id).ifPresent(clients::remove);
-		return sendEmptyResponse(HTTP_OK,ex);
+		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
 	private boolean doLogin(HttpExchange ex) throws IOException {
