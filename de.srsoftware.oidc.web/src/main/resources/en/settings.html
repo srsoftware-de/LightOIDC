@@ -28,8 +28,15 @@
                 <th>ID</th>
                 <td><input id="uuid" type="text" disabled="true"></td>
             </tr>
+            <tr id="update_error" style="display: none">
+                <th>Error</th>
+                <td class="warning">Failed to update settings!</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button id="updateBtn" type="button" onClick="update()">Update</button></td>
+            </tr>
         </table>
-        <button id="updateBtn" type="button" onClick="update()">Update</button>
     </fieldset>
     <fieldset>
         <legend>
@@ -48,8 +55,19 @@
                 <th>Repeat Password</th>
                 <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
             </tr>
+            <tr id="wrong_password" style="display: none">
+                <th>Error</th>
+                <td class="warning">Wrong password!</td>
+            </tr>
+            <tr id="password_mismatch" style="display: none">
+                <th>Error</th>
+                <td class="warning">Mismatch between new password and repetition!</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button id="passBtn" type="button" onClick="updatePass()">Update</button></td>
+            </tr>
         </table>
-        <button id="passBtn" type="button" onClick="updatePass()">Update</button>
     </fieldset>
 </form>
 </body>

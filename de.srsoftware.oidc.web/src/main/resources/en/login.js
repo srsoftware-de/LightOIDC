@@ -1,10 +1,11 @@
 async function handleLogin(response){
     if (response.ok){
         var body = await response.json();
-
+        hide('error');
         setTimeout(doRedirect,100);
+    } else {
+        show('error');
     }
-    return false;
 }
 
 function doRedirect(){
@@ -14,7 +15,6 @@ function doRedirect(){
 }
 
 function tryLogin(){
-    document.getElementById("error").innerHTML = "";
     var username = getValue('username');
     var password = getValue('password');
     fetch(api+"/login",{

@@ -1,0 +1,41 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="common.js"></script>
+    <script src="user.js"></script>
+    <script src="edit_client.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav></nav>
+<h1>Edit client</h1>
+<fieldset>
+    <legend>Data</legend>
+    <table>
+        <tr>
+            <th>ID</th>
+            <td><input type="text" disabled="true" id="client_id" /></td>
+        </tr>
+        <tr>
+            <th>Name</th>
+            <td><input type="text" id="name" /></td>
+        </tr>
+        <tr>
+            <th>Secret</th>
+            <td><input type="text" id="secret" /></td>
+        </tr>
+        <tr>
+            <th>Redirect URIs</th>
+            <td>
+                <textarea id="redirects"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><button type="button" id="button">Update</button></td>
+        </tr>
+    </table>
+</fieldset>
+</body>
+</html>

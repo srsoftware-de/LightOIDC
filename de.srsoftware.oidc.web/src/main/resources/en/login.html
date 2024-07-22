@@ -10,16 +10,24 @@
         <h1>Login</h1>
         <fieldset id="login">
             <legend>User credentials</legend>
-            <label>
-                Username
-                <input type="text" id="username" />
-            </label>
-            <label>
-                Password
-                <input type="password" id="password" onkeydown="keyDown()"/>
-            </label>
-            <button type="button" onClick="tryLogin()">Login</button>
+            <table>
+                <tr>
+                    <th>User name</th>
+                    <td><input type="text" id="username" /></td>
+                </tr>
+                <tr>
+                    <th>Password</th>
+                    <td><input type="password" id="password" onkeydown="keyDown()"/></td>
+                </tr>
+                <tr id="error" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Failed to log in!</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button type="button" onClick="tryLogin()">Login</button></td>
+                </tr>
+            </table>
         </fieldset>
-        <div id="error"></div>
     </body>
 </html>

@@ -11,18 +11,16 @@ function fillForm(){
 
 
 function handleResponse(response){
-    setText('updateBtn',response.ok ? 'saved.' : 'failed!');
+    if (response.ok){
+        hide('update_error')
+        setText('updateBtn', 'saved.');
+    } else {
+        show('update_error');
+        setText('updateBtn', 'Update failed!');
+    }
+    enable('updateBtn');
     setTimeout(function(){
         setText('updateBtn','Update');
-        enable('updateBtn');
-    },10000);
-}
-
-function handlePasswordResponse(response){
-    setText('passBtn',response.ok ? 'saved.' : 'failed!');
-    setTimeout(function(){
-        setText('passBtn','Update');
-        enable('passBtn');
     },10000);
 }
 
@@ -43,6 +41,26 @@ function update(){
     setText('updateBtn','sent…');
 }
 
+
+async function handlePasswordResponse(response){
+    if (response.ok){
+        hide('wrong_password');
+        hide('password_mismatch');
+        setText('passBtn', 'saved.');
+    } else {
+        setText('passBtn', 'Update failed!');
+        var text = await response.text();
+        if (text == 'wrong password') show('wrong_password');
+        if (text == 'password mismatch') show('password_mismatch');
+
+    }
+    enable('passBtn');
+    setTimeout(function(){
+        setText('passBtn','Update');
+    },10000);
+}
+
+
 function updatePass(){
     disable('passBtn');
     var newData = {
@@ -58,10 +76,6 @@ function updatePass(){
         body : JSON.stringify(newData)
     }).then(handlePasswordResponse);
     setText('passBtn','sent…');
-    setTimeout(function(){
-        setText('passBtn','Update');
-        enable('passBtn');
-    },10000);
 }
 
 function passKeyDown(ev){

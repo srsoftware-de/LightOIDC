@@ -19,6 +19,11 @@ function getValue(id){
     return get(id).value;
 }
 
+function hide(id){
+    console.log('hide('+id+')');
+    get(id).style.display = 'none';
+}
+
 function redirect(page){
     window.location.href = page;
 }
@@ -29,6 +34,10 @@ function setText(id, text){
 
 
 function setValue(id,newVal){
-    document.getElementById(id).value = newVal;
+    get(id).value = newVal;
 }
 
+function show(id){
+    console.log('show('+id+')');
+    get(id).style.display = '';
+}

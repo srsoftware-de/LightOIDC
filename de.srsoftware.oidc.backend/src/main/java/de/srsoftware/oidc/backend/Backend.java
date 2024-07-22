@@ -30,7 +30,7 @@ public class Backend extends PathHandler {
 		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendError(ex, "NOT ALLOWED");
 		var json      = json(ex);
 		var redirects = new HashSet<String>();
-		for (Object o : json.getJSONArray(REDIRECT_URI)) {
+		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
 			if (o instanceof String s) redirects.add(s);
 		}
 		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects);
@@ -128,6 +128,8 @@ public class Backend extends PathHandler {
 				return addClient(ex, session);
 			case "/authorize":
 				return authorize(ex, session);
+			case "/client":
+				return loadClient(ex, session);
 			case "/clients":
 				return clients(ex, session);
 			case "/update/password":
@@ -143,6 +145,17 @@ public class Backend extends PathHandler {
 
 	private Optional<Session> getSession(HttpExchange ex) {
 		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessions::retrieve);
+	}
+
+	private boolean loadClient(HttpExchange ex, Session session) throws IOException {
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var json = json(ex);
+		if (json.has(CLIENT_ID)) {
+			var clientID = json.getString(CLIENT_ID);
+			var client   = clients.getClient(clientID).map(Client::map).map(JSONObject::new);
+			if (client.isPresent()) return sendContent(ex, client.get());
+		}
+		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
 	private boolean logout(HttpExchange ex, Session session) throws IOException {

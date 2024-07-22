@@ -4,7 +4,7 @@ function addClient(){
         client_id : getValue('client-id'),
         name : getValue('client-name'),
         secret : getValue('client-secret'),
-        redirect_uri : getValue('redirect-urls').split("\n")
+        redirect_uris : getValue('redirect-urls').split("\n")
     };
     fetch(api+'/add/client',{
         method : 'POST',

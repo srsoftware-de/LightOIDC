@@ -5,10 +5,20 @@ body {
 
 body fieldset {
     border-radius: 10px;
+    display: inline-block;
 }
 
 a {
   color: yellow;
+}
+
+input, textarea{
+    width: 600px;
+}
+
+input:disabled{
+    color: white;
+    background-color: gray;
 }
 
 fieldset th,
@@ -18,4 +28,8 @@ form th{
 
 .hidden{
     display: none;
+}
+
+.warning{
+    color: yellow;
 }
