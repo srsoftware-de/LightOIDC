@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
 	public static final String CONTENT_TYPE = "Content-Type";
+	public static final String DELETE       = "DELETE";
 	public static final String GET	        = "GET";
 	public static final String JSON	        = "application/json";
 	public static final String POST	        = "POST";
@@ -37,9 +38,14 @@ public abstract class PathHandler implements HttpHandler {
 		return new Bond(path);
 	}
 
+	public boolean doDelete(String path, HttpExchange ex) throws IOException {
+		return false;
+	}
+
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
 		return false;
 	}
+
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
 		return false;
 	}
@@ -50,8 +56,9 @@ public abstract class PathHandler implements HttpHandler {
 		String method = ex.getRequestMethod();
 		System.out.printf("%s %s\n", method, path);
 		boolean dummy = switch (method) {
-			case POST -> doPost(path,ex);
+			case DELETE -> doDelete(path,ex);
 			case GET -> doGet(path,ex);
+			case POST -> doPost(path,ex);
 			default -> false;
 		};
 		ex.getResponseBody().close();

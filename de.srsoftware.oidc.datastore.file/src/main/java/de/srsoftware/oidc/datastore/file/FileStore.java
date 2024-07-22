@@ -1,6 +1,5 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
-import static de.srsoftware.oidc.api.Constants.CLIENT_ID;
 import static de.srsoftware.oidc.api.User.*;
 
 import de.srsoftware.oidc.api.*;
@@ -16,14 +15,14 @@ import java.util.*;
 import org.json.JSONObject;
 
 public class FileStore implements ClientService, SessionService, UserService {
-	private static final String CLIENTS   = "clients";
-	private static final String EXPIRATION = "expiration";
-	private static final String NAME = "name";
+	private static final String CLIENTS       = "clients";
+	private static final String EXPIRATION    = "expiration";
+	private static final String NAME          = "name";
 	private static final String REDIRECT_URIS = "redirect_uris";
-	private static final String SECRET = "secret";
-	private static final String SESSIONS   = "sessions";
-	private static final String USERS      = "users";
-	private static final String USER       = "user";
+	private static final String SECRET        = "secret";
+	private static final String SESSIONS      = "sessions";
+	private static final String USERS         = "users";
+	private static final String USER          = "user";
 
 	private final Path       storageFile;
 	private final JSONObject json;
@@ -200,35 +199,40 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public ClientService add(Client client) {
-		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME,client.name(),SECRET,client.secret(),REDIRECT_URIS,client.redirectUris()));
+		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
 		save();
 		return this;
 	}
 
 	@Override
 	public Optional<Client> getClient(String clientId) {
+		var clients = json.getJSONObject(CLIENTS);
+		if (clients.has(clientId)) return Optional.of(toClient(clientId,clients.getJSONObject(clientId)));
 		return Optional.empty();
+	}
+
+	private Client toClient(String clientId, JSONObject clientData) {
+		var redirectUris = new HashSet<String>();
+		for (var o : clientData.getJSONArray(REDIRECT_URIS)) {
+			if (o instanceof String s) redirectUris.add(s);
+		}
+		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
+
 	}
 
 	@Override
 	public List<Client> listClients() {
 		var clients = json.getJSONObject(CLIENTS);
-		var list = new ArrayList<Client>();
-		for (var clientId : clients.keySet()){
-			var clientData = clients.getJSONObject(clientId);
-			var redirectUris = new HashSet<String>();
-			for (var o : clientData.getJSONArray(REDIRECT_URIS)){
-				if (o instanceof String s) redirectUris.add(s);
-			}
-			var client = new Client(clientId,clientData.getString(NAME),clientData.getString(SECRET),redirectUris);
-			list.add(client);
-		}
+		var list    = new ArrayList<Client>();
+		for (var clientId : clients.keySet()) list.add(toClient(clientId,clients.getJSONObject(clientId)));
 		return list;
 	}
 
 	@Override
-	public ClientService remove(Client client) {
-		return null;
+	public FileStore remove(Client client) {
+		var clients = json.getJSONObject(CLIENTS);
+		if (clients.has(client.id())) clients.remove(client.id());
+		return save();
 	}
 
 	@Override

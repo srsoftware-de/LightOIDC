@@ -1,9 +1,9 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
+import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.oidc.api.User.*;
-import static de.srsoftware.oidc.api.Constants.*;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -27,14 +27,15 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean addClient(HttpExchange ex, Session session) throws IOException {
-		var json = json(ex);
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendError(ex, "NOT ALLOWED");
+		var json      = json(ex);
 		var redirects = new HashSet<String>();
-		for (Object o : json.getJSONArray(REDIRECT_URI)){
+		for (Object o : json.getJSONArray(REDIRECT_URI)) {
 			if (o instanceof String s) redirects.add(s);
 		}
-		var client = new Client(json.getString(CLIENT_ID),json.getString(NAME),json.getString(SECRET),redirects);
+		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects);
 		clients.add(client);
-		return sendContent(ex,client);
+		return sendContent(ex, client);
 	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
@@ -53,6 +54,14 @@ public class Backend extends PathHandler {
 		return sendContent(ex, json);
 	}
 
+	private boolean deleteClient(HttpExchange ex, Session session) throws IOException {
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendError(ex, "NOT ALLOWED");
+		var json = json(ex);
+		var id   = json.getString(CLIENT_ID);
+		clients.getClient(id).ifPresent(clients::remove);
+		return sendEmptyResponse(HTTP_OK,ex);
+	}
+
 	private boolean doLogin(HttpExchange ex) throws IOException {
 		var body = json(ex);
 
@@ -62,6 +71,22 @@ public class Backend extends PathHandler {
 		Optional<User> user = users.load(username, password);
 		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get()));
 		return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+	}
+
+	@Override
+	public boolean doDelete(String path, HttpExchange ex) throws IOException {
+		var optSession = getSession(ex);
+		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+
+		// post-login paths
+		var session = optSession.get();
+		switch (path) {
+			case "/client":
+				return deleteClient(ex, session);
+		}
+
+		System.err.println("not implemented");
+		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
 	@Override
@@ -100,7 +125,7 @@ public class Backend extends PathHandler {
 		var session = optSession.get();
 		switch (path) {
 			case "/add/client":
-				return addClient(ex,session);
+				return addClient(ex, session);
 			case "/authorize":
 				return authorize(ex, session);
 			case "/clients":

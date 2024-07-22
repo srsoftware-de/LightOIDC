@@ -15,3 +15,7 @@ fieldset th,
 form th{
     text-align: right;
 }
+
+.hidden{
+    display: none;
+}
