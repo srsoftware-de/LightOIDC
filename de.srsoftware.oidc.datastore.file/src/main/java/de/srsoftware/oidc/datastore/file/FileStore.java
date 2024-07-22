@@ -143,6 +143,9 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	/*** Session Service Methods ***/
 
+	// TODO: prolong session on user activity
+	// TODO: drop expired sessions
+
 	@Override
 	public Session createSession(User user) {
 		var now	 = Instant.now();
@@ -152,7 +155,9 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public SessionService dropSession(String sessionId) {
-		return null;
+		json.getJSONObject(SESSIONS).remove(sessionId);
+		save();
+		return this;
 	}
 
 	@Override

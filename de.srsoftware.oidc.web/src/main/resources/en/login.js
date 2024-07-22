@@ -31,3 +31,7 @@ function tryLogin(){
     }).then(handleLogin);
     return false;
 }
+
+function keyDown(ev){
+   if (event.keyCode == 13) tryLogin();
+}

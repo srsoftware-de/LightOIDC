@@ -59,10 +59,23 @@ public class Backend extends PathHandler {
 
 	@Override
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
+		// pre-login paths
 		switch (path) {
 			case "/openid-configuration":
 				return openidConfig(ex);
 		}
+
+		var optSession = getSession(ex);
+		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+
+		// post-login paths
+		var session = optSession.get();
+		switch (path) {
+			case "/logout":
+				return logout(ex,session);
+		}
+
+		System.err.println("not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -98,6 +111,12 @@ public class Backend extends PathHandler {
 		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessions::retrieve);
 	}
 
+	private boolean logout(HttpExchange ex, Session session) throws IOException {
+		sessions.dropSession(session.id());
+		new SessionToken("").addTo(ex);
+		return sendEmptyResponse(HTTP_OK,ex);
+	}
+
 	private boolean openidConfig(HttpExchange ex) throws IOException {
 		var        uri	= ex.getRequestURI().toString();
 		JSONObject json = new JSONObject();
@@ -108,15 +127,8 @@ public class Backend extends PathHandler {
 
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
-		var bytes   = new JSONObject(session.user().map(false)).toString().getBytes(UTF_8);
-		var headers = ex.getResponseHeaders();
-
-		headers.add(CONTENT_TYPE, JSON);
-		new SessionToken(session.id()).addTo(headers);
-		ex.sendResponseHeaders(200, bytes.length);
-		var out = ex.getResponseBody();
-		out.write(bytes);
-		return true;
+		new SessionToken(session.id()).addTo(ex);
+		return sendContent(ex,new JSONObject(session.user().map(false)));
 	}
 
 	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
@@ -126,13 +138,15 @@ public class Backend extends PathHandler {
 		if (!uuid.equals(user.uuid())) {
 			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		}
-		var oldPass = json.getJSONArray("oldpass");
-		var oldPass1 = oldPass.getString(0);
-		if (!oldPass1.equals(oldPass.getString(1))){
+		var oldPass = json.getString("oldpass");
+		if (!users.passwordMatches(oldPass,user.hashedPassword())) return sendError(ex,"wrong password");
+
+		var newpass = json.getJSONArray("newpass");
+		var newPass1 = newpass.getString(0);
+		if (!newPass1.equals(newpass.getString(1))){
 			return sendError(ex,"password mismatch");
 		}
-		if (!users.passwordMatches(oldPass1,user.hashedPassword())) return sendError(ex,"wrong password");
-		users.updatePassword(user,json.getString("newpass"));
+		users.updatePassword(user,newPass1);
 		return sendContent(ex,new JSONObject(user.map(false)));
 	}
 

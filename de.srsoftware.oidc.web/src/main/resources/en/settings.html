@@ -38,15 +38,15 @@
         <table>
             <tr>
                 <th>Old password</th>
-                <td><input id="oldpass1" type="password"></td>
-            </tr>
-            <tr>
-                <th>Repeat Password</th>
-                <td><input id="oldpass2" type="password"></td>
+                <td><input id="oldpass" type="password"></td>
             </tr>
             <tr>
                 <th>New Password</th>
-                <td><input id="newpass" type="password"></td>
+                <td><input id="newpass1" type="password"></td>
+            </tr>
+            <tr>
+                <th>Repeat Password</th>
+                <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
             </tr>
         </table>
         <button id="passBtn" type="button" onClick="updatePass()">Update</button>

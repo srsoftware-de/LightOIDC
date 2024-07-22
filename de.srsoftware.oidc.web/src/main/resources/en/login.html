@@ -4,6 +4,7 @@
         <title>Light OIDC</title>
         <script src="common.js"></script>
         <script src="login.js"></script>
+        <link rel="stylesheet" href="style.css" />
     </head>
     <body>
         <h1>Login</h1>
@@ -15,7 +16,7 @@
             </label>
             <label>
                 Password
-                <input type="password" id="password" />
+                <input type="password" id="password" onkeydown="keyDown()"/>
             </label>
             <button type="button" onClick="tryLogin()">Login</button>
         </fieldset>

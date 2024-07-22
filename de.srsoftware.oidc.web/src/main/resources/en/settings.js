@@ -47,8 +47,8 @@ function updatePass(){
     disable('passBtn');
     setText('passBtn','sent…');
     var newData = {
-        oldpass : [getValue('oldpass1'),getValue('oldpass2')],
-        newpass : getValue('newpass'),
+        oldpass : getValue('oldpass'),
+        newpass : [getValue('newpass1'),getValue('newpass2')],
         uuid : getValue('uuid')
     }
     fetch(api+'/update/password',{
@@ -63,6 +63,10 @@ function updatePass(){
             setText('passBtn','Update');
             enable('passBtn');
         },10000);
+}
+
+function passKeyDown(ev){
+   if (event.keyCode == 13) updatePass();
 }
 
 setTimeout(fillForm,100);

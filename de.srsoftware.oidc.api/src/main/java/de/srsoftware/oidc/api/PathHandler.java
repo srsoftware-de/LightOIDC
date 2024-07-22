@@ -119,6 +119,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
+			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
 			return sendContent(ex, HTTP_OK, o.toString().getBytes(UTF_8));
 		}
 
