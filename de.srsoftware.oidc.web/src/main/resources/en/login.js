@@ -9,8 +9,7 @@ async function handleLogin(response){
 
 function doRedirect(){
         let params = new URL(document.location.toString()).searchParams;
-        let redirect = params.get("return_to") || 'index.html';
-        window.location.href = redirect,true;
+        redirect( params.get("return_to") || 'index.html');
         return false;
 }
 

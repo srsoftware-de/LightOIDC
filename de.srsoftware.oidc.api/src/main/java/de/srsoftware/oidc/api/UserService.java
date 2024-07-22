@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public interface UserService {
 	public UserService	 delete(User user);
-	public boolean passwordMatches(String password, String hashedPassword);
+	public boolean		 passwordMatches(String password, String hashedPassword);
 	public UserService	 init(User defaultUser);
 	public List<User>	 list();
 	public Optional<User>	 load(String id);

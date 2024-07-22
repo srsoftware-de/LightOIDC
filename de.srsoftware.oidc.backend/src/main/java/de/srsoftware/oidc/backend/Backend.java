@@ -3,47 +3,54 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.oidc.api.User.*;
+import static de.srsoftware.oidc.api.Constants.*;
 import static java.net.HttpURLConnection.*;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Backend extends PathHandler {
-	private static final String CLIENT_ID = "client_id";
-	private static final String REDIRECT_URI = "redirect_uri";
 	private final SessionService sessions;
 	private final UserService    users;
-	private final ClientService clients;
+	private final ClientService  clients;
 
 	public Backend(ClientService clientService, SessionService sessionService, UserService userService) {
-		clients = clientService;
+		clients  = clientService;
 		sessions = sessionService;
 		users    = userService;
 	}
 
-	private boolean authorize(HttpExchange ex, Session session) throws IOException {
+	private boolean addClient(HttpExchange ex, Session session) throws IOException {
 		var json = json(ex);
+		var redirects = new HashSet<String>();
+		for (Object o : json.getJSONArray(REDIRECT_URI)){
+			if (o instanceof String s) redirects.add(s);
+		}
+		var client = new Client(json.getString(CLIENT_ID),json.getString(NAME),json.getString(SECRET),redirects);
+		clients.add(client);
+		return sendContent(ex,client);
+	}
+
+	private boolean authorize(HttpExchange ex, Session session) throws IOException {
+		var json     = json(ex);
 		var clientId = json.getString(CLIENT_ID);
 		var redirect = json.getString(REDIRECT_URI);
 		System.out.println(json);
-		return sendEmptyResponse(HTTP_NOT_FOUND,ex);
+		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
 	private boolean clients(HttpExchange ex, Session session) throws IOException {
 		var user = session.user();
-		if (!user.hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN,ex);
+		if (!user.hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
-		clients.listClients().forEach(client -> json.put(client.id(), Map.of("name",client.name(),"redirect_uris",client.redirectUris())));
-		return sendContent(ex,json);
+		clients.listClients().forEach(client -> json.put(client.id(), Map.of("name", client.name(), "redirect_uris", client.redirectUris())));
+		return sendContent(ex, json);
 	}
 
 	private boolean doLogin(HttpExchange ex) throws IOException {
@@ -72,7 +79,7 @@ public class Backend extends PathHandler {
 		var session = optSession.get();
 		switch (path) {
 			case "/logout":
-				return logout(ex,session);
+				return logout(ex, session);
 		}
 
 		System.err.println("not implemented");
@@ -92,14 +99,16 @@ public class Backend extends PathHandler {
 		// post-login paths
 		var session = optSession.get();
 		switch (path) {
+			case "/add/client":
+				return addClient(ex,session);
 			case "/authorize":
-				return authorize(ex,session);
+				return authorize(ex, session);
 			case "/clients":
-				return clients(ex,session);
+				return clients(ex, session);
 			case "/update/password":
-					return updatePassword(ex,session);
+				return updatePassword(ex, session);
 			case "/update/user":
-				return updateUser(ex,session);
+				return updateUser(ex, session);
 			case "/user":
 				return sendUserAndCookie(ex, session);
 		}
@@ -114,7 +123,7 @@ public class Backend extends PathHandler {
 	private boolean logout(HttpExchange ex, Session session) throws IOException {
 		sessions.dropSession(session.id());
 		new SessionToken("").addTo(ex);
-		return sendEmptyResponse(HTTP_OK,ex);
+		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
 	private boolean openidConfig(HttpExchange ex) throws IOException {
@@ -128,39 +137,39 @@ public class Backend extends PathHandler {
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
 		new SessionToken(session.id()).addTo(ex);
-		return sendContent(ex,new JSONObject(session.user().map(false)));
+		return sendContent(ex, new JSONObject(session.user().map(false)));
 	}
 
 	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
-		var user =session.user();
+		var user = session.user();
 		var json = json(ex);
 		var uuid = json.getString(UUID);
 		if (!uuid.equals(user.uuid())) {
 			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		}
 		var oldPass = json.getString("oldpass");
-		if (!users.passwordMatches(oldPass,user.hashedPassword())) return sendError(ex,"wrong password");
+		if (!users.passwordMatches(oldPass, user.hashedPassword())) return sendError(ex, "wrong password");
 
-		var newpass = json.getJSONArray("newpass");
+		var newpass  = json.getJSONArray("newpass");
 		var newPass1 = newpass.getString(0);
-		if (!newPass1.equals(newpass.getString(1))){
-			return sendError(ex,"password mismatch");
+		if (!newPass1.equals(newpass.getString(1))) {
+			return sendError(ex, "password mismatch");
 		}
-		users.updatePassword(user,newPass1);
-		return sendContent(ex,new JSONObject(user.map(false)));
+		users.updatePassword(user, newPass1);
+		return sendContent(ex, new JSONObject(user.map(false)));
 	}
 
 	private boolean updateUser(HttpExchange ex, Session session) throws IOException {
-		var user =session.user();
+		var user = session.user();
 		var json = json(ex);
 		var uuid = json.getString(UUID);
-		if (!uuid.equals(user.uuid())){
-			return sendEmptyResponse(HTTP_FORBIDDEN,ex);
+		if (!uuid.equals(user.uuid())) {
+			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		}
 		user.username(json.getString(USERNAME));
 		user.email(json.getString(EMAIL));
 		users.save(user);
 		JSONObject response = new JSONObject(user.map(false));
-		return sendContent(ex,response);
+		return sendContent(ex, response);
 	}
 }

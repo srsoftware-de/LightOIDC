@@ -1,5 +1,6 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
+import static de.srsoftware.oidc.api.Constants.CLIENT_ID;
 import static de.srsoftware.oidc.api.User.*;
 
 import de.srsoftware.oidc.api.*;
@@ -15,7 +16,11 @@ import java.util.*;
 import org.json.JSONObject;
 
 public class FileStore implements ClientService, SessionService, UserService {
+	private static final String CLIENTS   = "clients";
 	private static final String EXPIRATION = "expiration";
+	private static final String NAME = "name";
+	private static final String REDIRECT_URIS = "redirect_uris";
+	private static final String SECRET = "secret";
 	private static final String SESSIONS   = "sessions";
 	private static final String USERS      = "users";
 	private static final String USER       = "user";
@@ -57,11 +62,11 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public FileStore init(User defaultUser) {
+		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
 		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
 		if (!json.has(USERS)) save(defaultUser);
 		return this;
 	}
-
 
 
 	@Override
@@ -73,9 +78,9 @@ public class FileStore implements ClientService, SessionService, UserService {
 	@Override
 	public Optional<User> load(String userId) {
 		try {
-			var users = json.getJSONObject(USERS);
+			var users    = json.getJSONObject(USERS);
 			var userData = users.getJSONObject(userId);
-			return userOf(userData,userId);
+			return userOf(userData, userId);
 		} catch (Exception ignored) {
 		}
 		return Optional.empty();
@@ -91,7 +96,7 @@ public class FileStore implements ClientService, SessionService, UserService {
 				if (!userData.getString(USERNAME).equals(username)) continue;
 				var hashedPass = userData.getString(PASSWORD);
 				if (passwordHasher.matches(password, hashedPass)) {
-					return userOf(userData,userId);
+					return userOf(userData, userId);
 				}
 			}
 			return Optional.empty();
@@ -102,7 +107,7 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public boolean passwordMatches(String password, String hashedPassword) {
-		return passwordHasher.matches(password,hashedPassword);
+		return passwordHasher.matches(password, hashedPassword);
 	}
 
 	@Override
@@ -120,19 +125,19 @@ public class FileStore implements ClientService, SessionService, UserService {
 	@Override
 	public FileStore updatePassword(User user, String plaintextPassword) {
 		var oldHashedPassword = user.hashedPassword();
-		var salt = passwordHasher.salt(oldHashedPassword);
-		user.hashedPassword(passwordHasher.hash(plaintextPassword,salt));
+		var salt	      = passwordHasher.salt(oldHashedPassword);
+		user.hashedPassword(passwordHasher.hash(plaintextPassword, salt));
 		return save(user);
 	}
 
-	private Optional<User> userOf(JSONObject json, String userId){
-		var user = new User(json.getString(USERNAME), json.getString(PASSWORD), json.getString(REALNAME), json.getString(EMAIL), userId);
+	private Optional<User> userOf(JSONObject json, String userId) {
+		var user  = new User(json.getString(USERNAME), json.getString(PASSWORD), json.getString(REALNAME), json.getString(EMAIL), userId);
 		var perms = json.getJSONArray(PERMISSIONS);
-		for (Object perm : perms){
+		for (Object perm : perms) {
 			try {
 				if (perm instanceof String s) perm = Permission.valueOf(s);
 				if (perm instanceof Permission p) user.add(p);
-			} catch (Exception e){
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -195,7 +200,9 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public ClientService add(Client client) {
-		return null;
+		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME,client.name(),SECRET,client.secret(),REDIRECT_URIS,client.redirectUris()));
+		save();
+		return this;
 	}
 
 	@Override
@@ -205,7 +212,18 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public List<Client> listClients() {
-		return List.of();
+		var clients = json.getJSONObject(CLIENTS);
+		var list = new ArrayList<Client>();
+		for (var clientId : clients.keySet()){
+			var clientData = clients.getJSONObject(clientId);
+			var redirectUris = new HashSet<String>();
+			for (var o : clientData.getJSONArray(REDIRECT_URIS)){
+				if (o instanceof String s) redirectUris.add(s);
+			}
+			var client = new Client(clientId,clientData.getString(NAME),clientData.getString(SECRET),redirectUris);
+			list.add(client);
+		}
+		return list;
 	}
 
 	@Override

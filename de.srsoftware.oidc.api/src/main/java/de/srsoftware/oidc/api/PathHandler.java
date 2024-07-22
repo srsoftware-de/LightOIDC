@@ -9,7 +9,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -115,7 +114,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendContent(HttpExchange ex, byte[] bytes) throws IOException {
-			return sendContent(ex,HTTP_OK,bytes);
+			return sendContent(ex, HTTP_OK, bytes);
 		}
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
@@ -124,10 +123,10 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendError(HttpExchange ex, byte[] bytes) throws IOException {
-			return sendContent(ex,HTTP_BAD_REQUEST,bytes);
+			return sendContent(ex, HTTP_BAD_REQUEST, bytes);
 		}
 
 		public static boolean sendError(HttpExchange ex, Object o) throws IOException {
-			return sendContent(ex,HTTP_BAD_REQUEST,o.toString().getBytes(UTF_8));
+			return sendContent(ex, HTTP_BAD_REQUEST, o.toString().getBytes(UTF_8));
 		}
 	}

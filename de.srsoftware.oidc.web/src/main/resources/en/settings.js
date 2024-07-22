@@ -28,7 +28,6 @@ function handlePasswordResponse(response){
 
 function update(){
     disable('updateBtn');
-    setText('updateBtn','sent…');
     var newData = {
         username : getValue('username'),
         email : getValue('email'),
@@ -41,11 +40,11 @@ function update(){
         },
         body : JSON.stringify(newData)
     }).then(handleResponse)
+    setText('updateBtn','sent…');
 }
 
 function updatePass(){
     disable('passBtn');
-    setText('passBtn','sent…');
     var newData = {
         oldpass : getValue('oldpass'),
         newpass : [getValue('newpass1'),getValue('newpass2')],
@@ -58,11 +57,11 @@ function updatePass(){
         },
         body : JSON.stringify(newData)
     }).then(handlePasswordResponse);
-
-        setTimeout(function(){
-            setText('passBtn','Update');
-            enable('passBtn');
-        },10000);
+    setText('passBtn','sent…');
+    setTimeout(function(){
+        setText('passBtn','Update');
+        enable('passBtn');
+    },10000);
 }
 
 function passKeyDown(ev){

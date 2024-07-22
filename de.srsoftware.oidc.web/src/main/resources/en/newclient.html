@@ -4,13 +4,19 @@
     <title>Light OIDC</title>
     <script src="common.js"></script>
     <script src="user.js"></script>
+    <script src="newclient.js"></script>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<nav></nav>
 <h1>Add new client</h1>
 <fieldset>
     <legend>Settings</legend>
     <table>
+        <tr>
+            <th>client id</th>
+            <td><input type="text" size="50" id="client-id"></td>
+        </tr>
         <tr>
             <th>client name</th>
             <td><input type="text" size="50" id="client-name"></td>
@@ -24,6 +30,7 @@
             <td><textarea cols="50" rows="5" id="redirect-urls"></textarea></td>
         </tr>
     </table>
+    <button id="button" type="button" onclick="addClient()">Add client</button>
 </fieldset>
 </body>
 </html>

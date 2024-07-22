@@ -4,12 +4,12 @@ package de.srsoftware.oidc.api;
 import java.util.*;
 
 public final class User {
-	public static final String EMAIL    = "email";
-	public static final String PASSWORD = "password";
+	public static final String EMAIL       = "email";
+	public static final String PASSWORD    = "password";
 	public static final String PERMISSIONS = "permissions";
-	public static final String REALNAME = "realname";
-	public static final String USERNAME = "username";
-	public static final String UUID = "uuid";
+	public static final String REALNAME    = "realname";
+	public static final String USERNAME    = "username";
+	public static final String UUID	       = "uuid";
 
 	private final Set<Permission> permissions = new HashSet<>();
 
@@ -45,7 +45,7 @@ public final class User {
 		return Objects.equals(this.uuid, that.uuid);
 	}
 
-	public boolean hasPermission(Permission permission){
+	public boolean hasPermission(Permission permission) {
 		return permissions.contains(permission);
 	}
 
@@ -65,9 +65,7 @@ public final class User {
 
 
 	public Map<String, Object> map(boolean includePassword) {
-		return includePassword
-				? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, PASSWORD, hashedPassword)
-				: Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid);
+		return includePassword ? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, PASSWORD, hashedPassword) : Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid);
 	}
 
 	public String realName() {

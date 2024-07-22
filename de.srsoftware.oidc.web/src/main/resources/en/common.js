@@ -19,6 +19,10 @@ function getValue(id){
     return get(id).value;
 }
 
+function redirect(page){
+    window.location.href = page;
+}
+
 function setText(id, text){
     get(id).innerHTML = text;
 }

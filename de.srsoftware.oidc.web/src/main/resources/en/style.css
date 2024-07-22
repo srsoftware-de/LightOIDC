@@ -10,3 +10,8 @@ body fieldset {
 a {
   color: yellow;
 }
+
+fieldset th,
+form th{
+    text-align: right;
+}

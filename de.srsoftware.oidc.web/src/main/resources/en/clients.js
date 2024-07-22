@@ -1,11 +1,11 @@
 
 async function handleClients(response){
     if (response.status == UNAUTHORIZED) {
-        window.location.href = 'login.html?return_to='+encodeURI(window.location.href);
+        redirect('login.html?return_to='+encodeURI(window.location.href))
         return;
     }
     var clients = await response.json();
-    console.log(clients);
+    get()
 }
 
 fetch(api+"/clients",{method:'POST'}).then(handleClients);
