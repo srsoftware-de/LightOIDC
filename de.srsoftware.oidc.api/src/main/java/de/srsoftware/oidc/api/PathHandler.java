@@ -55,7 +55,7 @@ public abstract class PathHandler implements HttpHandler {
 		String path   = relativePath(ex);
 		String method = ex.getRequestMethod();
 		System.out.printf("%s %s\n", method, path);
-		boolean dummy = switch (method) {
+		boolean ignored = switch (method) {
 			case DELETE -> doDelete(path,ex);
 			case GET -> doGet(path,ex);
 			case POST -> doPost(path,ex);
@@ -89,11 +89,11 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static Optional<String> getHeader(HttpExchange ex, String key) {
-			return Optional.ofNullable(ex.getRequestHeaders().get(key)).map(List::stream).map(Stream::findFirst).orElse(Optional.empty());
+			return Optional.ofNullable(ex.getRequestHeaders().get(key)).map(List::stream).flatMap(Stream::findFirst);
 		}
 
-		public static boolean isPost(String method) {
-			return POST.equals(method);
+		public static String hostname(HttpExchange ex) {
+			return "http://%s".formatted(ex.getRequestHeaders().getFirst("Host"));
 		}
 
 		public static JSONObject json(HttpExchange ex) throws IOException {
@@ -101,12 +101,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static Optional<String> language(HttpExchange ex) {
-			return getHeader(ex, "Accept-Language").map(s -> Arrays.stream(s.split(","))).map(Stream::findFirst).orElse(Optional.empty());
-		}
-
-
-		public static String prefix(HttpExchange ex) {
-			return "http://%s".formatted(ex.getRequestHeaders().getFirst("Host"));
+			return getHeader(ex, "Accept-Language").map(s -> Arrays.stream(s.split(","))).flatMap(Stream::findFirst);
 		}
 
 		public static boolean sendEmptyResponse(int statusCode, HttpExchange ex) throws IOException {

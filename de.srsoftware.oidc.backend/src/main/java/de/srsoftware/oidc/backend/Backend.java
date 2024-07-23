@@ -165,10 +165,9 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean openidConfig(HttpExchange ex) throws IOException {
-		var        uri	= ex.getRequestURI().toString();
 		JSONObject json = new JSONObject();
 
-		json.put("authorization_endpoint", prefix(ex) + "/web/authorization.html");
+		json.put("authorization_endpoint", hostname(ex) + "/web/authorization.html");
 		return sendContent(ex, json);
 	}
 

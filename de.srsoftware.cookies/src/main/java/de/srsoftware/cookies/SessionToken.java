@@ -3,7 +3,6 @@ package de.srsoftware.cookies;
 
 
 import com.sun.net.httpserver.HttpExchange;
-import java.util.List;
 import java.util.Optional;
 
 public class SessionToken extends Cookie {
