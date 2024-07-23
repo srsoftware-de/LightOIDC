@@ -39,11 +39,16 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
-		var json     = json(ex);
-		var clientId = json.getString(CLIENT_ID);
+		var json      = json(ex);
+		var clientId  = json.getString(CLIENT_ID);
+		var optClient = clients.getClient(clientId);
+		if (optClient.isEmpty()) return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
-		System.out.println(json);
-		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+		if (!client.redirectUris().contains(redirect)) return sendEmptyResponse(HTTP_BAD_REQUEST, ex);
+		var state = json.getString(STATE);
+		var code  = client.generateCode();
+		return sendContent(ex, Map.of(CODE,code,REDIRECT_URI,redirect,STATE,state));
 	}
 
 	private boolean clients(HttpExchange ex, Session session) throws IOException {
@@ -117,6 +122,8 @@ public class Backend extends PathHandler {
 		switch (path) {
 			case "/login":
 				return doLogin(ex);
+			case "/token":
+				return provideToken(ex);
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
@@ -164,17 +171,23 @@ public class Backend extends PathHandler {
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private boolean openidConfig(HttpExchange ex) throws IOException {
-		JSONObject json = new JSONObject();
-
-		json.put("authorization_endpoint", hostname(ex) + "/web/authorization.html");
-		return sendContent(ex, json);
+	private boolean provideToken(HttpExchange ex) throws IOException {
+		System.err.printf("%s.provideToken(ex) not implemented!\n",getClass().getSimpleName());
+		var json = json(ex);
+		System.err.println(json);
+		return sendEmptyResponse(HTTP_NOT_FOUND,ex);
 	}
 
+	private boolean openidConfig(HttpExchange ex) throws IOException {
+		return sendContent(ex, Map.of(
+				"token_endpoint",hostname(ex)+"/api/token",
+				"authorization_endpoint", hostname(ex) + "/web/authorization.html")
+		);
+	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
 		new SessionToken(session.id()).addTo(ex);
-		return sendContent(ex, new JSONObject(session.user().map(false)));
+		return sendContent(ex, session.user().map(false));
 	}
 
 	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
@@ -193,7 +206,7 @@ public class Backend extends PathHandler {
 			return sendError(ex, "password mismatch");
 		}
 		users.updatePassword(user, newPass1);
-		return sendContent(ex, new JSONObject(user.map(false)));
+		return sendContent(ex, user.map(false));
 	}
 
 	private boolean updateUser(HttpExchange ex, Session session) throws IOException {
@@ -206,7 +219,6 @@ public class Backend extends PathHandler {
 		user.username(json.getString(USERNAME));
 		user.email(json.getString(EMAIL));
 		users.save(user);
-		JSONObject response = new JSONObject(user.map(false));
-		return sendContent(ex, response);
+		return sendContent(ex, user.map(false));
 	}
 }

@@ -1,8 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -11,6 +10,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.json.JSONObject;
@@ -120,6 +120,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
+			if (o instanceof Map map) o = new JSONObject(map);
 			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
 			return sendContent(ex, HTTP_OK, o.toString().getBytes(UTF_8));
 		}
@@ -130,5 +131,10 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static boolean sendError(HttpExchange ex, Object o) throws IOException {
 			return sendContent(ex, HTTP_BAD_REQUEST, o.toString().getBytes(UTF_8));
+		}
+
+		public static boolean sendRedirect(HttpExchange ex, String url) throws IOException {
+			ex.getResponseHeaders().add("Location", url);
+			return sendEmptyResponse(HTTP_MOVED_TEMP, ex);
 		}
 	}

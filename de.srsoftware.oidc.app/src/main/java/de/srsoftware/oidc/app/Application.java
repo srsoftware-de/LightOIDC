@@ -49,11 +49,11 @@ public class Application {
 		var tokens = new ArrayList<>(List.of(args));
 		var map    = new HashMap<String, Object>();
 		while (!tokens.isEmpty()) {
-			var token = tokens.removeFirst();
+			var token = tokens.remove(0);
 			switch (token) {
 				case "--base":
 					if (tokens.isEmpty()) throw new IllegalArgumentException("--path option requires second argument!");
-					map.put(BASE_PATH, Path.of(tokens.removeFirst()));
+					map.put(BASE_PATH, Path.of(tokens.remove(0)));
 					break;
 				default:
 					System.err.printf("Unknown option: %s\n", token);

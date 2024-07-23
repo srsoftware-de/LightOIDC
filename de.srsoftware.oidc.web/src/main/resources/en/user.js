@@ -1,7 +1,7 @@
 var user = null;
 async function handleUser(response){
     if (response.status == UNAUTHORIZED) {
-        redirect('login.html?return_to='+encodeURI(window.location.href));
+        redirect('login.html?return_to='+encodeURIComponent(window.location.href));
         return;
     }
     if (response.ok){
