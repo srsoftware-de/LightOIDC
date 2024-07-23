@@ -5,10 +5,7 @@ package de.srsoftware.oidc.app;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 
 import com.sun.net.httpserver.HttpServer;
-import de.srsoftware.oidc.api.ClientService;
-import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.User;
-import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.backend.Backend;
 import de.srsoftware.oidc.datastore.file.FileStore;
 import de.srsoftware.oidc.datastore.file.UuidHasher;
@@ -40,13 +37,10 @@ public class Application {
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
 		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS);
 		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
-		ClientService  clientService  = fileStore;
-		SessionService sessionService = fileStore;
-		UserService    userService    = fileStore;
 		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
-		new Backend(clientService, sessionService, userService).bindPath(BACKEND, WELL_KNOWN).on(server);
+		new Backend(fileStore, fileStore, fileStore).bindPath(BACKEND, WELL_KNOWN).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}
@@ -55,11 +49,11 @@ public class Application {
 		var tokens = new ArrayList<>(List.of(args));
 		var map    = new HashMap<String, Object>();
 		while (!tokens.isEmpty()) {
-			var token = tokens.remove(0);
+			var token = tokens.removeFirst();
 			switch (token) {
 				case "--base":
 					if (tokens.isEmpty()) throw new IllegalArgumentException("--path option requires second argument!");
-					map.put(BASE_PATH, Path.of(tokens.remove(0)));
+					map.put(BASE_PATH, Path.of(tokens.removeFirst()));
 					break;
 				default:
 					System.err.printf("Unknown option: %s\n", token);

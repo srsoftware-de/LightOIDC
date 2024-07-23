@@ -15,7 +15,7 @@ public class SessionToken extends Cookie {
 	}
 
 	public static Optional<SessionToken> from(HttpExchange ex) {
-		return Cookie.of(ex).orElseGet(List::of).stream().filter(cookie -> cookie.startsWith("sessionToken=")).map(cookie -> cookie.split("=", 2)[1]).map(id -> new SessionToken(id)).findAny();
+		return Cookie.of(ex).stream().filter(cookie -> cookie.startsWith("sessionToken=")).map(cookie -> cookie.split("=", 2)[1]).map(id -> new SessionToken(id)).findAny();
 	}
 
 	public String sessionId() {
