@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="common.js"></script>
+    <script src="user.js"></script>
+    <script src="clients.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav>
+    <a id="clients" href="clients.html">Clients</a>
+</nav>
+<h1>Clients</h1>
+<fieldset>
+    <legend>bei LightOIDC registrierte Clients:</legend>
+    <table>
+        <tr>
+            <th>Client</th>
+            <th>ID</th>
+            <th>Weiterleitungs-URLs</th>
+            <th>Aktionen</th>
+        </tr>
+        <tr id="bottom">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <button onclick="window.location.href='newclient.html';">Neuen Client hinzufügen…</button>
+            </td>
+        </tr>
+    </table>
+    <span class="hidden" id="message">Client "{}" wirklich löschen?</span>
+</fieldset>
+</body>
+</html>
