@@ -20,7 +20,6 @@ function getValue(id){
 }
 
 function hide(id){
-    console.log('hide('+id+')');
     get(id).style.display = 'none';
 }
 
@@ -38,6 +37,5 @@ function setValue(id,newVal){
 }
 
 function show(id){
-    console.log('show('+id+')');
     get(id).style.display = '';
 }

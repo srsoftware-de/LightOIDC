@@ -14,7 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.json.JSONObject;
 
-public class FileStore implements ClientService, SessionService, UserService {
+public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
 	private static final String CLIENTS       = "clients";
 	private static final String EXPIRATION    = "expiration";
 	private static final String NAME          = "name";
@@ -236,6 +236,33 @@ public class FileStore implements ClientService, SessionService, UserService {
 
 	@Override
 	public ClientService update(Client client) {
+		return null;
+	}
+
+	/*** Authorization service methods ***/
+
+	@Override
+	public AuthorizationService authorize(Client client, User user, Date expiration) {
+		return null;
+	}
+
+	@Override
+	public boolean isAuthorized(Client client, User user) {
+		return false;
+	}
+
+	@Override
+	public List<User> authorizedUsers(Client client) {
+		return List.of();
+	}
+
+	@Override
+	public List<Client> authorizedClients(User user) {
+		return List.of();
+	}
+
+	@Override
+	public AuthorizationService revoke(Client client, User user) {
 		return null;
 	}
 }

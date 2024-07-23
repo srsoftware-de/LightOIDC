@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.web;
 
+import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -36,14 +37,12 @@ public class StaticPages extends PathHandler {
 			relativePath = ex.getRequestURI().toString().endsWith(FAVICON) ? FAVICON : INDEX;
 		}
 		try {
-			System.out.printf("Loading %s for language %s…", relativePath, lang);
 			Response response = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
-
 			ex.getResponseHeaders().add(CONTENT_TYPE, response.contentType);
-			System.out.println("success.");
+			LOG.log(DEBUG,"Loaded {0} for language {1}…success.", relativePath, lang);
 			return sendContent(ex, response.content);
 		} catch (FileNotFoundException fnf) {
-			System.err.println("failed!");
+			LOG.log(WARNING,"Loaded {0} for language {1}…failed.", relativePath, lang);
 			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 		}
 	}

@@ -1,6 +1,8 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.INFO;
 import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -16,6 +18,7 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
+	public System.Logger       LOG	        = System.getLogger(getClass().getSimpleName());
 	public static final String CONTENT_TYPE = "Content-Type";
 	public static final String DELETE       = "DELETE";
 	public static final String GET	        = "GET";
@@ -54,7 +57,7 @@ public abstract class PathHandler implements HttpHandler {
 	public void handle(HttpExchange ex) throws IOException {
 		String path   = relativePath(ex);
 		String method = ex.getRequestMethod();
-		System.out.printf("%s %s\n", method, path);
+		LOG.log(INFO, "{0} {1}", method, path);
 		boolean ignored = switch (method) {
 			case DELETE -> doDelete(path,ex);
 			case GET -> doGet(path,ex);
@@ -109,32 +112,38 @@ public abstract class PathHandler implements HttpHandler {
 			return false;
 		}
 
+		public static boolean sendRedirect(HttpExchange ex, String url) throws IOException {
+			ex.getResponseHeaders().add("Location", url);
+			return sendEmptyResponse(HTTP_MOVED_TEMP, ex);
+		}
+
 		public static boolean sendContent(HttpExchange ex, int status, byte[] bytes) throws IOException {
 			ex.sendResponseHeaders(status, bytes.length);
 			ex.getResponseBody().write(bytes);
 			return true;
 		}
 
+		public static boolean sendContent(HttpExchange ex, int status, Object o) throws IOException {
+			if (o instanceof Map map) o = new JSONObject(map);
+			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
+			return sendContent(ex, status, o.toString().getBytes(UTF_8));
+		}
+
+
 		public static boolean sendContent(HttpExchange ex, byte[] bytes) throws IOException {
 			return sendContent(ex, HTTP_OK, bytes);
 		}
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
-			if (o instanceof Map map) o = new JSONObject(map);
-			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
-			return sendContent(ex, HTTP_OK, o.toString().getBytes(UTF_8));
+			return sendContent(ex, HTTP_OK, o);
 		}
 
-		public static boolean sendError(HttpExchange ex, byte[] bytes) throws IOException {
+
+		public static boolean badRequest(HttpExchange ex, byte[] bytes) throws IOException {
 			return sendContent(ex, HTTP_BAD_REQUEST, bytes);
 		}
 
-		public static boolean sendError(HttpExchange ex, Object o) throws IOException {
-			return sendContent(ex, HTTP_BAD_REQUEST, o.toString().getBytes(UTF_8));
-		}
-
-		public static boolean sendRedirect(HttpExchange ex, String url) throws IOException {
-			ex.getResponseHeaders().add("Location", url);
-			return sendEmptyResponse(HTTP_MOVED_TEMP, ex);
+		public static boolean badRequest(HttpExchange ex, Object o) throws IOException {
+			return sendContent(ex, HTTP_BAD_REQUEST, o);
 		}
 	}

@@ -3,8 +3,11 @@ package de.srsoftware.oidc.app;
 
 
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
 
 import com.sun.net.httpserver.HttpServer;
+import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.User;
 import de.srsoftware.oidc.backend.Backend;
 import de.srsoftware.oidc.datastore.file.FileStore;
@@ -28,6 +31,7 @@ public class Application {
 	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
 	public static final String  INDEX           = STATIC_PATH + "/index.html";
 	private static final String BASE_PATH       = "basePath";
+	private static System.Logger LOG = new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
 		var            argMap         = map(args);
@@ -40,7 +44,7 @@ public class Application {
 		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
-		new Backend(fileStore, fileStore, fileStore).bindPath(BACKEND, WELL_KNOWN).on(server);
+		new Backend(fileStore, fileStore, fileStore, fileStore).bindPath(BACKEND, WELL_KNOWN).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}
@@ -56,7 +60,7 @@ public class Application {
 					map.put(BASE_PATH, Path.of(tokens.remove(0)));
 					break;
 				default:
-					System.err.printf("Unknown option: %s\n", token);
+					LOG.log(ERROR,"Unknown option: {0}", token);
 			}
 		}
 

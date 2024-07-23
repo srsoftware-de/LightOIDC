@@ -4,6 +4,8 @@ package de.srsoftware.oidc.backend;
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.oidc.api.User.*;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -16,18 +18,21 @@ import java.util.Optional;
 import org.json.JSONObject;
 
 public class Backend extends PathHandler {
-	private final SessionService sessions;
-	private final UserService    users;
-	private final ClientService  clients;
+	private static final System.Logger LOG = System.getLogger(Backend.class.getSimpleName());
+	private final AuthorizationService authorizations;
+	private final SessionService	   sessions;
+	private final UserService	   users;
+	private final ClientService	   clients;
 
-	public Backend(ClientService clientService, SessionService sessionService, UserService userService) {
-		clients  = clientService;
-		sessions = sessionService;
-		users    = userService;
+	public Backend(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService, UserService userService) {
+		authorizations = authorizationService;
+		clients        = clientService;
+		sessions       = sessionService;
+		users          = userService;
 	}
 
 	private boolean addClient(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendError(ex, "NOT ALLOWED");
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
 		var json      = json(ex);
 		var redirects = new HashSet<String>();
 		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
@@ -39,16 +44,26 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
+		var user      = session.user();
 		var json      = json(ex);
 		var clientId  = json.getString(CLIENT_ID);
+		var redirect  = json.getString(REDIRECT_URI);
 		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return sendEmptyResponse(HTTP_NOT_FOUND, ex);
-		var client   = optClient.get();
-		var redirect = json.getString(REDIRECT_URI);
-		if (!client.redirectUris().contains(redirect)) return sendEmptyResponse(HTTP_BAD_REQUEST, ex);
+		if (optClient.isEmpty()) return badRequest(ex, Map.of(CAUSE, "unknown client", CLIENT_ID, clientId));
+		var client = optClient.get();
+
+		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
+
+		if (!authorizations.isAuthorized(client, session.user())) {
+			if (json.has(CONFIRMED) && json.getBoolean(CONFIRMED)) {
+				authorizations.authorize(client, user, null);
+			} else {
+				return sendContent(ex, Map.of(CONFIRMED, false, NAME, client.name()));
+			}
+		}
 		var state = json.getString(STATE);
 		var code  = client.generateCode();
-		return sendContent(ex, Map.of(CODE,code,REDIRECT_URI,redirect,STATE,state));
+		return sendContent(ex, Map.of(CONFIRMED, true, CODE, code, REDIRECT_URI, redirect, STATE, state));
 	}
 
 	private boolean clients(HttpExchange ex, Session session) throws IOException {
@@ -60,7 +75,7 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean deleteClient(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendError(ex, "NOT ALLOWED");
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
 		var json = json(ex);
 		var id   = json.getString(CLIENT_ID);
 		clients.getClient(id).ifPresent(clients::remove);
@@ -89,8 +104,7 @@ public class Backend extends PathHandler {
 			case "/client":
 				return deleteClient(ex, session);
 		}
-
-		System.err.println("not implemented");
+		LOG.log(ERROR, "not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -112,7 +126,7 @@ public class Backend extends PathHandler {
 				return logout(ex, session);
 		}
 
-		System.err.println("not implemented");
+		LOG.log(WARNING,"not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -146,7 +160,7 @@ public class Backend extends PathHandler {
 			case "/user":
 				return sendUserAndCookie(ex, session);
 		}
-		System.err.println("not implemented");
+		LOG.log(WARNING,"not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -172,17 +186,14 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean provideToken(HttpExchange ex) throws IOException {
-		System.err.printf("%s.provideToken(ex) not implemented!\n",getClass().getSimpleName());
-		var json = json(ex);
-		System.err.println(json);
-		return sendEmptyResponse(HTTP_NOT_FOUND,ex);
+		LOG.log(ERROR,"{0}.provideToken(ex) not implemented!\n", getClass().getSimpleName());
+		LOG.log(WARNING,json(ex));
+		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
 	private boolean openidConfig(HttpExchange ex) throws IOException {
-		return sendContent(ex, Map.of(
-				"token_endpoint",hostname(ex)+"/api/token",
-				"authorization_endpoint", hostname(ex) + "/web/authorization.html")
-		);
+		var host = hostname(ex);
+		return sendContent(ex, Map.of("token_endpoint", host + "/api/token", "authorization_endpoint", host + "/web/authorization.html", "userinfo_endpoint", host + "/api/userinfo", "jwks_uri", host + "/api/jwks"));
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
@@ -198,12 +209,12 @@ public class Backend extends PathHandler {
 			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		}
 		var oldPass = json.getString("oldpass");
-		if (!users.passwordMatches(oldPass, user.hashedPassword())) return sendError(ex, "wrong password");
+		if (!users.passwordMatches(oldPass, user.hashedPassword())) return badRequest(ex, "wrong password");
 
 		var newpass  = json.getJSONArray("newpass");
 		var newPass1 = newpass.getString(0);
 		if (!newPass1.equals(newpass.getString(1))) {
-			return sendError(ex, "password mismatch");
+			return badRequest(ex, "password mismatch");
 		}
 		users.updatePassword(user, newPass1);
 		return sendContent(ex, user.map(false));

@@ -8,8 +8,13 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<nav></nav>
-<h1>Authorization!</h1>
-Not implemented, yet!
+    <nav></nav>
+    <div id="content" style="display: none">
+        <h1>Authorization</h1>
+        Confirmation required: are you shure you want to grant access to <span id="name">some client</span>?
+        <button type="button" onclick="grantAutorization()">Yes</button>
+        <button type="button" onclick="denyAutorization()">No</button>
+    </div>
+    <div id="error" class="error" style="display: none"></div>
 </body>
 </html>
