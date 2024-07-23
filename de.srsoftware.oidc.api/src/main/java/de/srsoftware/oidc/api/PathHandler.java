@@ -18,12 +18,14 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
-	public System.Logger       LOG	        = System.getLogger(getClass().getSimpleName());
-	public static final String CONTENT_TYPE = "Content-Type";
-	public static final String DELETE       = "DELETE";
-	public static final String GET	        = "GET";
-	public static final String JSON	        = "application/json";
-	public static final String POST	        = "POST";
+	public static final String  CONTENT_TYPE = "Content-Type";
+	public static final String  DELETE       = "DELETE";
+	private static final String FORWARDED_HOST = "x-forwarded-host";
+	public static final String  GET	         = "GET";
+	public static final String HOST = "host";
+	public static final String  JSON         = "application/json";
+	public static System.Logger LOG	         = System.getLogger(PathHandler.class.getSimpleName());
+	public static final String  POST         = "POST";
 
 	private String[] paths;
 
@@ -96,7 +98,10 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static String hostname(HttpExchange ex) {
-			return "http://%s".formatted(ex.getRequestHeaders().getFirst("Host"));
+			var headers = ex.getRequestHeaders();
+			var host = headers.getFirst(FORWARDED_HOST);
+			if (host == null) host = headers.getFirst(HOST);
+			return host == null ? null : "https://"+host;
 		}
 
 		public static JSONObject json(HttpExchange ex) throws IOException {
@@ -118,6 +123,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendContent(HttpExchange ex, int status, byte[] bytes) throws IOException {
+			LOG.log(DEBUG, "sending {0} response…", status);
 			ex.sendResponseHeaders(status, bytes.length);
 			ex.getResponseBody().write(bytes);
 			return true;

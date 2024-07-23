@@ -21,17 +21,17 @@ import java.util.*;
 import java.util.concurrent.Executors;
 
 public class Application {
-	public static final String  BACKEND         = "/api";
-	private static final String FAVICON         = "/favicon.ico";
-	public static final String  ROOT            = "/";
-	public static final String  STATIC_PATH     = "/web";
-	private static final String WELL_KNOWN      = "/.well-known";
-	public static final String  FIRST_USER      = "admin";
-	public static final String  FIRST_USER_PASS = "admin";
-	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
-	public static final String  INDEX           = STATIC_PATH + "/index.html";
-	private static final String BASE_PATH       = "basePath";
-	private static System.Logger LOG = new ColorLogger("Application").setLogLevel(DEBUG);
+	public static final String   BACKEND         = "/api";
+	private static final String  FAVICON         = "/favicon.ico";
+	public static final String   ROOT            = "/";
+	public static final String   STATIC_PATH     = "/web";
+	private static final String  WELL_KNOWN      = "/.well-known";
+	public static final String   FIRST_USER      = "admin";
+	public static final String   FIRST_USER_PASS = "admin";
+	public static final String   FIRST_UUID      = UUID.randomUUID().toString();
+	public static final String   INDEX           = STATIC_PATH + "/index.html";
+	private static final String  BASE_PATH       = "basePath";
+	private static System.Logger LOG             = new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
 		var            argMap         = map(args);
@@ -60,7 +60,7 @@ public class Application {
 					map.put(BASE_PATH, Path.of(tokens.remove(0)));
 					break;
 				default:
-					LOG.log(ERROR,"Unknown option: {0}", token);
+					LOG.log(ERROR, "Unknown option: {0}", token);
 			}
 		}
 

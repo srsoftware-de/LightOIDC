@@ -39,10 +39,10 @@ public class StaticPages extends PathHandler {
 		try {
 			Response response = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
 			ex.getResponseHeaders().add(CONTENT_TYPE, response.contentType);
-			LOG.log(DEBUG,"Loaded {0} for language {1}…success.", relativePath, lang);
+			LOG.log(DEBUG, "Loaded {0} for language {1}…success.", relativePath, lang);
 			return sendContent(ex, response.content);
 		} catch (FileNotFoundException fnf) {
-			LOG.log(WARNING,"Loaded {0} for language {1}…failed.", relativePath, lang);
+			LOG.log(WARNING, "Loaded {0} for language {1}…failed.", relativePath, lang);
 			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 		}
 	}

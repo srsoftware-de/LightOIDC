@@ -12,9 +12,11 @@ import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class Backend extends PathHandler {
@@ -126,7 +128,7 @@ public class Backend extends PathHandler {
 				return logout(ex, session);
 		}
 
-		LOG.log(WARNING,"not implemented");
+		LOG.log(WARNING, "not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -160,7 +162,7 @@ public class Backend extends PathHandler {
 			case "/user":
 				return sendUserAndCookie(ex, session);
 		}
-		LOG.log(WARNING,"not implemented");
+		LOG.log(WARNING, "not implemented");
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 	}
 
@@ -186,9 +188,16 @@ public class Backend extends PathHandler {
 	}
 
 	private boolean provideToken(HttpExchange ex) throws IOException {
-		LOG.log(ERROR,"{0}.provideToken(ex) not implemented!\n", getClass().getSimpleName());
-		LOG.log(WARNING,json(ex));
+		var map = deserialize(body(ex));
+		LOG.log(WARNING, "map: {0}", map);
+		LOG.log(ERROR, "{0}.provideToken(ex) not implemented!", getClass().getSimpleName());
+		var grantType = map.get(GRANT_TYPE);
+		if (!ATUH_CODE.equals(grantType)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+	}
+
+	private Map<String, String> deserialize(String body) {
+		return Arrays.stream(body.split("&")).map(s -> s.split("=")).collect(Collectors.toMap(arr -> arr[0], arr -> arr[1]));
 	}
 
 	private boolean openidConfig(HttpExchange ex) throws IOException {
