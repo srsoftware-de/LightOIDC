@@ -34,7 +34,7 @@ function denyAutorization(){
 }
 
 function backendAutorization(){
-    fetch(api+"/authorize",{
+    fetch(client_controller+"/authorize",{
         method: 'POST',
         body: JSON.stringify(json),
         headers: {

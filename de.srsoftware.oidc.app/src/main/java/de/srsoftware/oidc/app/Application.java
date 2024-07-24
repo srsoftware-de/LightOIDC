@@ -9,7 +9,10 @@ import static java.lang.System.Logger.Level.ERROR;
 import com.sun.net.httpserver.HttpServer;
 import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.User;
-import de.srsoftware.oidc.backend.Backend;
+import de.srsoftware.oidc.backend.ClientController;
+import de.srsoftware.oidc.backend.TokenController;
+import de.srsoftware.oidc.backend.UserController;
+import de.srsoftware.oidc.backend.WellKnownController;
 import de.srsoftware.oidc.datastore.file.FileStore;
 import de.srsoftware.oidc.datastore.file.UuidHasher;
 import de.srsoftware.oidc.web.Forward;
@@ -21,17 +24,20 @@ import java.util.*;
 import java.util.concurrent.Executors;
 
 public class Application {
-	public static final String   BACKEND         = "/api";
-	private static final String  FAVICON         = "/favicon.ico";
-	public static final String   ROOT            = "/";
-	public static final String   STATIC_PATH     = "/web";
-	private static final String  WELL_KNOWN      = "/.well-known";
-	public static final String   FIRST_USER      = "admin";
-	public static final String   FIRST_USER_PASS = "admin";
-	public static final String   FIRST_UUID      = UUID.randomUUID().toString();
-	public static final String   INDEX           = STATIC_PATH + "/index.html";
-	private static final String  BASE_PATH       = "basePath";
-	private static System.Logger LOG             = new ColorLogger("Application").setLogLevel(DEBUG);
+	public static final String  API_CLIENT      = "/api/client";
+	private static final String API_TOKEN       = "/api/token";
+	public static final String  API_USER        = "/api/user";
+	public static final String  FIRST_USER      = "admin";
+	public static final String  FIRST_USER_PASS = "admin";
+	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
+	public static final String  ROOT            = "/";
+	public static final String  STATIC_PATH     = "/web";
+
+	private static final String  BASE_PATH  = "basePath";
+	private static final String  FAVICON    = "/favicon.ico";
+	private static final String  INDEX      = STATIC_PATH + "/index.html";
+	private static final String  WELL_KNOWN = "/.well-known";
+	private static System.Logger LOG        = new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
 		var            argMap         = map(args);
@@ -44,8 +50,12 @@ public class Application {
 		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
-		new Backend(fileStore, fileStore, fileStore, fileStore).bindPath(BACKEND, WELL_KNOWN).on(server);
-		server.setExecutor(Executors.newCachedThreadPool());
+		new WellKnownController().bindPath(WELL_KNOWN).on(server);
+		new UserController(fileStore, fileStore).bindPath(API_USER).on(server);
+		new TokenController().bindPath(API_TOKEN).on(server);
+		new ClientController(fileStore, fileStore, fileStore).bindPath(API_CLIENT).on(server);
+		//server.setExecutor(Executors.newCachedThreadPool());
+		server.setExecutor(Executors.newSingleThreadExecutor());
 		server.start();
 	}
 

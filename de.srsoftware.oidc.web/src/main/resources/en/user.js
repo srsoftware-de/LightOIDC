@@ -24,4 +24,4 @@ async function handleNavigation(response){
     }
 }
 
-fetch(api+"/user",{method:'POST'}).then(handleUser);
+fetch(user_controller+"/",{method:'POST'}).then(handleUser);

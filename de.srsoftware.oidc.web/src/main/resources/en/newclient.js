@@ -6,7 +6,7 @@ function addClient(){
         secret : getValue('client-secret'),
         redirect_uris : getValue('redirect-urls').split("\n")
     };
-    fetch(api+'/add/client',{
+    fetch(client_controller+'/add',{
         method : 'POST',
         headers : {
            'Content-Type': 'application/json'

@@ -17,7 +17,7 @@ function doRedirect(){
 function tryLogin(){
     var username = getValue('username');
     var password = getValue('password');
-    fetch(api+"/login",{
+    fetch(user_controller+"/login",{
         method: 'POST',
         headers: {
           Accept: 'application/json',

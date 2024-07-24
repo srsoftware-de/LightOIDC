@@ -31,7 +31,7 @@ function update(){
         email : getValue('email'),
         uuid : getValue('uuid')
     }
-    fetch(api+'/update/user',{
+    fetch(user_controller+'/update',{
         method : 'POST',
         headers : {
            'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ function updatePass(){
         newpass : [getValue('newpass1'),getValue('newpass2')],
         uuid : getValue('uuid')
     }
-    fetch(api+'/update/password',{
+    fetch(user_controller+'/password',{
         method : 'POST',
         headers : {
            'Content-Type': 'application/json'

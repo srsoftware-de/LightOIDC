@@ -20,7 +20,7 @@ function handleRemove(response){
 function remove(clientId){
     var message = document.getElementById('message').innerHTML;
     if (confirm(message.replace("{}",clientId))) {
-        fetch(api+"/client",{
+        fetch(client_controller+"/delete",{
             method: 'DELETE',
             body : JSON.stringify({ client_id : clientId })
         }).then(handleRemove);
@@ -31,4 +31,4 @@ function edit(clientId){
     redirect("edit_client.html?id="+clientId);
 }
 
-fetch(api+"/clients",{method:'POST'}).then(handleClients);
+fetch(client_controller+"/list",{method:'POST'}).then(handleClients);

@@ -1,4 +1,6 @@
 var api = "/api";
+var client_controller = "/api/client"
+var user_controller = "/api/user"
 var web = "/web";
 
 const UNAUTHORIZED = 401;

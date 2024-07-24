@@ -1,8 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
-import static java.lang.System.Logger.Level.DEBUG;
-import static java.lang.System.Logger.Level.INFO;
+import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -18,14 +17,14 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
-	public static final String  CONTENT_TYPE = "Content-Type";
-	public static final String  DELETE       = "DELETE";
+	public static final String  CONTENT_TYPE   = "Content-Type";
+	public static final String  DELETE         = "DELETE";
 	private static final String FORWARDED_HOST = "x-forwarded-host";
-	public static final String  GET	         = "GET";
-	public static final String HOST = "host";
-	public static final String  JSON         = "application/json";
-	public static System.Logger LOG	         = System.getLogger(PathHandler.class.getSimpleName());
-	public static final String  POST         = "POST";
+	public static final String  GET	           = "GET";
+	public static final String  HOST           = "host";
+	public static final String  JSON           = "application/json";
+	public static System.Logger LOG	           = System.getLogger(PathHandler.class.getSimpleName());
+	public static final String  POST           = "POST";
 
 	private String[] paths;
 
@@ -99,9 +98,9 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static String hostname(HttpExchange ex) {
 			var headers = ex.getRequestHeaders();
-			var host = headers.getFirst(FORWARDED_HOST);
+			var host    = headers.getFirst(FORWARDED_HOST);
 			if (host == null) host = headers.getFirst(HOST);
-			return host == null ? null : "https://"+host;
+			return host == null ? null : "https://" + host;
 		}
 
 		public static JSONObject json(HttpExchange ex) throws IOException {
@@ -110,6 +109,11 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static Optional<String> language(HttpExchange ex) {
 			return getHeader(ex, "Accept-Language").map(s -> Arrays.stream(s.split(","))).flatMap(Stream::findFirst);
+		}
+
+		public static boolean notFound(HttpExchange ex) throws IOException {
+			LOG.log(WARNING, "not implemented");
+			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 		}
 
 		public static boolean sendEmptyResponse(int statusCode, HttpExchange ex) throws IOException {
