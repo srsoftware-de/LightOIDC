@@ -52,9 +52,9 @@ public class Application {
 		new Forward(INDEX).bindPath(ROOT).on(server);
 		new WellKnownController().bindPath(WELL_KNOWN).on(server);
 		new UserController(fileStore, fileStore).bindPath(API_USER).on(server);
-		new TokenController().bindPath(API_TOKEN).on(server);
+		new TokenController(fileStore).bindPath(API_TOKEN).on(server);
 		new ClientController(fileStore, fileStore, fileStore).bindPath(API_CLIENT).on(server);
-		//server.setExecutor(Executors.newCachedThreadPool());
+		// server.setExecutor(Executors.newCachedThreadPool());
 		server.setExecutor(Executors.newSingleThreadExecutor());
 		server.start();
 	}

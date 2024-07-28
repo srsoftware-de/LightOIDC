@@ -1,6 +1,9 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.cookies;
 
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.util.Arrays;
@@ -8,13 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
-
 public abstract class Cookie implements Map.Entry<String, String> {
 	static final System.Logger LOG = System.getLogger(SessionToken.class.getSimpleName());
-	private final String key;
-	private String	     value = null;
+	private final String       key;
+	private String	           value = null;
 
 	Cookie(String key, String value) {
 		this.key = key;
@@ -22,7 +22,7 @@ public abstract class Cookie implements Map.Entry<String, String> {
 	}
 
 	public <T extends Cookie> T addTo(Headers headers) {
-		LOG.log(ERROR,"sending cookie {0}={1}",key,value);
+		LOG.log(ERROR, "sending cookie {0}={1}", key, value);
 		headers.add("Set-Cookie", "%s=%s".formatted(key, value));
 		return (T)this;
 	}
@@ -42,14 +42,7 @@ public abstract class Cookie implements Map.Entry<String, String> {
 	}
 
 	protected static List<String> of(HttpExchange ex) {
-		return Optional.ofNullable(ex.getRequestHeaders()
-				.get("Cookie"))
-				.stream()
-				.flatMap(List::stream)
-				.flatMap(s -> Arrays.stream(s.split(";")))
-				.map(String::trim)
-				.peek(cookie -> LOG.log(WARNING,"received cookie {0}",cookie))
-				.toList();
+		return Optional.ofNullable(ex.getRequestHeaders().get("Cookie")).stream().flatMap(List::stream).flatMap(s -> Arrays.stream(s.split(";"))).map(String::trim).peek(cookie -> LOG.log(WARNING, "received cookie {0}", cookie)).toList();
 	}
 
 	@Override
