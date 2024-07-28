@@ -13,6 +13,12 @@ import de.srsoftware.oidc.api.PathHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.jose4j.jwk.RsaJsonWebKey;
+import org.jose4j.jwk.RsaJwkGenerator;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
 public class TokenController extends PathHandler {
@@ -68,6 +74,31 @@ public class TokenController extends PathHandler {
 	}
 
 	private String createJWT(Client client) {
-		return null;
+		try {
+			RsaJsonWebKey rsaJsonWebKey = RsaJwkGenerator.generateJwk(2048);
+			rsaJsonWebKey.setKeyId("k1");
+			JwtClaims claims = new JwtClaims();
+			claims.setIssuer("Issuer");		 // who creates the token and signs it
+			claims.setAudience("Audience");		 // to whom the token is intended to be sent
+			claims.setExpirationTimeMinutesInTheFuture(10);	 // time when the token will expire (10 minutes from now)
+			claims.setGeneratedJwtId();		 // a unique identifier for the token
+			claims.setIssuedAtToNow();		 // when the token was issued/created (now)
+			claims.setNotBeforeMinutesInThePast(2);	 // time before which the token is not yet valid (2 minutes ago)
+			claims.setSubject("subject");		 // the subject/principal is whom the token is about
+			claims.setClaim("email", "mail@example.com");	 // additional claims/attributes about the subject can be added
+			List<String> groups = Arrays.asList("group-one", "other-group", "group-three");
+			claims.setStringListClaim("groups", groups);  // multi-valued claims work too and will end up as a JSON array
+
+			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
+			// In this example it is a JWS so we create a JsonWebSignature object.
+			JsonWebSignature jws = new JsonWebSignature();
+			jws.setPayload(claims.toJson());
+			jws.setKey(rsaJsonWebKey.getPrivateKey());
+			jws.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
+			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+			return jws.getCompactSerialization();
+		} catch (JoseException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
