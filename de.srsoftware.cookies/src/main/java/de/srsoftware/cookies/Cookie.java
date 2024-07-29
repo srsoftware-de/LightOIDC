@@ -1,14 +1,14 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.cookies;
 
+import static java.lang.System.Logger.Level.*;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static java.lang.System.Logger.Level.*;
 
 public abstract class Cookie implements Map.Entry<String, String> {
 	static final System.Logger LOG = System.getLogger(SessionToken.class.getSimpleName());

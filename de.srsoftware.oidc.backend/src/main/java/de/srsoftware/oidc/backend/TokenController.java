@@ -11,8 +11,6 @@ import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.PathHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -76,8 +74,8 @@ public class TokenController extends PathHandler {
 
 	private String createJWT(Client client) {
 		try {
-			byte[] secretBytes = client.secret().getBytes(StandardCharsets.UTF_8);
-			HmacKey hmacKey = new HmacKey(secretBytes);
+			byte[]  secretBytes = client.secret().getBytes(StandardCharsets.UTF_8);
+			HmacKey hmacKey	    = new HmacKey(secretBytes);
 
 			JwtClaims claims = new JwtClaims();
 			claims.setIssuer("Issuer");		 // who creates the token and signs it
@@ -94,9 +92,9 @@ public class TokenController extends PathHandler {
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
 			JsonWebSignature jws = new JsonWebSignature();
-			if (secretBytes.length*8 < 256) {
-				LOG.log(WARNING,"Using secret with less than 256 bits! You will go to hell for this!");
-				jws.setDoKeyValidation(false); // TODO: this is dangerous! Better: enforce key length of 256bits!
+			if (secretBytes.length * 8 < 256) {
+				LOG.log(WARNING, "Using secret with less than 256 bits! You will go to hell for this!");
+				jws.setDoKeyValidation(false);	// TODO: this is dangerous! Better: enforce key length of 256bits!
 			}
 
 			jws.setPayload(claims.toJson());
