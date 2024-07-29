@@ -2,8 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -48,8 +47,8 @@ public class TokenController extends PathHandler {
 		var map = deserialize(body(ex));
 		// TODO: check 	Authorization Code, → https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
 		// TODO: check Redirect URL
-		LOG.log(WARNING, "post data: {0}", map);
-		LOG.log(ERROR, "{0}.provideToken(ex) not implemented!", getClass().getSimpleName());
+		LOG.log(DEBUG, "post data: {0}", map);
+		LOG.log(WARNING, "{0}.provideToken(ex) not implemented!", getClass().getSimpleName());
 		var grantType = map.get(GRANT_TYPE);
 		if (!ATUH_CODE.equals(grantType)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 		var optClient = Optional.ofNullable(map.get(CLIENT_ID)).flatMap(clients::getClient);
@@ -77,10 +76,8 @@ public class TokenController extends PathHandler {
 
 	private String createJWT(Client client) {
 		try {
-			MessageDigest digest      = MessageDigest.getInstance("SHA-256");
-			byte[]        encodedhash = digest.digest(client.secret().getBytes(StandardCharsets.UTF_8));
-
-			HmacKey hmacKey = new HmacKey(encodedhash);
+			byte[] secretBytes = client.secret().getBytes(StandardCharsets.UTF_8);
+			HmacKey hmacKey = new HmacKey(secretBytes);
 
 			JwtClaims claims = new JwtClaims();
 			claims.setIssuer("Issuer");		 // who creates the token and signs it
@@ -97,13 +94,16 @@ public class TokenController extends PathHandler {
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
 			JsonWebSignature jws = new JsonWebSignature();
+			if (secretBytes.length*8 < 256) {
+				LOG.log(WARNING,"Using secret with less than 256 bits! You will go to hell for this!");
+				jws.setDoKeyValidation(false); // TODO: this is dangerous! Better: enforce key length of 256bits!
+			}
+
 			jws.setPayload(claims.toJson());
 			jws.setKey(hmacKey);
 			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
 			return jws.getCompactSerialization();
 		} catch (JoseException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
 	}
