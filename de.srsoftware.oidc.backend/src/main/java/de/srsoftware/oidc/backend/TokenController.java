@@ -12,10 +12,10 @@ import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.PathHandler;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.jose4j.jwk.RsaJsonWebKey;
-import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -77,7 +77,10 @@ public class TokenController extends PathHandler {
 
 	private String createJWT(Client client) {
 		try {
-			HmacKey hmacKey = new HmacKey(client.secret().getBytes(StandardCharsets.UTF_8));
+			MessageDigest digest      = MessageDigest.getInstance("SHA-256");
+			byte[]        encodedhash = digest.digest(client.secret().getBytes(StandardCharsets.UTF_8));
+
+			HmacKey hmacKey = new HmacKey(encodedhash);
 
 			JwtClaims claims = new JwtClaims();
 			claims.setIssuer("Issuer");		 // who creates the token and signs it
@@ -99,6 +102,8 @@ public class TokenController extends PathHandler {
 			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
 			return jws.getCompactSerialization();
 		} catch (JoseException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
 	}
