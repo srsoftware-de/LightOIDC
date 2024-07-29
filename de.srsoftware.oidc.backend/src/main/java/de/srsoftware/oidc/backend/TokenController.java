@@ -2,8 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -40,8 +39,8 @@ public class TokenController extends PathHandler {
 		var map = deserialize(body(ex));
 		// TODO: check 	Authorization Code, → https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
 		// TODO: check Redirect URL
-		LOG.log(WARNING, "post data: {0}", map);
-		LOG.log(ERROR, "{0}.provideToken(ex) not implemented!", getClass().getSimpleName());
+		LOG.log(DEBUG, "post data: {0}", map);
+		LOG.log(WARNING, "{0}.provideToken(ex) not implemented!", getClass().getSimpleName());
 		var grantType = map.get(GRANT_TYPE);
 		if (!ATUH_CODE.equals(grantType)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 		var optClient = Optional.ofNullable(map.get(CLIENT_ID)).flatMap(clients::getClient);
