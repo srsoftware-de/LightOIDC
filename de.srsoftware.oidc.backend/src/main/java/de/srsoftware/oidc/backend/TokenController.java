@@ -11,6 +11,7 @@ import de.srsoftware.oidc.api.Client;
 import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.PathHandler;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -18,6 +19,7 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.keys.HmacKey;
 import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
@@ -75,8 +77,8 @@ public class TokenController extends PathHandler {
 
 	private String createJWT(Client client) {
 		try {
-			RsaJsonWebKey rsaJsonWebKey = RsaJwkGenerator.generateJwk(2048);
-			rsaJsonWebKey.setKeyId("k1");
+			HmacKey hmacKey = new HmacKey(client.secret().getBytes(StandardCharsets.UTF_8));
+
 			JwtClaims claims = new JwtClaims();
 			claims.setIssuer("Issuer");		 // who creates the token and signs it
 			claims.setAudience("Audience");		 // to whom the token is intended to be sent
@@ -93,9 +95,8 @@ public class TokenController extends PathHandler {
 			// In this example it is a JWS so we create a JsonWebSignature object.
 			JsonWebSignature jws = new JsonWebSignature();
 			jws.setPayload(claims.toJson());
-			jws.setKey(rsaJsonWebKey.getPrivateKey());
-			jws.setKeyIdHeaderValue(rsaJsonWebKey.getKeyId());
-			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+			jws.setKey(hmacKey);
+			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
 			return jws.getCompactSerialization();
 		} catch (JoseException e) {
 			throw new RuntimeException(e);
