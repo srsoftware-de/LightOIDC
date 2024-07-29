@@ -9,8 +9,11 @@ import static java.net.HttpURLConnection.*;
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.UUID;
 import org.json.JSONObject;
 
 public class ClientController extends Controller {
@@ -24,17 +27,6 @@ public class ClientController extends Controller {
 		clients        = clientService;
 	}
 
-	private boolean add(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
-		var json      = json(ex);
-		var redirects = new HashSet<String>();
-		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
-			if (o instanceof String s) redirects.add(s);
-		}
-		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects);
-		clients.add(client);
-		return sendContent(ex, client);
-	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
 		var user      = session.user();
@@ -48,14 +40,17 @@ public class ClientController extends Controller {
 		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
 
 		if (!authorizations.isAuthorized(client, session.user())) {
-			if (json.has(CONFIRMED) && json.getBoolean(CONFIRMED)) {
-				authorizations.authorize(client, user, null);
+			if (json.has(DAYS)) {
+				var days       = json.getInt(DAYS);
+				var expiration = Instant.now().plus(Duration.ofDays(days));
+				authorizations.authorize(client, user, expiration);
 			} else {
 				return sendContent(ex, Map.of(CONFIRMED, false, NAME, client.name()));
 			}
 		}
 		var state = json.getString(STATE);
-		var code  = client.generateCode();
+		var code  = UUID.randomUUID().toString();
+		authorizations.addCode(client, session.user(), code);
 		return sendContent(ex, Map.of(CONFIRMED, true, CODE, code, REDIRECT_URI, redirect, STATE, state));
 	}
 
@@ -94,8 +89,8 @@ public class ClientController extends Controller {
 		switch (path) {
 			case "/":
 				return load(ex, session);
-			case "/add":
-				return add(ex, session);
+			case "/add", "/update":
+				return save(ex, session);
 			case "/authorize":
 				return authorize(ex, session);
 			case "/list":
@@ -122,5 +117,17 @@ public class ClientController extends Controller {
 			if (client.isPresent()) return sendContent(ex, client.get());
 		}
 		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+	}
+
+	private boolean save(HttpExchange ex, Session session) throws IOException {
+		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
+		var json      = json(ex);
+		var redirects = new HashSet<String>();
+		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
+			if (o instanceof String s) redirects.add(s);
+		}
+		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects);
+		clients.save(client);
+		return sendContent(ex, client);
 	}
 }

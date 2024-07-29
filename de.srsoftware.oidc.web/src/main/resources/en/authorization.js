@@ -24,8 +24,8 @@ async function handleResponse(response){
     }
 }
 
-function grantAutorization(){
-    json.confirmed = true;
+function grantAutorization(days){
+    json.days = days;
     backendAutorization();
 }
 

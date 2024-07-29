@@ -12,7 +12,10 @@
     <div id="content" style="display: none">
         <h1>Authorization</h1>
         Confirmation required: are you shure you want to grant access to <span id="name">some client</span>?
-        <button type="button" onclick="grantAutorization()">Yes</button>
+        <button type="button" onclick="grantAutorization(1)">Yes - 1 day</button>
+        <button type="button" onclick="grantAutorization(7)">Yes - 1 week</button>
+        <button type="button" onclick="grantAutorization(30)">Yes - 1 month</button>
+        <button type="button" onclick="grantAutorization(365)">Yes - 1 year</button>
         <button type="button" onclick="denyAutorization()">No</button>
     </div>
     <div id="error" class="error" style="display: none"></div>

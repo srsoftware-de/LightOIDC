@@ -15,14 +15,16 @@ import java.util.*;
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
-	private static final String CLIENTS       = "clients";
-	private static final String EXPIRATION    = "expiration";
-	private static final String NAME          = "name";
-	private static final String REDIRECT_URIS = "redirect_uris";
-	private static final String SECRET        = "secret";
-	private static final String SESSIONS      = "sessions";
-	private static final String USERS         = "users";
-	private static final String USER          = "user";
+	private static final String AUTHORIZATIONS = "authorizations";
+	private static final String CLIENTS        = "clients";
+	private static final String CODES          = "codes";
+	private static final String EXPIRATION     = "expiration";
+	private static final String NAME           = "name";
+	private static final String REDIRECT_URIS  = "redirect_uris";
+	private static final String SECRET         = "secret";
+	private static final String SESSIONS       = "sessions";
+	private static final String USERS          = "users";
+	private static final String USER           = "user";
 
 	private final Path       storageFile;
 	private final JSONObject json;
@@ -61,6 +63,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public FileStore init(User defaultUser) {
+		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
 		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
 		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
 		if (!json.has(USERS)) save(defaultUser);
@@ -179,6 +182,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			if (expiration.isAfter(Instant.now())) {
 				return load(userId).map(user -> new Session(user, expiration, sessionId));
 			}
+			dropSession(sessionId);
 		} catch (Exception ignored) {
 		}
 		return Optional.empty();
@@ -198,26 +202,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	/** client service methods **/
 
 	@Override
-	public ClientService add(Client client) {
-		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
-		save();
-		return this;
-	}
-
-	@Override
 	public Optional<Client> getClient(String clientId) {
 		var clients = json.getJSONObject(CLIENTS);
 		if (clients.has(clientId)) return Optional.of(toClient(clientId, clients.getJSONObject(clientId)));
 		return Optional.empty();
 	}
 
-	private Client toClient(String clientId, JSONObject clientData) {
-		var redirectUris = new HashSet<String>();
-		for (var o : clientData.getJSONArray(REDIRECT_URIS)) {
-			if (o instanceof String s) redirectUris.add(s);
-		}
-		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
-	}
 
 	@Override
 	public List<Client> listClients() {
@@ -235,19 +225,75 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public ClientService update(Client client) {
-		return null;
+	public ClientService save(Client client) {
+		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
+		save();
+		return this;
 	}
+
+	private Client toClient(String clientId, JSONObject clientData) {
+		var redirectUris = new HashSet<String>();
+		for (var o : clientData.getJSONArray(REDIRECT_URIS)) {
+			if (o instanceof String s) redirectUris.add(s);
+		}
+		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
+	}
+
 
 	/*** Authorization service methods ***/
 
 	@Override
-	public AuthorizationService authorize(Client client, User user, Date expiration) {
-		return null;
+	public Optional<Authorization> forCode(String code) {
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		if (!authorizations.has(code)) return Optional.empty();
+		String authId = authorizations.getString(code);
+		if (!authorizations.has(authId)) {
+			authorizations.remove(code);
+			return Optional.empty();
+		}
+		try {
+			var expiration = Instant.ofEpochSecond(authorizations.getLong(authId));
+			if (expiration.isAfter(Instant.now())) {
+				String[] parts = authId.split("@");
+				return Optional.of(new Authorization(parts[1], parts[0], expiration));
+			}
+			authorizations.remove(authId);
+		} catch (Exception ignored) {
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
+	public AuthorizationService addCode(Client client, User user, String code) {
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		authorizations.put(code, authorizationId(user, client));
+		save();
+		return this;
+	}
+
+	@Override
+	public AuthorizationService authorize(Client client, User user, Instant expiration) {
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		authorizations.put(authorizationId(user, client), expiration.getEpochSecond());
+		return this;
+	}
+
+	private String authorizationId(User user, Client client) {
+		return String.join("@", user.uuid(), client.id());
 	}
 
 	@Override
 	public boolean isAuthorized(Client client, User user) {
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		var authId	   = authorizationId(user, client);
+		if (!authorizations.has(authId)) return false;
+
+		try {
+			if (Instant.ofEpochSecond(authorizations.getLong(authId)).isAfter(Instant.now())) return true;
+		} catch (Exception ignored) {
+		}
+		revoke(client, user);
 		return false;
 	}
 
@@ -263,6 +309,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public AuthorizationService revoke(Client client, User user) {
-		return null;
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		var authId	   = authorizationId(user, client);
+		if (!authorizations.has(authId)) return this;
+		authorizations.remove(authId);
+		return save();
 	}
 }

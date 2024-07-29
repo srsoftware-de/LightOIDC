@@ -15,25 +15,25 @@
     <table>
         <tr>
             <th>ID</th>
-            <td><input type="text" disabled="true" id="client_id" /></td>
+            <td><input type="text" disabled="true" id="client-id" /></td>
         </tr>
         <tr>
             <th>Name</th>
-            <td><input type="text" id="name" /></td>
+            <td><input type="text" id="client-name" /></td>
         </tr>
         <tr>
             <th>Secret</th>
-            <td><input type="text" id="secret" /></td>
+            <td><input type="text" id="client-secret" /></td>
         </tr>
         <tr>
             <th>Redirect URIs</th>
             <td>
-                <textarea id="redirects"></textarea>
+                <textarea id="redirect-urls"></textarea>
             </td>
         </tr>
         <tr>
             <td></td>
-            <td><button type="button" id="button">Update</button></td>
+            <td><button type="button" id="button" onclick="updateClient();">Update</button></td>
         </tr>
     </table>
 </fieldset>
