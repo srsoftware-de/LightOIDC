@@ -43,15 +43,15 @@ public abstract class PathHandler implements HttpHandler {
 	}
 
 	public boolean doDelete(String path, HttpExchange ex) throws IOException {
-		return false;
+		return notFound(ex);
 	}
 
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
-		return false;
+		return notFound(ex);
 	}
 
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
-		return false;
+		return notFound(ex);
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean notFound(HttpExchange ex) throws IOException {
-			LOG.log(WARNING, "not implemented");
+			LOG.log(ERROR, "not implemented");
 			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
 		}
 

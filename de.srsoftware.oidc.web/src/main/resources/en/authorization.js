@@ -13,6 +13,7 @@ async function handleResponse(response){
         if (!json.confirmed){
             showConfirmationDialog(json.name);
         } else {
+        console.log('redirecting to '+json.redirect_uri+'?code='+json.code+'&state='+json.state+'&scope=openid');
             redirect(json.redirect_uri+'?code='+json.code+'&state='+json.state+'&scope=openid');
         }
         return;

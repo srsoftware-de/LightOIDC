@@ -2,7 +2,6 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.User.*;
-import static java.lang.System.Logger.Level.WARNING;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -31,8 +30,7 @@ public class UserController extends Controller {
 				return logout(ex, session);
 		}
 
-		LOG.log(WARNING, "not implemented");
-		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+		return notFound(ex);
 	}
 
 

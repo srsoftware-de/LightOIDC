@@ -2,7 +2,6 @@
 package de.srsoftware.oidc.web;
 
 import static java.lang.System.Logger.Level.*;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.PathHandler;
@@ -43,7 +42,7 @@ public class StaticPages extends PathHandler {
 			return sendContent(ex, response.content);
 		} catch (FileNotFoundException fnf) {
 			LOG.log(WARNING, "Loaded {0} for language {1}…failed.", relativePath, lang);
-			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+			return notFound(ex);
 		}
 	}
 

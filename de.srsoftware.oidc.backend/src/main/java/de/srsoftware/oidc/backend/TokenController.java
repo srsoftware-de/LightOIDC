@@ -12,10 +12,10 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.keys.HmacKey;
+import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
@@ -23,11 +23,13 @@ public class TokenController extends PathHandler {
 	private final ClientService	   clients;
 	private final AuthorizationService authorizations;
 	private final UserService	   users;
+	private final KeyManager	   keyManager;
 
-	public TokenController(AuthorizationService authorizationService, ClientService clientService, UserService userService) {
-		authorizations = authorizationService;
-		clients        = clientService;
-		users          = userService;
+	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService) {
+		authorizations	= authorizationService;
+		clients	= clientService;
+		this.keyManager = keyManager;
+		users	= userService;
 	}
 
 	private Map<String, String> deserialize(String body) {
@@ -45,7 +47,9 @@ public class TokenController extends PathHandler {
 	}
 
 	private boolean provideToken(HttpExchange ex) throws IOException {
-		var map       = deserialize(body(ex));
+		var map = deserialize(body(ex));
+		// TODO: check 	data, → https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
+
 		var grantType = map.get(GRANT_TYPE);
 		if (!AUTH_CODE.equals(grantType)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 
@@ -66,8 +70,8 @@ public class TokenController extends PathHandler {
 		var uri = URLDecoder.decode(map.get(REDIRECT_URI), StandardCharsets.UTF_8);
 		if (!client.redirectUris().contains(uri)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown redirect uri", REDIRECT_URI, uri));
 
-		var secretFromClient = map.get(CLIENT_SECRET);
-		if (!client.secret().equals(secretFromClient)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
+		var secretFromClient = URLDecoder.decode(map.get(CLIENT_SECRET));
+		if (secretFromClient != null && !client.secret().equals(secretFromClient)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
 
 		String jwToken = createJWT(client, user.get());
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
@@ -76,42 +80,52 @@ public class TokenController extends PathHandler {
 		response.put(TOKEN_TYPE, BEARER);
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);
+		LOG.log(DEBUG, jwToken);
 		return sendContent(ex, response);
 	}
 
 	private String createJWT(Client client, User user) {
 		try {
-			byte[]  secretBytes = client.secret().getBytes(StandardCharsets.UTF_8);
-			HmacKey hmacKey	    = new HmacKey(secretBytes);
+			PublicJsonWebKey key = keyManager.getKey();
 
-			JwtClaims claims = getJwtClaims(user);
+			JwtClaims claims = getJwtClaims(user, client);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
 			JsonWebSignature jws = new JsonWebSignature();
-			if (secretBytes.length * 8 < 256) {
-				LOG.log(WARNING, "Using secret with less than 256 bits! You will go to hell for this!");
-				jws.setDoKeyValidation(false);	// TODO: this is dangerous! Better: enforce key length of 256bits!
-			}
 
+			jws.setHeader("typ", "JWT");
 			jws.setPayload(claims.toJson());
-			jws.setKey(hmacKey);
-			jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
+			jws.setKey(key.getPrivateKey());
+			jws.setKeyIdHeaderValue(key.getKeyId());
+			jws.setAlgorithmHeaderValue(key.getAlgorithm());
 			return jws.getCompactSerialization();
-		} catch (JoseException e) {
+		} catch (JoseException | KeyManager.KeyCreationException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	private static JwtClaims getJwtClaims(User user) {
+	private static JwtClaims getJwtClaims(User user, Client client) {
 		JwtClaims claims = new JwtClaims();
-		claims.setIssuer(APP_NAME);		 // who creates the token and signs it
-		claims.setExpirationTimeMinutesInTheFuture(10);	 // time when the token will expire (10 minutes from now)
-		claims.setGeneratedJwtId();		 // a unique identifier for the token
-		claims.setIssuedAtToNow();		 // when the token was issued/created (now)
-		claims.setNotBeforeMinutesInThePast(2);	 // time before which the token is not yet valid (2 minutes ago)
-		claims.setSubject(user.uuid());		 // the subject/principal is whom the token is about
-		claims.setClaim("email", user.email());	 // additional claims/attributes about the subject can be added
+		claims.setAudience(client.id(), "test");
+		claims.setClaim("client_id", client.id());
+		claims.setClaim("email", user.email());	      // additional claims/attributes about the subject can be added
+		claims.setExpirationTimeMinutesInTheFuture(10);	      // time when the token will expire (10 minutes from now)
+		claims.setIssuedAtToNow();		      // when the token was issued/created (now)
+		claims.setIssuer("https://lightoidc.srsoftware.de");  // who creates the token and signs it
+		claims.setGeneratedJwtId();		      // a unique identifier for the token
+		claims.setSubject(user.uuid());		      // the subject/principal is whom the token is about
+
+		// die nachfolgenden Claims sind nur Spielerei, ich habe versucht, das System mit Umbrella zum Laufen zu bekommen
+		claims.setClaim("scope", "openid");
+		claims.setStringListClaim("amr", "pwd");
+		claims.setClaim("at_hash", Base64.getEncoder().encodeToString("Test".getBytes(StandardCharsets.UTF_8)));
+		claims.setClaim("azp", client.id());
+		claims.setClaim("email_verified", true);
+		try {
+			claims.setClaim("rat", claims.getIssuedAt().getValue());
+		} catch (MalformedClaimException e) {
+		}
 		return claims;
 	}
 }

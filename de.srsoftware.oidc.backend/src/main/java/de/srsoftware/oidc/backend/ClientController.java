@@ -11,6 +11,7 @@ import de.srsoftware.oidc.api.*;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
@@ -29,8 +30,11 @@ public class ClientController extends Controller {
 
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
-		var user      = session.user();
-		var json      = json(ex);
+		var user  = session.user();
+		var json  = json(ex);
+		var scope = json.getString(SCOPE);
+		if (!Arrays.asList(scope.split(" ")).contains(OPENID)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "openid scope missing in request"));
+
 		var clientId  = json.getString(CLIENT_ID);
 		var redirect  = json.getString(REDIRECT_URI);
 		var optClient = clients.getClient(clientId);
@@ -74,8 +78,7 @@ public class ClientController extends Controller {
 			case "/":
 				return deleteClient(ex, session);
 		}
-		LOG.log(ERROR, "not implemented");
-		return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+		return notFound(ex);
 	}
 
 

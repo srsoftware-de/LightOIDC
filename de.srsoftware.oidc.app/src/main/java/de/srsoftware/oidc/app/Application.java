@@ -12,12 +12,12 @@ import static java.lang.System.getenv;
 
 import com.sun.net.httpserver.HttpServer;
 import de.srsoftware.logging.ColorLogger;
+import de.srsoftware.oidc.api.KeyManager;
+import de.srsoftware.oidc.api.KeyStorage;
 import de.srsoftware.oidc.api.User;
-import de.srsoftware.oidc.backend.ClientController;
-import de.srsoftware.oidc.backend.TokenController;
-import de.srsoftware.oidc.backend.UserController;
-import de.srsoftware.oidc.backend.WellKnownController;
+import de.srsoftware.oidc.backend.*;
 import de.srsoftware.oidc.datastore.file.FileStore;
+import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.datastore.file.UuidHasher;
 import de.srsoftware.oidc.web.Forward;
 import de.srsoftware.oidc.web.StaticPages;
@@ -33,6 +33,7 @@ public class Application {
 	public static final String  FIRST_USER      = "admin";
 	public static final String  FIRST_USER_PASS = "admin";
 	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
+	public static final String  JWKS            = "/api/jwks";
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
 
@@ -43,20 +44,24 @@ public class Application {
 	private static System.Logger LOG        = new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
-		var            argMap   = map(args);
-		Optional<Path> basePath = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : Optional.empty();
-		var        storageFile    = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir(APP_NAME).resolve("config.json")).toFile();
-		var        passwordHasher = new UuidHasher();
-		var        firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var        firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS);
-		FileStore  fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
-		HttpServer server         = HttpServer.create(new InetSocketAddress(8080), 0);
+		var            argMap         = map(args);
+		Optional<Path> basePath       = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : Optional.empty();
+		var            storageFile    = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir(APP_NAME).resolve("config.json")).toFile();
+		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
+		var            passwordHasher = new UuidHasher();
+		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS);
+		KeyStorage     keyStore       = new PlaintextKeyStore(keyDir);
+		KeyManager     keyManager     = new RotatingKeyManager(keyStore);
+		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
+		HttpServer     server         = HttpServer.create(new InetSocketAddress(8080), 0);
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
 		new WellKnownController().bindPath(WELL_KNOWN).on(server);
 		new UserController(fileStore, fileStore).bindPath(API_USER).on(server);
-		new TokenController(fileStore, fileStore, fileStore).bindPath(API_TOKEN).on(server);
+		new TokenController(fileStore, fileStore, keyManager, fileStore).bindPath(API_TOKEN).on(server);
 		new ClientController(fileStore, fileStore, fileStore).bindPath(API_CLIENT).on(server);
+		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
 		// server.setExecutor(Executors.newCachedThreadPool());
 		server.setExecutor(Executors.newSingleThreadExecutor());
 		server.start();
