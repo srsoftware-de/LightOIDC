@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import static de.srsoftware.oidc.api.Constants.AUTHORIZATION;
 import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -89,7 +90,11 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static Optional<String> getAuthToken(HttpExchange ex) {
-			return getHeader(ex, "Authorization");
+			return getHeader(ex, AUTHORIZATION);
+		}
+
+		public static Optional<String> getBearer(HttpExchange ex) {
+			return getAuthToken(ex).filter(token -> token.startsWith("Bearer ")).map(token -> token.substring(7));
 		}
 
 		public static Optional<String> getHeader(HttpExchange ex, String key) {

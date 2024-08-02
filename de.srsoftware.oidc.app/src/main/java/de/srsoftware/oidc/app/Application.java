@@ -33,7 +33,7 @@ public class Application {
 	public static final String  FIRST_USER      = "admin";
 	public static final String  FIRST_USER_PASS = "admin";
 	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
-	public static final String  JWKS            = "/api/jwks";
+	public static final String  JWKS            = "/api/jwks.json";
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
 

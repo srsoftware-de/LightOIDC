@@ -40,8 +40,9 @@ public class ClientController extends Controller {
 		var optClient = clients.getClient(clientId);
 		if (optClient.isEmpty()) return badRequest(ex, Map.of(CAUSE, "unknown client", CLIENT_ID, clientId));
 		var client = optClient.get();
-
 		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
+
+		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
 
 		if (!authorizations.isAuthorized(client, session.user())) {
 			if (json.has(DAYS)) {

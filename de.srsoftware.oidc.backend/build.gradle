@@ -15,6 +15,7 @@ dependencies {
     implementation project(':de.srsoftware.cookies')
     implementation project(':de.srsoftware.oidc.api')
     implementation project(':de.srsoftware.logging')
+    implementation project(':de.srsoftware.utils')
     implementation 'org.json:json:20240303'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
 }

@@ -19,6 +19,6 @@ public class WellKnownController extends PathHandler {
 
 	private boolean openidConfig(HttpExchange ex) throws IOException {
 		var host = hostname(ex);
-		return sendContent(ex, Map.of("token_endpoint", host + "/api/token", "authorization_endpoint", host + "/web/authorization.html", "userinfo_endpoint", host + "/api/userinfo", "jwks_uri", host + "/api/jwks", "issuer", "https://lightoidc.srsoftware.de"));
+		return sendContent(ex, Map.of("token_endpoint", host + "/api/token", "authorization_endpoint", host + "/web/authorization.html", "userinfo_endpoint", host + "/api/user/info", "jwks_uri", host + "/api/jwks.json", "issuer", "https://lightoidc.srsoftware.de"));
 	}
 }

@@ -5,6 +5,7 @@ public class Constants {
 	public static final String ACCESS_TOKEN  = "access_token";
 	public static final String APP_NAME      = "LightOIDC";
 	public static final String AUTH_CODE     = "authorization_code";
+	public static final String AUTHORIZATION = "Authorization";
 	public static final String BEARER        = "Bearer";
 	public static final String CAUSE         = "cause";
 	public static final String CLIENT_ID     = "client_id";
@@ -17,6 +18,7 @@ public class Constants {
 	public static final String GRANT_TYPE    = "grant_type";
 	public static final String ID_TOKEN      = "id_token";
 	public static final String NAME	         = "name";
+	public static final String NONCE         = "nonce";
 	public static final String OPENID        = "openid";
 	public static final String REDIRECT_URI  = "redirect_uri";
 	public static final String REDIRECT_URIS = "redirect_uris";

@@ -8,7 +8,9 @@ import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.cookies.SessionToken;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+import org.json.JSONObject;
 
 public class UserController extends Controller {
 	private final UserService users;
@@ -20,6 +22,10 @@ public class UserController extends Controller {
 
 	@Override
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
+		switch (path) {
+			case "/info":
+				return userInfo(ex);
+		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 
@@ -31,6 +37,14 @@ public class UserController extends Controller {
 		}
 
 		return notFound(ex);
+	}
+
+	private boolean userInfo(HttpExchange ex) throws IOException {
+		var optUser = getBearer(ex).flatMap(users::forToken);
+		if (optUser.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+		var user = optUser.get();
+		var map = Map.of("sub",user.uuid(),"email",user.email());
+		return sendContent(ex, new JSONObject(map));
 	}
 
 

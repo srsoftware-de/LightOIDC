@@ -1,6 +1,8 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
 import static de.srsoftware.oidc.api.User.*;
+import static de.srsoftware.utils.Optionals.optional;
+import static de.srsoftware.utils.Strings.uuid;
 
 import de.srsoftware.oidc.api.*;
 import java.io.File;
@@ -12,6 +14,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+
+import de.srsoftware.utils.Optionals;
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
@@ -30,6 +34,8 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private final JSONObject json;
 	private final PasswordHasher<String> passwordHasher;
 	private Duration	     sessionDuration = Duration.of(10, ChronoUnit.MINUTES);
+	private Map<String, Client>	     clients	     = new HashMap<>();
+	private Map<String, User>	     accessTokens    = new HashMap<>();
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
 		this.storageFile    = storage.toPath();
@@ -52,7 +58,15 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		}
 	}
 
+
 	/*** User Service Methods ***/
+
+	@Override
+	public String accessToken(User user) {
+		var token = uuid();
+		accessTokens.put(token, Objects.requireNonNull(user));
+		return token;
+	}
 
 
 	@Override
@@ -60,6 +74,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return null;
 	}
 
+	@Override
+	public Optional<User> forToken(String accessToken) {
+		return optional(accessTokens.get(accessToken));
+	}
 
 	@Override
 	public FileStore init(User defaultUser) {
@@ -203,8 +221,14 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<Client> getClient(String clientId) {
-		var clients = json.getJSONObject(CLIENTS);
-		if (clients.has(clientId)) return Optional.of(toClient(clientId, clients.getJSONObject(clientId)));
+		var client = clients.get(clientId);
+		if (client != null) return Optional.of(client);
+		var clientsJson = json.getJSONObject(CLIENTS);
+		if (clientsJson.has(clientId)) {
+			client = toClient(clientId, clientsJson.getJSONObject(clientId));
+			clients.put(clientId, client);
+			return Optional.of(client);
+		}
 		return Optional.empty();
 	}
 

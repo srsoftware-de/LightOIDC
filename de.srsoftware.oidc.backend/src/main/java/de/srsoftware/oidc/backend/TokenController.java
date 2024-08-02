@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
+import static de.srsoftware.utils.Optionals.optional;
 import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 
@@ -15,7 +16,6 @@ import java.util.stream.Collectors;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
@@ -70,13 +70,27 @@ public class TokenController extends PathHandler {
 		var uri = URLDecoder.decode(map.get(REDIRECT_URI), StandardCharsets.UTF_8);
 		if (!client.redirectUris().contains(uri)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown redirect uri", REDIRECT_URI, uri));
 
-		var secretFromClient = URLDecoder.decode(map.get(CLIENT_SECRET));
-		if (secretFromClient != null && !client.secret().equals(secretFromClient)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
-
+		if (client.secret() != null) {
+			String clientSecret = optional(ex.getRequestHeaders().get(AUTHORIZATION))
+				          .map(list -> list.get(0))
+				          .filter(s -> s.startsWith("Basic "))
+				          .map(s -> s.substring(6))
+				          .map(s -> Base64.getDecoder().decode(s))
+				          .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+				          .filter(s -> s.startsWith("%s:".formatted(client.id())))
+				          .map(s -> s.substring(client.id().length() + 1).trim())
+				          .map(s -> {
+					          System.err.println(s);
+					          return s;
+				          })
+				          .orElseGet(() -> map.get(CLIENT_SECRET));
+			if (clientSecret == null) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret missing"));
+			if (!client.secret().equals(clientSecret)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
+		}
 		String jwToken = createJWT(client, user.get());
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
-		response.put(ACCESS_TOKEN, UUID.randomUUID().toString());  // TODO: wofür genau wird der verwendet, was gilt es hier zu beachten
+		response.put(ACCESS_TOKEN, users.accessToken(user.get()));
 		response.put(TOKEN_TYPE, BEARER);
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);
@@ -87,7 +101,7 @@ public class TokenController extends PathHandler {
 	private String createJWT(Client client, User user) {
 		try {
 			PublicJsonWebKey key = keyManager.getKey();
-
+			key.setUse("sig");
 			JwtClaims claims = getJwtClaims(user, client);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
@@ -99,6 +113,7 @@ public class TokenController extends PathHandler {
 			jws.setKey(key.getPrivateKey());
 			jws.setKeyIdHeaderValue(key.getKeyId());
 			jws.setAlgorithmHeaderValue(key.getAlgorithm());
+
 			return jws.getCompactSerialization();
 		} catch (JoseException | KeyManager.KeyCreationException | IOException e) {
 			throw new RuntimeException(e);
@@ -115,17 +130,7 @@ public class TokenController extends PathHandler {
 		claims.setIssuer("https://lightoidc.srsoftware.de");  // who creates the token and signs it
 		claims.setGeneratedJwtId();		      // a unique identifier for the token
 		claims.setSubject(user.uuid());		      // the subject/principal is whom the token is about
-
-		// die nachfolgenden Claims sind nur Spielerei, ich habe versucht, das System mit Umbrella zum Laufen zu bekommen
-		claims.setClaim("scope", "openid");
-		claims.setStringListClaim("amr", "pwd");
-		claims.setClaim("at_hash", Base64.getEncoder().encodeToString("Test".getBytes(StandardCharsets.UTF_8)));
-		claims.setClaim("azp", client.id());
-		claims.setClaim("email_verified", true);
-		try {
-			claims.setClaim("rat", claims.getIssuedAt().getValue());
-		} catch (MalformedClaimException e) {
-		}
+		client.nonce().ifPresent(nonce -> claims.setClaim(NONCE, nonce));
 		return claims;
 	}
 }
