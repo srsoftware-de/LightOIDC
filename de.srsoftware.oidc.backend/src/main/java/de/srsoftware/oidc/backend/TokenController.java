@@ -20,16 +20,20 @@ import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
 public class TokenController extends PathHandler {
+	public record Configuration(String issuer, int tokenExpirationMinutes) {
+	}
 	private final ClientService	   clients;
 	private final AuthorizationService authorizations;
 	private final UserService	   users;
 	private final KeyManager	   keyManager;
+	private Configuration	   config;
 
-	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService) {
+	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
 		authorizations	= authorizationService;
 		clients	= clientService;
 		this.keyManager = keyManager;
 		users	= userService;
+		config	= configuration;
 	}
 
 	private Map<String, String> deserialize(String body) {
@@ -90,7 +94,7 @@ public class TokenController extends PathHandler {
 		try {
 			PublicJsonWebKey key = keyManager.getKey();
 			key.setUse("sig");
-			JwtClaims claims = getJwtClaims(user, client);
+			JwtClaims claims = createIdTokenClaims(user, client);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
@@ -108,17 +112,20 @@ public class TokenController extends PathHandler {
 		}
 	}
 
-	private static JwtClaims getJwtClaims(User user, Client client) {
+	private JwtClaims createIdTokenClaims(User user, Client client) {
 		JwtClaims claims = new JwtClaims();
-		claims.setAudience(client.id(), "test");
+
+		// required claims:
+		claims.setIssuer(config.issuer);  // who creates the token and signs it
+		claims.setSubject(user.uuid());	  // the subject/principal is whom the token is about
+		claims.setAudience(client.id());
+		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
+		claims.setIssuedAtToNow();	         // when the token was issued/created (now)
+
 		claims.setClaim("client_id", client.id());
-		claims.setClaim("email", user.email());	      // additional claims/attributes about the subject can be added
-		claims.setExpirationTimeMinutesInTheFuture(10);	      // time when the token will expire (10 minutes from now)
-		claims.setIssuedAtToNow();		      // when the token was issued/created (now)
-		claims.setIssuer("https://lightoidc.srsoftware.de");  // who creates the token and signs it
-		claims.setGeneratedJwtId();		      // a unique identifier for the token
-		claims.setSubject(user.uuid());		      // the subject/principal is whom the token is about
+		claims.setClaim("email", user.email());  // additional claims/attributes about the subject can be added
 		client.nonce().ifPresent(nonce -> claims.setClaim(NONCE, nonce));
+		claims.setGeneratedJwtId();	         // a unique identifier for the token
 		return claims;
 	}
 }
