@@ -43,7 +43,7 @@ public class UserController extends Controller {
 		var optUser = getBearer(ex).flatMap(users::forToken);
 		if (optUser.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 		var user = optUser.get();
-		var map = Map.of("sub",user.uuid(),"email",user.email());
+		var map  = Map.of("sub", user.uuid(), "email", user.email());
 		return sendContent(ex, new JSONObject(map));
 	}
 

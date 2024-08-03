@@ -1,8 +1,9 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
 import static de.srsoftware.oidc.api.User.*;
-import static de.srsoftware.utils.Optionals.optional;
+import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
+import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import java.io.File;
@@ -14,8 +15,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-
-import de.srsoftware.utils.Optionals;
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
@@ -76,7 +75,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<User> forToken(String accessToken) {
-		return optional(accessTokens.get(accessToken));
+		return nullable(accessTokens.get(accessToken));
 	}
 
 	@Override
@@ -103,7 +102,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			return userOf(userData, userId);
 		} catch (Exception ignored) {
 		}
-		return Optional.empty();
+		return empty();
 	}
 
 	@Override
@@ -119,9 +118,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 					return userOf(userData, userId);
 				}
 			}
-			return Optional.empty();
+			return empty();
 		} catch (Exception e) {
-			return Optional.empty();
+			return empty();
 		}
 	}
 
@@ -175,7 +174,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public Session createSession(User user) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(sessionDuration);
-		return save(new Session(user, endOfSession, java.util.UUID.randomUUID().toString()));
+		return save(new Session(user, endOfSession, uuid().toString()));
 	}
 
 	@Override
@@ -203,7 +202,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			dropSession(sessionId);
 		} catch (Exception ignored) {
 		}
-		return Optional.empty();
+		return empty();
 	}
 
 	private Session save(Session session) {
@@ -229,7 +228,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			clients.put(clientId, client);
 			return Optional.of(client);
 		}
-		return Optional.empty();
+		return empty();
 	}
 
 
@@ -269,11 +268,11 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public Optional<Authorization> forCode(String code) {
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		if (!authorizations.has(code)) return Optional.empty();
+		if (!authorizations.has(code)) return empty();
 		String authId = authorizations.getString(code);
 		if (!authorizations.has(authId)) {
 			authorizations.remove(code);
-			return Optional.empty();
+			return empty();
 		}
 		try {
 			var expiration = Instant.ofEpochSecond(authorizations.getLong(authId));
@@ -285,7 +284,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		} catch (Exception ignored) {
 		}
 
-		return Optional.empty();
+		return empty();
 	}
 
 	@Override

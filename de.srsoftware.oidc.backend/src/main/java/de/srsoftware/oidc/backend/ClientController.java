@@ -3,6 +3,7 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
+import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.net.HttpURLConnection.*;
 
@@ -14,7 +15,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.UUID;
 import org.json.JSONObject;
 
 public class ClientController extends Controller {
@@ -54,7 +54,7 @@ public class ClientController extends Controller {
 			}
 		}
 		var state = json.getString(STATE);
-		var code  = UUID.randomUUID().toString();
+		var code  = uuid();
 		authorizations.addCode(client, session.user(), code);
 		return sendContent(ex, Map.of(CONFIRMED, true, CODE, code, REDIRECT_URI, redirect, STATE, state));
 	}

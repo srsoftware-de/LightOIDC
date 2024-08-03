@@ -2,7 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.utils.Optionals.optional;
+import static de.srsoftware.utils.Optionals.nullable;
 import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 
@@ -71,19 +71,7 @@ public class TokenController extends PathHandler {
 		if (!client.redirectUris().contains(uri)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown redirect uri", REDIRECT_URI, uri));
 
 		if (client.secret() != null) {
-			String clientSecret = optional(ex.getRequestHeaders().get(AUTHORIZATION))
-				          .map(list -> list.get(0))
-				          .filter(s -> s.startsWith("Basic "))
-				          .map(s -> s.substring(6))
-				          .map(s -> Base64.getDecoder().decode(s))
-				          .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-				          .filter(s -> s.startsWith("%s:".formatted(client.id())))
-				          .map(s -> s.substring(client.id().length() + 1).trim())
-				          .map(s -> {
-					          System.err.println(s);
-					          return s;
-				          })
-				          .orElseGet(() -> map.get(CLIENT_SECRET));
+			String clientSecret = nullable(ex.getRequestHeaders().get(AUTHORIZATION)).map(list -> list.get(0)).filter(s -> s.startsWith("Basic ")).map(s -> s.substring(6)).map(s -> Base64.getDecoder().decode(s)).map(bytes -> new String(bytes, StandardCharsets.UTF_8)).filter(s -> s.startsWith("%s:".formatted(client.id()))).map(s -> s.substring(client.id().length() + 1).trim()).orElseGet(() -> map.get(CLIENT_SECRET));
 			if (clientSecret == null) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret missing"));
 			if (!client.secret().equals(clientSecret)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
 		}

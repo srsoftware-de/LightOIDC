@@ -1,7 +1,9 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+
 import static de.srsoftware.oidc.api.Constants.*;
+import static de.srsoftware.utils.Optionals.nullable;
 
 import java.util.*;
 
@@ -38,7 +40,7 @@ public final class Client {
 	}
 
 	public Optional nonce() {
-		return Optional.ofNullable(nonce);
+		return nullable(nonce);
 	}
 
 	public String secret() {

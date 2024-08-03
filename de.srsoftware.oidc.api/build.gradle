@@ -13,6 +13,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     implementation 'org.json:json:20240303'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+    implementation project(':de.srsoftware.utils')
 }
 
 test {

@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.web;
 
 import static java.lang.System.Logger.Level.*;
+import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.PathHandler;
@@ -69,7 +70,7 @@ public class StaticPages extends PathHandler {
 	private Optional<Response> loadFile(String language, String path) {
 		try {
 			var resource = base.map(b -> getLocalUrl(b, language, path)).orElseGet(() -> getResource(language, path));
-			if (resource == null) return Optional.empty();
+			if (resource == null) return empty();
 			var connection	= resource.openConnection();
 			var contentType = connection.getContentType();
 			try (var in = connection.getInputStream()) {

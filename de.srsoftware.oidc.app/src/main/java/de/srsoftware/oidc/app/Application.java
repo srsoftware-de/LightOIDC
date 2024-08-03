@@ -4,11 +4,13 @@ package de.srsoftware.oidc.app;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
-import static de.srsoftware.utils.Optionals.nonEmpty;
+import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static de.srsoftware.utils.Paths.configDir;
+import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.getenv;
+import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpServer;
 import de.srsoftware.logging.ColorLogger;
@@ -32,7 +34,7 @@ public class Application {
 	public static final String  API_USER        = "/api/user";
 	public static final String  FIRST_USER      = "admin";
 	public static final String  FIRST_USER_PASS = "admin";
-	public static final String  FIRST_UUID      = UUID.randomUUID().toString();
+	public static final String  FIRST_UUID      = uuid();
 	public static final String  JWKS            = "/api/jwks.json";
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
@@ -45,7 +47,7 @@ public class Application {
 
 	public static void main(String[] args) throws Exception {
 		var            argMap         = map(args);
-		Optional<Path> basePath       = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : Optional.empty();
+		Optional<Path> basePath       = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : empty();
 		var            storageFile    = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir(APP_NAME).resolve("config.json")).toFile();
 		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
 		var            passwordHasher = new UuidHasher();
@@ -71,8 +73,8 @@ public class Application {
 		var tokens = new ArrayList<>(List.of(args));
 		var map    = new HashMap<String, Object>();
 
-		nonEmpty(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
-		nonEmpty(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
+		emptyIfBlank(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
+		emptyIfBlank(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
 
 		// Command line arguments override environment
 		while (!tokens.isEmpty()) {

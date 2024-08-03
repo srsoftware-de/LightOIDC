@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.api;
 
 import static de.srsoftware.oidc.api.Constants.AUTHORIZATION;
+import static de.srsoftware.utils.Optionals.nullable;
 import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -98,7 +99,7 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static Optional<String> getHeader(HttpExchange ex, String key) {
-			return Optional.ofNullable(ex.getRequestHeaders().get(key)).map(List::stream).flatMap(Stream::findFirst);
+			return nullable(ex.getRequestHeaders().get(key)).map(List::stream).flatMap(Stream::findFirst);
 		}
 
 		public static String hostname(HttpExchange ex) {
