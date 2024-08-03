@@ -40,6 +40,14 @@ public abstract class PathHandler implements HttpHandler {
 		}
 	}
 
+	public static boolean badRequest(HttpExchange ex, byte[] bytes) throws IOException {
+		return sendContent(ex, HTTP_BAD_REQUEST, bytes);
+	}
+
+	public static boolean badRequest(HttpExchange ex, Object o) throws IOException {
+		return sendContent(ex, HTTP_BAD_REQUEST, o);
+	}
+
 	public Bond bindPath(String... path) {
 		return new Bond(path);
 	}
@@ -152,14 +160,5 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
 			return sendContent(ex, HTTP_OK, o);
-		}
-
-
-		public static boolean badRequest(HttpExchange ex, byte[] bytes) throws IOException {
-			return sendContent(ex, HTTP_BAD_REQUEST, bytes);
-		}
-
-		public static boolean badRequest(HttpExchange ex, Object o) throws IOException {
-			return sendContent(ex, HTTP_BAD_REQUEST, o);
 		}
 	}

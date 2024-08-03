@@ -22,8 +22,10 @@ public class Constants {
 	public static final String OPENID        = "openid";
 	public static final String REDIRECT_URI  = "redirect_uri";
 	public static final String REDIRECT_URIS = "redirect_uris";
+	public static final String RESPONSE_TYPE = "response_type";
 	public static final String SCOPE         = "scope";
 	public static final String SECRET        = "secret";
 	public static final String STATE         = "state";
+	public static final String TOKEN         = "token";
 	public static final String TOKEN_TYPE    = "token_type";
 }
