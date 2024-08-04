@@ -2,18 +2,23 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
+import static de.srsoftware.oidc.api.Constants.ERROR;
+import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static java.lang.System.Logger.Level.*;
-import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
+import org.json.JSONObject;
 
 public class TokenController extends PathHandler {
 	public record Configuration(String issuer, int tokenExpirationMinutes) {
@@ -46,36 +51,54 @@ public class TokenController extends PathHandler {
 		return notFound(ex);
 	}
 
+	private HashMap<String, String> tokenResponse(String errorCode, String description) throws IOException {
+		var map = new HashMap<String, String>();
+		map.put(ERROR, errorCode);
+		emptyIfBlank(description).ifPresent(d -> map.put(ERROR_DESCRIPTION, d));
+		return map;
+	}
+
 	private boolean provideToken(HttpExchange ex) throws IOException {
 		var map = deserialize(body(ex));
-		// TODO: check 	data, → https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
-		return sendEmptyResponse(HTTP_NOT_IMPLEMENTED, ex);
-		/*
-		var grantType = map.get(GRANT_TYPE);
-		if (!AUTH_CODE.equals(grantType)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 
-		var code	     = map.get(CODE);
-		var optAuthorization = authorizations.forCode(code);
-		if (optAuthorization.isEmpty()) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "invalid auth code", CODE, code));
+		var grantType = map.get(GRANT_TYPE);
+		// verify grant type
+		if (!AUTH_CODE.equals(grantType)) return badRequest(ex, tokenResponse(INVALID_GRANT, "unknown grant type \"%s\"".formatted(grantType)));
+
+		var basicAuth = getBasicAuth(ex).orElse(null);
+
+		var clientId  = basicAuth != null ? basicAuth.userId() : map.get(CLIENT_ID);
+		var optClient = clients.getClient(clientId);
+		if (optClient.isEmpty()) return badRequest(ex, tokenResponse(INVALID_CLIENT, "unknown client \"%s\"".formatted(clientId)));
+
+		var client = optClient.get();
+		if (client.secret() != null) {	// for confidential clients:
+			// authenticate client by matching secret
+			String clientSecret = basicAuth != null ? basicAuth.pass() : map.get(CLIENT_SECRET);
+			if (clientSecret == null) return sendContent(ex, HTTP_UNAUTHORIZED, tokenResponse(INVALID_CLIENT, "client not authenticated"));
+			if (!client.secret().equals(clientSecret)) return sendContent(ex, HTTP_UNAUTHORIZED, tokenResponse(INVALID_CLIENT, "client not authenticated"));
+		}
+
+		var authCode = map.get(CODE);
+
+		// verify that code is not re-used
+		var optAuthorization = authorizations.consumeAuthorization(authCode);
+		if (optAuthorization.isEmpty()) return badRequest(ex, tokenResponse(INVALID_GRANT, "invalid auth code: \"%s\"".formatted(authCode)));
 		var authorization = optAuthorization.get();
 
-		var clientId = map.get(CLIENT_ID);
-		if (!authorization.clientId().equals(clientId)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "invalid client id", CLIENT_ID, clientId));
-		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown client", CLIENT_ID, clientId));
-		var client = optClient.get();
+		// verify authorization code was issued to the authenticated client
+		if (!authorization.clientId().equals(clientId)) return badRequest(ex, tokenResponse(UNAUTHORIZED_CLIENT, null));
 
-		var user = users.load(authorization.userId());
-		if (user.isEmpty()) return sendContent(ex, 500, Map.of(ERROR, "User not found"));
-
+		// verify redirect URI
 		var uri = URLDecoder.decode(map.get(REDIRECT_URI), StandardCharsets.UTF_8);
-		if (!client.redirectUris().contains(uri)) sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown redirect uri", REDIRECT_URI, uri));
+		if (!client.redirectUris().contains(uri)) return badRequest(ex, tokenResponse(INVALID_REQUEST, "unknown redirect uri: \"%s\"".formatted(uri)));
 
-		if (client.secret() != null) {
-			String clientSecret = nullable(ex.getRequestHeaders().get(AUTHORIZATION)).map(list -> list.get(0)).filter(s -> s.startsWith("Basic ")).map(s -> s.substring(6)).map(s -> Base64.getDecoder().decode(s)).map(bytes -> new String(bytes, StandardCharsets.UTF_8)).filter(s -> s.startsWith("%s:".formatted(client.id()))).map(s -> s.substring(client.id().length() + 1).trim()).orElseGet(() -> map.get(CLIENT_SECRET));
-			if (clientSecret == null) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret missing"));
-			if (!client.secret().equals(clientSecret)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "client secret mismatch"));
-		}
+		// verify user is valid
+		var user = users.load(authorization.userId());
+		if (user.isEmpty()) return badRequest(ex, tokenResponse(INVALID_REQUEST, "unknown user"));
+
+		if (!authorization.scopes().scopes().contains(OPENID)) return badRequest(ex, tokenResponse(INVALID_REQUEST, "Token invalid for OpenID scope"));
+
 		String jwToken = createJWT(client, user.get());
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
@@ -83,8 +106,8 @@ public class TokenController extends PathHandler {
 		response.put(TOKEN_TYPE, BEARER);
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);
-		LOG.log(DEBUG, jwToken);
-		return sendContent(ex, response);*/
+
+		return sendContent(ex, response);
 	}
 
 	private String createJWT(Client client, User user) {

@@ -11,10 +11,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 import org.json.JSONObject;
 
@@ -29,6 +26,9 @@ public abstract class PathHandler implements HttpHandler {
 	public static final String  POST           = "POST";
 
 	private String[] paths;
+
+	public record BasicAuth(String userId, String pass) {
+	}
 
 	public class Bond {
 		Bond(String[] paths) {
@@ -100,6 +100,16 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static Optional<String> getAuthToken(HttpExchange ex) {
 			return getHeader(ex, AUTHORIZATION);
+		}
+
+		public static Optional<BasicAuth> getBasicAuth(HttpExchange ex) {
+			return getAuthToken(ex)
+			    .filter(token -> token.startsWith("Basic "))  //
+			    .map(token -> token.substring(6))
+			    .map(Base64.getDecoder()::decode)
+			    .map(bytes -> new String(bytes, UTF_8))
+			    .map(token -> token.split(":", 2))
+			    .map(arr -> new BasicAuth(arr[0], arr[1]));
 		}
 
 		public static Optional<String> getBearer(HttpExchange ex) {

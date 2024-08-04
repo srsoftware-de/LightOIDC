@@ -3,15 +3,16 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
+import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.utils.Optionals;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class ClientController extends Controller {
@@ -27,46 +28,46 @@ public class ClientController extends Controller {
 
 	private boolean authorizationError(HttpExchange ex, String errorCode, String description, String state) throws IOException {
 		var map = new HashMap<String, String>();
-		map.put(ERROR,errorCode);
-		if (description != null) map.put(ERROR_DESCRIPTION,description);
-		if (state != null) map.put(STATE,state);
-		return badRequest(ex,map);
+		map.put(ERROR, errorCode);
+		emptyIfBlank(description).ifPresent(d -> map.put(ERROR_DESCRIPTION, d));
+		emptyIfBlank(state).ifPresent(s -> map.put(STATE, s));
+		return badRequest(ex, map);
 	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
-		var json = json(ex);
+		var user  = session.user();
+		var json  = json(ex);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
-		if (!json.has(CLIENT_ID)) return authorizationError(ex, INVALID_REQUEST,"Missing required parameter \"%s\"!".formatted(CLIENT_ID),state);
+		if (!json.has(CLIENT_ID)) return authorizationError(ex, INVALID_REQUEST, "Missing required parameter \"%s\"!".formatted(CLIENT_ID), state);
 		var clientId  = json.getString(CLIENT_ID);
 		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return authorizationError(ex,INVALID_REQUEST_OBJECT,"unknown client: %s".formatted(clientId),state);
+		if (optClient.isEmpty()) return authorizationError(ex, INVALID_REQUEST_OBJECT, "unknown client: %s".formatted(clientId), state);
 
 		for (String param : List.of(SCOPE, RESPONSE_TYPE, REDIRECT_URI)) {
-			if (!json.has(param)) return authorizationError(ex,INVALID_REQUEST,"Missing required parameter \"%s\"!".formatted(param),state);
+			if (!json.has(param)) return authorizationError(ex, INVALID_REQUEST, "Missing required parameter \"%s\"!".formatted(param), state);
 		}
 		var scopes = toList(json, SCOPE);
-		if (!scopes.contains(OPENID)) return authorizationError(ex,INVALID_SCOPE,"This is an OpenID Provider. You should request \"openid\" scope!",state);
+		if (!scopes.contains(OPENID)) return authorizationError(ex, INVALID_SCOPE, "This is an OpenID Provider. You should request \"openid\" scope!", state);
 		var responseTypes = toList(json, RESPONSE_TYPE);
 		for (var responseType : responseTypes) {
 			switch (responseType) {
 				case ID_TOKEN:
 				case TOKEN:
-					return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Response type \"%s\" currently not supported".formatted(responseType),state);
+					return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Response type \"%s\" currently not supported".formatted(responseType), state);
 				case CODE:
 					break;
 				default:
-					return authorizationError(ex,INVALID_REQUEST_OBJECT,"Unknown response type \"%s\"".formatted(responseType),state);
+					return authorizationError(ex, INVALID_REQUEST_OBJECT, "Unknown response type \"%s\"".formatted(responseType), state);
 			}
 		}
-		if ( !responseTypes.contains(CODE)) return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE),state);
+		if (!responseTypes.contains(CODE)) return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE), state);
 
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
-		if (!client.redirectUris().contains(redirect)) authorizationError(ex, INVALID_REDIRECT_URI, "unknown redirect uri: %s".formatted(redirect),state);
+		if (!client.redirectUris().contains(redirect)) authorizationError(ex, INVALID_REDIRECT_URI, "unknown redirect uri: %s".formatted(redirect), state);
 
 		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
-		if (json.has(AUTHORZED)) {
+		if (json.has(AUTHORZED)) {  // user did consent
 			var authorized = json.getJSONObject(AUTHORZED);
 			var days       = authorized.getInt("days");
 			var list       = new ArrayList<String>();
@@ -78,9 +79,9 @@ public class ClientController extends Controller {
 		if (!authResult.unauthorizedScopes().isEmpty()) {
 			return sendContent(ex, Map.of("unauthorized_scopes", authResult.unauthorizedScopes(), "rp", client.name()));
 		}
-		var authorizedScopes = authResult.authorizedScopes().stream().map(AuthorizedScope::scope).collect(Collectors.joining(" "));
-		var result	    = new HashMap<String, String>();
-		result.put(SCOPE, authorizedScopes);
+		var joinedAuthorizedScopes = Optionals.nullable(authResult.authorizedScopes()).map(AuthorizedScopes::scopes).map(list -> String.join(" ", list));
+		var result	           = new HashMap<String, String>();
+		joinedAuthorizedScopes.ifPresent(authorizedScopes -> result.put(SCOPE, authorizedScopes));
 		result.put(CODE, authResult.authCode());
 		if (state != null) result.put(STATE, state);
 		return sendContent(ex, result);

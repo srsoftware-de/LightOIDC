@@ -37,7 +37,7 @@ public class FileStore implements ClaimAuthorizationService, ClientService, Sess
 	private Duration	     sessionDuration = Duration.of(10, ChronoUnit.MINUTES);
 	private Map<String, Client>	     clients	     = new HashMap<>();
 	private Map<String, User>	     accessTokens    = new HashMap<>();
-	private Map<String, String>	     authCodes	     = new HashMap<>();
+	private Map<String, Authorization>   authCodes	     = new HashMap<>();
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
 		this.storageFile    = storage.toPath();
@@ -266,6 +266,11 @@ public class FileStore implements ClaimAuthorizationService, ClientService, Sess
 	}
 
 	/*** ClaimAuthorizationService methods ***/
+	private String authCode(User user, Client client, Authorization authorization) {
+		var code = uuid();
+		authCodes.put(code, authorization);
+		return code;
+	}
 
 	@Override
 	public ClaimAuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
@@ -280,8 +285,10 @@ public class FileStore implements ClaimAuthorizationService, ClientService, Sess
 		return this;
 	}
 
-	private AuthResult unauthorized(Collection<String> scopes) {
-		return new AuthResult(List.of(), new HashSet<>(scopes), null);
+
+	@Override
+	public Optional<Authorization> consumeAuthorization(String authCode) {
+		return nullable(authCodes.remove(authCode));
 	}
 
 	@Override
@@ -291,25 +298,27 @@ public class FileStore implements ClaimAuthorizationService, ClientService, Sess
 		if (userAuthorizations == null) return unauthorized(scopes);
 		var clientScopes = userAuthorizations.has(client.id()) ? userAuthorizations.getJSONObject(client.id()) : null;
 		if (clientScopes == null) return unauthorized(scopes);
-		var now	       = Instant.now();
-		var authorizedScopes   = new ArrayList<AuthorizedScope>();
-		var unauthorizedScopes = new HashSet<String>();
+		var     now	           = Instant.now();
+		var     authorizedScopes   = new HashSet<String>();
+		var     unauthorizedScopes = new HashSet<String>();
+		Instant earliestExpiration = null;
 		for (var scope : scopes) {
 			if (clientScopes.has(scope)) {
 				var expiration = Instant.ofEpochSecond(clientScopes.getLong(scope));
 				if (expiration.isAfter(now)) {
-					authorizedScopes.add(new AuthorizedScope(scope, expiration));
+					authorizedScopes.add(scope);
+					if (earliestExpiration == null || expiration.isBefore(earliestExpiration)) earliestExpiration = expiration;
 				} else {
 					unauthorizedScopes.add(scope);
 				}
 			}
 		}
-		return new AuthResult(authorizedScopes, unauthorizedScopes, authCode(user, client));
+
+		var authorization = new Authorization(client.id(), user.uuid(), new AuthorizedScopes(authorizedScopes, earliestExpiration));
+		return new AuthResult(authorization.scopes(), unauthorizedScopes, authCode(user, client, authorization));
 	}
 
-	private String authCode(User user, Client client) {
-		var code = uuid();
-		authCodes.put(user.uuid() + "@" + client.id(), code);
-		return code;
+	private AuthResult unauthorized(Collection<String> scopes) {
+		return new AuthResult(null, new HashSet<>(scopes), null);
 	}
 }
