@@ -10,19 +10,19 @@
     <body>
         <nav></nav>
         <div id="content">
-            <h1>Settings</h1>
+            <h1>Einstellungen</h1>
             <form>
                 <fieldset>
                     <legend>
-                        User settings
+                        Benutzer
                     </legend>
                     <table>
                         <tr>
-                            <th>User name</th>
+                            <th>Benutzername</th>
                             <td><input id="username" type="text"></td>
                         </tr>
                         <tr>
-                            <th>Email</th>
+                            <th>E-Mail</th>
                             <td><input id="email" type="email"></td>
                         </tr>
                         <tr>
@@ -30,30 +30,30 @@
                             <td><input id="uuid" type="text" disabled="true"></td>
                         </tr>
                         <tr id="update_error" style="display: none">
-                            <th>Error</th>
-                            <td class="warning">Failed to update settings!</td>
+                            <th>Fehler</th>
+                            <td class="warning">Aktualisieren der Einstellungen fehlgeschlagen!</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td><button id="updateBtn" type="button" onClick="update()">Update</button></td>
+                            <td><button id="updateBtn" type="button" onClick="update()">Aktualisieren</button></td>
                         </tr>
                     </table>
                 </fieldset>
                 <fieldset>
                     <legend>
-                        Password
+                        Passwort
                     </legend>
                     <table>
                         <tr>
-                            <th>Old password</th>
+                            <th>altes Passwort</th>
                             <td><input id="oldpass" type="password"></td>
                         </tr>
                         <tr>
-                            <th>New Password</th>
+                            <th>Neues Passwort</th>
                             <td><input id="newpass1" type="password"></td>
                         </tr>
                         <tr>
-                            <th>Repeat Password</th>
+                            <th>Passwort wiederholen</th>
                             <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
                         </tr>
                         <tr id="wrong_password" style="display: none">
@@ -61,12 +61,12 @@
                             <td class="warning">Wrong password!</td>
                         </tr>
                         <tr id="password_mismatch" style="display: none">
-                            <th>Error</th>
-                            <td class="warning">Mismatch between new password and repetition!</td>
+                            <th>Fehler</th>
+                            <td class="warning">Passwort und Wiederholung stimmen nicht überein!</td>
                         </tr>
                         <tr>
                             <td></td>
-                            <td><button id="passBtn" type="button" onClick="updatePass()">Update</button></td>
+                            <td><button id="passBtn" type="button" onClick="updatePass()">Aktualisieren</button></td>
                         </tr>
                     </table>
                 </fieldset>

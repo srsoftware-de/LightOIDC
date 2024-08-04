@@ -8,7 +8,7 @@ async function handleClients(response){
     for (let id in clients){
         var row = document.createElement("tr");
         var client = clients[id];
-        row.innerHTML = "<td>"+client.name+"</td>\n<td>"+id+"</td>\n<td>"+client.redirect_uris.join("<br/>")+'</td>\n<td><button onclick="remove(\''+id+'\')" type="button">remove '+client.name+'</button><button type="button" onclick="edit(\''+id+'\')">Edit</button></td>';
+        row.innerHTML = "<td>"+client.name+"</td>\n<td>"+id+"</td>\n<td>"+client.redirect_uris.join("<br/>")+'</td>\n<td><button class="danger" onclick="remove(\''+id+'\')" type="button">remove&nbsp;'+client.name+'</button><button type="button" onclick="edit(\''+id+'\')">Edit</button></td>';
         bottom.parentNode.insertBefore(row,bottom);
     }
 }

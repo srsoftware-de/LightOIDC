@@ -1,29 +1,65 @@
 body {
-    background: black;
+    background: rgb(48,48,48);
     color: white;
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    text-align: center;
 }
 
+a{
+    color: rgb(108, 182, 255);
+    text-decoration: none;
+    font-weight: bold;
+}
+#content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    width: 100%;
+}
+
+button {
+    background: royalblue;
+    border: none;
+    border-radius: 7px;
+    padding: 10px;
+    color: white;
+    margin: 2px;
+}
+
+.danger{
+    background: crimson;
+}
 body fieldset {
     border-radius: 10px;
     display: inline-block;
 }
 
-a {
-  color: yellow;
-}
-
-input, textarea{
+.wide input, textarea{
     width: 600px;
 }
 
-input:disabled{
+input, textarea{
+    border: none;
+    border-radius: 3px;
+    background-color: rgb(38, 103, 152);
+    padding: 7px;
     color: white;
-    background-color: gray;
+    margin: 2px;
+}
+
+input:disabled{
+    color: indigo;
 }
 
 fieldset th,
 form th{
     text-align: right;
+}
+
+fieldset .centered th,
+form .centered th{
+    text-align: center;
 }
 
 .hidden{

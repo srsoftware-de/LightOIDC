@@ -9,27 +9,28 @@
     </head>
     <body>
         <nav></nav>
-        <h1>Clients</h1>
-
-        <fieldset>
-            <legend>bei LightOIDC registrierte Clients:</legend>
-            <table>
-                <tr>
-                    <th>Client</th>
-                    <th>ID</th>
-                    <th>Weiterleitungs-URLs</th>
-                    <th>Aktionen</th>
-                </tr>
-                <tr id="bottom">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <button onclick="window.location.href='new_client.html';">Neuen Client hinzufügen…</button>
-                    </td>
-                </tr>
-            </table>
-            <span class="hidden" id="message">Client "{}" wirklich löschen?</span>
-        </fieldset>
+        <div id="content">
+            <h1>Clients</h1>
+            <fieldset>
+                <legend>bei LightOIDC registrierte Clients:</legend>
+                <table>
+                    <tr class="centered">
+                        <th>Client</th>
+                        <th>ID</th>
+                        <th>Weiterleitungs-URLs</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    <tr id="bottom">
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <button onclick="window.location.href='new_client.html';">Neuen Client hinzufügen…</button>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+                <span class="hidden" id="message">Client "{}" wirklich löschen?</span>
+            </fieldset>
+        </div>
     </body>
 </html>

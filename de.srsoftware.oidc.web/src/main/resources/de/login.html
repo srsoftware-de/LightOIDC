@@ -8,25 +8,25 @@
     </head>
     <body>
         <div id="content">
-            <h1>Login</h1>
+            <h1>Anmeldung</h1>
             <fieldset id="login">
-                <legend>User credentials</legend>
+                <legend>Zugangsdaten</legend>
                 <table>
                     <tr>
-                        <th>User name</th>
+                        <th>Benutzername</th>
                         <td><input type="text" id="username" /></td>
                     </tr>
                     <tr>
-                        <th>Password</th>
+                        <th>Passwort</th>
                         <td><input type="password" id="password" onkeydown="keyDown()"/></td>
                     </tr>
                     <tr id="error" style="display: none">
-                        <th>Error</th>
-                        <td class="warning">Failed to log in!</td>
+                        <th>Fehler</th>
+                        <td class="warning">Anmeldung nicht erfolgreich!</td>
                     </tr>
                     <tr>
                         <td></td>
-                        <td><button type="button" onClick="tryLogin()">Login</button></td>
+                        <td><button type="button" onClick="tryLogin()">Anmelden</button></td>
                     </tr>
                 </table>
             </fieldset>

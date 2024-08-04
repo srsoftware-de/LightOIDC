@@ -9,28 +9,29 @@
     </head>
     <body>
         <nav></nav>
-        <h1>Clients</h1>
+        <div id="content">
+            <h1>Clients</h1>
+            <fieldset>
+                <legend>These are clients that are registered with LightOIDC:</legend>
+                <table>
+                    <tr class="centered">
+                        <th>Client</th>
+                        <th>ID</th>
+                        <th>Redirect URLs</th>
+                        <th>Actions</th>
+                    </tr>
+                    <tr id="bottom">
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <button onclick="window.location.href='new_client.html';">Add new client…</button>
+                        </td>
+                        <td></td>
 
-        <fieldset>
-            <legend>These are clients that are registered with LightOIDC:</legend>
-            <table>
-                <tr>
-                    <th>Client</th>
-                    <th>ID</th>
-                    <th>Redirect URLs</th>
-                    <th>Actions</th>
-                </tr>
-                <tr id="bottom">
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <button onclick="window.location.href='new_client.html';">Add new client…</button>
-                    </td>
-                </tr>
-            </table>
-            <span class="hidden" id="message">Really remove client "{}"?</span>
-        </fieldset>
-        <a href="https://umbrella.srsoftware.de/user/login">Umbrella</a>
+                    </tr>
+                </table>
+                <span class="hidden" id="message">Really remove client "{}"?</span>
+            </fieldset>
+        </div>
     </body>
 </html>
