@@ -39,14 +39,19 @@ async function handleResponse(response){
         }
         show('missing_scopes');
     } else {
-        console.log(response);
+        console.log("handleResponse(…) ← ",response);
         if (response.status == 401){
             login();
             return;
         }
-        var text = await response.text();
-        setText('error',"Error: <br/>"+text);
+        var json = await response.json();
+        setText('error',"Error: <br/>"+json.error_description);
         show('error');
+        if (json.error != "invalid_request_uri"){
+            var url = params.get('redirect_uri') + '?' + new URLSearchParams(json).toString();
+            console.log('redirecting to '+url);
+            redirect(url);
+        }
     }
 }
 
@@ -56,7 +61,7 @@ function grantAutorization(days){
 }
 
 function denyAutorization(){
-    redirect(params.get('redirect_uri')+"?error=access denied");
+    redirect(params.get('redirect_uri')+"?error=consent_required");
 }
 
 function backendAutorization(){

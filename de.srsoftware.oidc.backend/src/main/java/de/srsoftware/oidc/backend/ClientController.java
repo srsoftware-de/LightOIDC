@@ -25,36 +25,45 @@ public class ClientController extends Controller {
 		clients        = clientService;
 	}
 
+	private boolean authorizationError(HttpExchange ex, String errorCode, String description, String state) throws IOException {
+		var map = new HashMap<String, String>();
+		map.put(ERROR,errorCode);
+		if (description != null) map.put(ERROR_DESCRIPTION,description);
+		if (state != null) map.put(STATE,state);
+		return badRequest(ex,map);
+	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
 		var user = session.user();
 		var json = json(ex);
-		for (String param : List.of(SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URI)) {
-			if (!json.has(param)) return badRequest(ex, "Missing required parameter \"%s\"!".formatted(param));
+		var state = json.has(STATE) ? json.getString(STATE) : null;
+		if (!json.has(CLIENT_ID)) return authorizationError(ex, INVALID_REQUEST,"Missing required parameter \"%s\"!".formatted(CLIENT_ID),state);
+		var clientId  = json.getString(CLIENT_ID);
+		var optClient = clients.getClient(clientId);
+		if (optClient.isEmpty()) return authorizationError(ex,INVALID_REQUEST_OBJECT,"unknown client: %s".formatted(clientId),state);
+
+		for (String param : List.of(SCOPE, RESPONSE_TYPE, REDIRECT_URI)) {
+			if (!json.has(param)) return authorizationError(ex,INVALID_REQUEST,"Missing required parameter \"%s\"!".formatted(param),state);
 		}
 		var scopes = toList(json, SCOPE);
-		if (!scopes.contains(OPENID)) return badRequest(ex, "This is an OpenID Provider. You should request \"openid\" scope!");
+		if (!scopes.contains(OPENID)) return authorizationError(ex,INVALID_SCOPE,"This is an OpenID Provider. You should request \"openid\" scope!",state);
 		var responseTypes = toList(json, RESPONSE_TYPE);
 		for (var responseType : responseTypes) {
 			switch (responseType) {
 				case ID_TOKEN:
 				case TOKEN:
-					return sendContent(ex, HTTP_NOT_IMPLEMENTED, "Response type \"%s\" currently not supported".formatted(responseType));
+					return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Response type \"%s\" currently not supported".formatted(responseType),state);
 				case CODE:
 					break;
 				default:
-					return badRequest(ex, "Unknown response type \"%s\"".formatted(responseType));
+					return authorizationError(ex,INVALID_REQUEST_OBJECT,"Unknown response type \"%s\"".formatted(responseType),state);
 			}
 		}
-		if (!responseTypes.contains(CODE)) return badRequest(ex, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE));
+		if ( !responseTypes.contains(CODE)) return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE),state);
 
-		var clientId  = json.getString(CLIENT_ID);
-		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return badRequest(ex, Map.of(CAUSE, "unknown client", CLIENT_ID, clientId));
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
-		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
-		var state = json.has(STATE) ? json.getString(STATE) : null;
+		if (!client.redirectUris().contains(redirect)) authorizationError(ex, INVALID_REDIRECT_URI, "unknown redirect uri: %s".formatted(redirect),state);
 
 		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
 		if (json.has(AUTHORZED)) {
@@ -69,9 +78,9 @@ public class ClientController extends Controller {
 		if (!authResult.unauthorizedScopes().isEmpty()) {
 			return sendContent(ex, Map.of("unauthorized_scopes", authResult.unauthorizedScopes(), "rp", client.name()));
 		}
-		var authoriedScopes = authResult.authorizedScopes().stream().map(AuthorizedScope::scope).collect(Collectors.joining(" "));
+		var authorizedScopes = authResult.authorizedScopes().stream().map(AuthorizedScope::scope).collect(Collectors.joining(" "));
 		var result	    = new HashMap<String, String>();
-		result.put(SCOPE, authoriedScopes);
+		result.put(SCOPE, authorizedScopes);
 		result.put(CODE, authResult.authCode());
 		if (state != null) result.put(STATE, state);
 		return sendContent(ex, result);
