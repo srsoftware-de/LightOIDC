@@ -3,7 +3,7 @@ package de.srsoftware.oidc.backend;
 
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.oidc.api.PathHandler;
+import de.srsoftware.http.PathHandler;
 import java.io.IOException;
 import java.util.Map;
 

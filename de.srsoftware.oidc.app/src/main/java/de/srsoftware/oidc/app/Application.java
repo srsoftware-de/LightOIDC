@@ -3,7 +3,7 @@ package de.srsoftware.oidc.app;
 
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
+import static de.srsoftware.oidc.api.data.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static de.srsoftware.utils.Paths.configDir;
 import static de.srsoftware.utils.Strings.uuid;
@@ -16,7 +16,7 @@ import com.sun.net.httpserver.HttpServer;
 import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.KeyManager;
 import de.srsoftware.oidc.api.KeyStorage;
-import de.srsoftware.oidc.api.User;
+import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
 import de.srsoftware.oidc.datastore.file.FileStore;
 import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;

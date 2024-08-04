@@ -1,7 +1,7 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.oidc.api;
+package de.srsoftware.http;
 
-import static de.srsoftware.oidc.api.Constants.AUTHORIZATION;
+
 import static de.srsoftware.utils.Optionals.nullable;
 import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.*;
@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
+	public static final String  AUTHORIZATION  = "Authorization";
 	public static final String  CONTENT_TYPE   = "Content-Type";
 	public static final String  DELETE         = "DELETE";
 	private static final String FORWARDED_HOST = "x-forwarded-host";

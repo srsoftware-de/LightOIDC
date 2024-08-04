@@ -12,9 +12,9 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation project(':de.srsoftware.cookies')
-    implementation project(':de.srsoftware.oidc.api')
+    implementation project(':de.srsoftware.http')
     implementation project(':de.srsoftware.logging')
+    implementation project(':de.srsoftware.oidc.api')
     implementation project(':de.srsoftware.utils')
     implementation 'org.json:json:20240303'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'

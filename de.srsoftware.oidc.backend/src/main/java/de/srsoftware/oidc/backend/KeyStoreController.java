@@ -2,9 +2,9 @@
 package de.srsoftware.oidc.backend;
 
 import com.sun.net.httpserver.HttpExchange;
+import de.srsoftware.http.PathHandler;
 import de.srsoftware.oidc.api.KeyManager;
 import de.srsoftware.oidc.api.KeyStorage;
-import de.srsoftware.oidc.api.PathHandler;
 import java.io.IOException;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;

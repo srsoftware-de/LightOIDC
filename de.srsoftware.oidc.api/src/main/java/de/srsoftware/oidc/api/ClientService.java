@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import de.srsoftware.oidc.api.data.Client;
 import java.util.List;
 import java.util.Optional;
 

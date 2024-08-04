@@ -1,5 +1,5 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.cookies;
+package de.srsoftware.http;
 
 
 import com.sun.net.httpserver.HttpExchange;

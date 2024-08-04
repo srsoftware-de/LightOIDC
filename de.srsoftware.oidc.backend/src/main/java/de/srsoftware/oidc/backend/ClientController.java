@@ -2,12 +2,15 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
+import static de.srsoftware.oidc.api.data.Permission.MANAGE_CLIENTS;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.AuthorizedScopes;
+import de.srsoftware.oidc.api.data.Client;
+import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.utils.Optionals;
 import java.io.IOException;
 import java.time.Instant;
@@ -16,11 +19,11 @@ import java.util.*;
 import org.json.JSONObject;
 
 public class ClientController extends Controller {
-	private static final System.Logger      LOG = System.getLogger(ClientController.class.getSimpleName());
-	private final ClaimAuthorizationService authorizations;
-	private final ClientService	        clients;
+	private static final System.Logger LOG = System.getLogger(ClientController.class.getSimpleName());
+	private final AuthorizationService authorizations;
+	private final ClientService	   clients;
 
-	public ClientController(ClaimAuthorizationService authorizationService, ClientService clientService, SessionService sessionService) {
+	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService) {
 		super(sessionService);
 		authorizations = authorizationService;
 		clients        = clientService;

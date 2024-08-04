@@ -4,11 +4,13 @@ package de.srsoftware.oidc.backend;
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Constants.ERROR;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
-import static java.lang.System.Logger.Level.*;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 import com.sun.net.httpserver.HttpExchange;
+import de.srsoftware.http.PathHandler;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.Client;
+import de.srsoftware.oidc.api.data.User;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -23,13 +25,13 @@ import org.json.JSONObject;
 public class TokenController extends PathHandler {
 	public record Configuration(String issuer, int tokenExpirationMinutes) {
 	}
-	private final ClientService	        clients;
-	private final ClaimAuthorizationService authorizations;
-	private final UserService	        users;
-	private final KeyManager	        keyManager;
-	private Configuration	        config;
+	private final ClientService	   clients;
+	private final AuthorizationService authorizations;
+	private final UserService	   users;
+	private final KeyManager	   keyManager;
+	private Configuration	   config;
 
-	public TokenController(ClaimAuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
+	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
 		authorizations	= authorizationService;
 		clients	= clientService;
 		this.keyManager = keyManager;
@@ -37,8 +39,15 @@ public class TokenController extends PathHandler {
 		config	= configuration;
 	}
 
+	private String decode(String urlencoded) {
+		return URLDecoder.decode(urlencoded, StandardCharsets.UTF_8);
+	}
+
 	private Map<String, String> deserialize(String body) {
-		return Arrays.stream(body.split("&")).map(s -> s.split("=")).collect(Collectors.toMap(arr -> arr[0], arr -> arr[1]));
+		return Arrays
+		    .stream(body.split("&"))  //
+		    .map(s -> s.split("="))
+		    .collect(Collectors.toMap(arr -> decode(arr[0]), arr -> decode(arr[1])));
 	}
 
 	@Override

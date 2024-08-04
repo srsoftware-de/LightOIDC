@@ -5,7 +5,7 @@ import static java.lang.System.Logger.Level.*;
 import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.oidc.api.PathHandler;
+import de.srsoftware.http.PathHandler;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;

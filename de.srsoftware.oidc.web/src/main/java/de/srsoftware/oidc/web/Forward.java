@@ -4,7 +4,7 @@ package de.srsoftware.oidc.web;
 import static java.lang.System.Logger.Level.INFO;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.oidc.api.PathHandler;
+import de.srsoftware.http.PathHandler;
 import java.io.IOException;
 
 public class Forward extends PathHandler {

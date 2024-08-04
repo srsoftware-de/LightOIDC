@@ -1,13 +1,14 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
 import static de.srsoftware.oidc.api.Constants.EXPIRATION;
-import static de.srsoftware.oidc.api.User.*;
+import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.json.JSONObject;
 
-public class FileStore implements ClaimAuthorizationService, ClientService, SessionService, UserService {
+public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
 	private static final String AUTHORIZATIONS	 = "authorizations";
 	private static final String CLIENTS	 = "clients";
 	private static final String CODES	 = "codes";
@@ -273,7 +274,7 @@ public class FileStore implements ClaimAuthorizationService, ClientService, Sess
 	}
 
 	@Override
-	public ClaimAuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
+	public AuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
 		LOG.log(WARNING, "{0}.authorize({1}, {2}, {3}, {4}) not implemented", getClass().getSimpleName(), user.realName(), client.name(), scopes, expiration);
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
 		if (!authorizations.has(user.uuid())) authorizations.put(user.uuid(), new JSONObject());

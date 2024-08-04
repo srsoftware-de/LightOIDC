@@ -1,12 +1,14 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
-import static de.srsoftware.oidc.api.User.*;
+import static de.srsoftware.oidc.api.data.User.*;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.cookies.SessionToken;
+import de.srsoftware.http.SessionToken;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.Session;
+import de.srsoftware.oidc.api.data.User;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;

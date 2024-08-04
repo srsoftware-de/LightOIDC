@@ -1,5 +1,5 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.cookies;
+package de.srsoftware.http;
 
 import static de.srsoftware.utils.Optionals.nullable;
 import static java.lang.System.Logger.Level.*;
