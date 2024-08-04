@@ -1,32 +1,57 @@
 var params = new URLSearchParams(window.location.search)
 var json = Object.fromEntries(params);
+var scopes = {};
 
 function showConfirmationDialog(name){
     get('name').innerHTML = name;
     show('content');
 }
 
+async function showScope(response,scope){
+    if (response.ok){
+        var content = await response.text();
+        get('scopes').innerHTML += content;
+    } else {
+        get('scopes').innerHTML += '<li>'+scope+' (???)</li>';
+    }
+}
+
 async function handleResponse(response){
     if (response.ok){
         var json = await response.json();
-        console.log("handleResponse(ok) ←",json);
-        if (!json.confirmed){
-            showConfirmationDialog(json.name);
-        } else {
-        console.log('redirecting to '+json.redirect_uri+'?code='+json.code+'&state='+json.state+'&scope=openid');
-            redirect(json.redirect_uri+'?code='+json.code+'&state='+json.state+'&scope=openid');
+        if (json.rp) {
+            setText("rp",json.rp);
+            setText("rp2",json.rp);
         }
-        return;
+        get('scopes').innerHTML = '';
+        if (json.unauthorized_scopes){
+            scopes = json.unauthorized_scopes;
+            for (var scope of json.unauthorized_scopes){
+                fetch(web+"scopes/"+scope+".html").then(response => showScope(response,scope))
+            }
+            show("content");
+            return;
+        }
+        if (json.scope){
+            var url = params.get('redirect_uri') + '?' + new URLSearchParams(json).toString();
+            redirect(url);
+            return;
+        }
+        show('missing_scopes');
     } else {
-        var json = await response.json();
-        console.log("handleResponse(error) ←",json);
-        get('error').innerHTML = "Error: <br/>"+JSON.stringify(json);
+        console.log(response);
+        if (response.status == 401){
+            login();
+            return;
+        }
+        var text = await response.text();
+        setText('error',"Error: <br/>"+text);
         show('error');
     }
 }
 
 function grantAutorization(days){
-    json.days = days;
+    json['authorized'] = { days : days, scopes : scopes};
     backendAutorization();
 }
 

@@ -6,6 +6,7 @@ public class Constants {
 	public static final String APP_NAME      = "LightOIDC";
 	public static final String AUTH_CODE     = "authorization_code";
 	public static final String AUTHORIZATION = "Authorization";
+	public static final String AUTHORZED     = "authorized";
 	public static final String BEARER        = "Bearer";
 	public static final String CAUSE         = "cause";
 	public static final String CLIENT_ID     = "client_id";
@@ -14,6 +15,7 @@ public class Constants {
 	public static final String CONFIG_PATH   = "LIGHTOIDC_CONFIG_PATH";
 	public static final String CONFIRMED     = "confirmed";
 	public static final String DAYS	         = "days";
+	public static final String EXPIRATION    = "expiration";
 	public static final String EXPIRES_IN    = "expires_in";
 	public static final String GRANT_TYPE    = "grant_type";
 	public static final String ID_TOKEN      = "id_token";

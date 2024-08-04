@@ -33,3 +33,7 @@ form th{
 .warning{
     color: yellow;
 }
+
+.error{
+    background-color: red;
+}

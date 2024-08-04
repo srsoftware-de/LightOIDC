@@ -10,14 +10,18 @@
 <body>
     <nav></nav>
     <div id="content" style="display: none">
-        <h1>Authorization</h1>
-        Confirmation required: are you shure you want to grant access to <span id="name">some client</span>?
-        <button type="button" onclick="grantAutorization(1)">Yes - 1 day</button>
-        <button type="button" onclick="grantAutorization(7)">Yes - 1 week</button>
-        <button type="button" onclick="grantAutorization(30)">Yes - 1 month</button>
-        <button type="button" onclick="grantAutorization(365)">Yes - 1 year</button>
+        A relying party, <span id="rp">unknown</span>, requested access to the following information:
+        <ul id="scopes">
+
+        </ul>
+        Do you consent to share this information with <span id="rp2">unknown</span>?
+        <button type="button" onclick="grantAutorization(1)">Yes - for 1 day</button>
+        <button type="button" onclick="grantAutorization(7)">Yes - for 1 week</button>
+        <button type="button" onclick="grantAutorization(30)">Yes - for 1 month</button>
+        <button type="button" onclick="grantAutorization(365)">Yes - for 1 year</button>
         <button type="button" onclick="denyAutorization()">No</button>
     </div>
     <div id="error" class="error" style="display: none"></div>
+    <div id="missing_scopes" class="error" style="display: none">Authorization response contained neither list of <em>unauthorized scopes</em> nor list of <em>authorized scopes</em>! This is a server problem.</div>
 </body>
 </html>

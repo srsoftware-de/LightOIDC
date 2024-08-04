@@ -3,26 +3,23 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Permission.MANAGE_CLIENTS;
-import static de.srsoftware.utils.Strings.uuid;
-import static java.lang.System.Logger.Level.ERROR;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class ClientController extends Controller {
-	private static final System.Logger LOG = System.getLogger(ClientController.class.getSimpleName());
-	private final AuthorizationService authorizations;
-	private final ClientService	   clients;
+	private static final System.Logger      LOG = System.getLogger(ClientController.class.getSimpleName());
+	private final ClaimAuthorizationService authorizations;
+	private final ClientService	        clients;
 
-	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService) {
+	public ClientController(ClaimAuthorizationService authorizationService, ClientService clientService, SessionService sessionService) {
 		super(sessionService);
 		authorizations = authorizationService;
 		clients        = clientService;
@@ -30,33 +27,58 @@ public class ClientController extends Controller {
 
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
-		var user  = session.user();
-		var json  = json(ex);
-		var scope = json.getString(SCOPE);
-		if (!Arrays.asList(scope.split(" ")).contains(OPENID)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "openid scope missing in request"));
-
-		var clientId  = json.getString(CLIENT_ID);
-		var redirect  = json.getString(REDIRECT_URI);
-		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return badRequest(ex, Map.of(CAUSE, "unknown client", CLIENT_ID, clientId));
-		var client = optClient.get();
-		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
-
-		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
-
-		if (!authorizations.isAuthorized(client, session.user())) {
-			if (json.has(DAYS)) {
-				var days       = json.getInt(DAYS);
-				var expiration = Instant.now().plus(Duration.ofDays(days));
-				authorizations.authorize(client, user, expiration);
-			} else {
-				return sendContent(ex, Map.of(CONFIRMED, false, NAME, client.name()));
+		var user = session.user();
+		var json = json(ex);
+		for (String param : List.of(SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URI)) {
+			if (!json.has(param)) return badRequest(ex, "Missing required parameter \"%s\"!".formatted(param));
+		}
+		var scopes = toList(json, SCOPE);
+		if (!scopes.contains(OPENID)) return badRequest(ex, "This is an OpenID Provider. You should request \"openid\" scope!");
+		var responseTypes = toList(json, RESPONSE_TYPE);
+		for (var responseType : responseTypes) {
+			switch (responseType) {
+				case ID_TOKEN:
+				case TOKEN:
+					return sendContent(ex, HTTP_NOT_IMPLEMENTED, "Response type \"%s\" currently not supported".formatted(responseType));
+				case CODE:
+					break;
+				default:
+					return badRequest(ex, "Unknown response type \"%s\"".formatted(responseType));
 			}
 		}
-		var state = json.getString(STATE);
-		var code  = uuid();
-		authorizations.addCode(client, session.user(), code);
-		return sendContent(ex, Map.of(CONFIRMED, true, CODE, code, REDIRECT_URI, redirect, STATE, state));
+		if (!responseTypes.contains(CODE)) return badRequest(ex, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE));
+
+		var clientId  = json.getString(CLIENT_ID);
+		var optClient = clients.getClient(clientId);
+		if (optClient.isEmpty()) return badRequest(ex, Map.of(CAUSE, "unknown client", CLIENT_ID, clientId));
+		var client   = optClient.get();
+		var redirect = json.getString(REDIRECT_URI);
+		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Map.of(CAUSE, "unknown redirect uri", REDIRECT_URI, redirect));
+		var state = json.has(STATE) ? json.getString(STATE) : null;
+
+		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
+		if (json.has(AUTHORZED)) {
+			var authorized = json.getJSONObject(AUTHORZED);
+			var days       = authorized.getInt("days");
+			var list       = new ArrayList<String>();
+			authorized.getJSONArray("scopes").forEach(scope -> list.add(scope.toString()));
+			authorizations.authorize(user, client, list, Instant.now().plus(days, ChronoUnit.DAYS));
+		}
+
+		var authResult = authorizations.getAuthorization(user, client, scopes);
+		if (!authResult.unauthorizedScopes().isEmpty()) {
+			return sendContent(ex, Map.of("unauthorized_scopes", authResult.unauthorizedScopes(), "rp", client.name()));
+		}
+		var authoriedScopes = authResult.authorizedScopes().stream().map(AuthorizedScope::scope).collect(Collectors.joining(" "));
+		var result	    = new HashMap<String, String>();
+		result.put(SCOPE, authoriedScopes);
+		result.put(CODE, authResult.authCode());
+		if (state != null) result.put(STATE, state);
+		return sendContent(ex, result);
+	}
+
+	private List<String> toList(JSONObject json, String key) {
+		return Arrays.asList(json.getString(key).split(" "));
 	}
 
 	private boolean deleteClient(HttpExchange ex, Session session) throws IOException {
@@ -86,7 +108,7 @@ public class ClientController extends Controller {
 	@Override
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
-		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+		if (optSession.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "No authorized!");
 
 		// post-login paths
 		var session = optSession.get();

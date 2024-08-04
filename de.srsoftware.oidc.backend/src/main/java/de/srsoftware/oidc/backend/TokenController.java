@@ -2,33 +2,29 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.utils.Optionals.nullable;
 import static java.lang.System.Logger.Level.*;
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.*;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
-import org.json.JSONObject;
 
 public class TokenController extends PathHandler {
 	public record Configuration(String issuer, int tokenExpirationMinutes) {
 	}
-	private final ClientService	   clients;
-	private final AuthorizationService authorizations;
-	private final UserService	   users;
-	private final KeyManager	   keyManager;
-	private Configuration	   config;
+	private final ClientService	        clients;
+	private final ClaimAuthorizationService authorizations;
+	private final UserService	        users;
+	private final KeyManager	        keyManager;
+	private Configuration	        config;
 
-	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
+	public TokenController(ClaimAuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
 		authorizations	= authorizationService;
 		clients	= clientService;
 		this.keyManager = keyManager;
@@ -53,7 +49,8 @@ public class TokenController extends PathHandler {
 	private boolean provideToken(HttpExchange ex) throws IOException {
 		var map = deserialize(body(ex));
 		// TODO: check 	data, → https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
-
+		return sendEmptyResponse(HTTP_NOT_IMPLEMENTED, ex);
+		/*
 		var grantType = map.get(GRANT_TYPE);
 		if (!AUTH_CODE.equals(grantType)) return sendContent(ex, HTTP_BAD_REQUEST, Map.of(ERROR, "unknown grant type", GRANT_TYPE, grantType));
 
@@ -87,7 +84,7 @@ public class TokenController extends PathHandler {
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);
 		LOG.log(DEBUG, jwToken);
-		return sendContent(ex, response);
+		return sendContent(ex, response);*/
 	}
 
 	private String createJWT(Client client, User user) {
@@ -120,12 +117,12 @@ public class TokenController extends PathHandler {
 		claims.setSubject(user.uuid());	  // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
 		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
-		claims.setIssuedAtToNow();	         // when the token was issued/created (now)
+		claims.setIssuedAtToNow();			            // when the token was issued/created (now)
 
 		claims.setClaim("client_id", client.id());
 		claims.setClaim("email", user.email());  // additional claims/attributes about the subject can be added
 		client.nonce().ifPresent(nonce -> claims.setClaim(NONCE, nonce));
-		claims.setGeneratedJwtId();	         // a unique identifier for the token
+		claims.setGeneratedJwtId();  // a unique identifier for the token
 		return claims;
 	}
 }

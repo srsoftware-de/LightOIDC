@@ -25,6 +25,10 @@ function hide(id){
     get(id).style.display = 'none';
 }
 
+function login(){
+    redirect('login.html?return_to='+encodeURIComponent(window.location.href));
+}
+
 function redirect(page){
     window.location.href = page;
 }

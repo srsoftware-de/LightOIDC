@@ -1,8 +1,10 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
+import static de.srsoftware.oidc.api.Constants.EXPIRATION;
 import static de.srsoftware.oidc.api.User.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
@@ -17,17 +19,17 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.json.JSONObject;
 
-public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
-	private static final String AUTHORIZATIONS = "authorizations";
-	private static final String CLIENTS        = "clients";
-	private static final String CODES          = "codes";
-	private static final String EXPIRATION     = "expiration";
-	private static final String NAME           = "name";
-	private static final String REDIRECT_URIS  = "redirect_uris";
-	private static final String SECRET         = "secret";
-	private static final String SESSIONS       = "sessions";
-	private static final String USERS          = "users";
-	private static final String USER           = "user";
+public class FileStore implements ClaimAuthorizationService, ClientService, SessionService, UserService {
+	private static final String AUTHORIZATIONS	 = "authorizations";
+	private static final String CLIENTS	 = "clients";
+	private static final String CODES	 = "codes";
+	private static final System.Logger LOG	 = System.getLogger(FileStore.class.getSimpleName());
+	private static final String	   NAME	 = "name";
+	private static final String	   REDIRECT_URIS = "redirect_uris";
+	private static final String	   SECRET	 = "secret";
+	private static final String	   SESSIONS	 = "sessions";
+	private static final String	   USERS	 = "users";
+	private static final String	   USER	 = "user";
 
 	private final Path       storageFile;
 	private final JSONObject json;
@@ -35,6 +37,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private Duration	     sessionDuration = Duration.of(10, ChronoUnit.MINUTES);
 	private Map<String, Client>	     clients	     = new HashMap<>();
 	private Map<String, User>	     accessTokens    = new HashMap<>();
+	private Map<String, String>	     authCodes	     = new HashMap<>();
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
 		this.storageFile    = storage.toPath();
@@ -262,80 +265,51 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
 	}
 
-
-	/*** Authorization service methods ***/
-
-	@Override
-	public Optional<Authorization> forCode(String code) {
-		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		if (!authorizations.has(code)) return empty();
-		String authId = authorizations.getString(code);
-		if (!authorizations.has(authId)) {
-			authorizations.remove(code);
-			return empty();
-		}
-		try {
-			var expiration = Instant.ofEpochSecond(authorizations.getLong(authId));
-			if (expiration.isAfter(Instant.now())) {
-				String[] parts = authId.split("@");
-				return Optional.of(new Authorization(parts[1], parts[0], expiration));
-			}
-			authorizations.remove(authId);
-		} catch (Exception ignored) {
-		}
-
-		return empty();
-	}
+	/*** ClaimAuthorizationService methods ***/
 
 	@Override
-	public AuthorizationService addCode(Client client, User user, String code) {
+	public ClaimAuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
+		LOG.log(WARNING, "{0}.authorize({1}, {2}, {3}, {4}) not implemented", getClass().getSimpleName(), user.realName(), client.name(), scopes, expiration);
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		authorizations.put(code, authorizationId(user, client));
+		if (!authorizations.has(user.uuid())) authorizations.put(user.uuid(), new JSONObject());
+		var userAuthorizations = authorizations.getJSONObject(user.uuid());
+		if (!userAuthorizations.has(client.id())) userAuthorizations.put(client.id(), new JSONObject());
+		var clientScopes = userAuthorizations.getJSONObject(client.id());
+		for (var scope : scopes) clientScopes.put(scope, expiration.getEpochSecond());
 		save();
 		return this;
 	}
 
-	@Override
-	public AuthorizationService authorize(Client client, User user, Instant expiration) {
-		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		authorizations.put(authorizationId(user, client), expiration.getEpochSecond());
-		return this;
-	}
-
-	private String authorizationId(User user, Client client) {
-		return String.join("@", user.uuid(), client.id());
+	private AuthResult unauthorized(Collection<String> scopes) {
+		return new AuthResult(List.of(), new HashSet<>(scopes), null);
 	}
 
 	@Override
-	public boolean isAuthorized(Client client, User user) {
-		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		var authId	   = authorizationId(user, client);
-		if (!authorizations.has(authId)) return false;
-
-		try {
-			if (Instant.ofEpochSecond(authorizations.getLong(authId)).isAfter(Instant.now())) return true;
-		} catch (Exception ignored) {
+	public AuthResult getAuthorization(User user, Client client, Collection<String> scopes) {
+		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
+		var userAuthorizations = authorizations.has(user.uuid()) ? authorizations.getJSONObject(user.uuid()) : null;
+		if (userAuthorizations == null) return unauthorized(scopes);
+		var clientScopes = userAuthorizations.has(client.id()) ? userAuthorizations.getJSONObject(client.id()) : null;
+		if (clientScopes == null) return unauthorized(scopes);
+		var now	       = Instant.now();
+		var authorizedScopes   = new ArrayList<AuthorizedScope>();
+		var unauthorizedScopes = new HashSet<String>();
+		for (var scope : scopes) {
+			if (clientScopes.has(scope)) {
+				var expiration = Instant.ofEpochSecond(clientScopes.getLong(scope));
+				if (expiration.isAfter(now)) {
+					authorizedScopes.add(new AuthorizedScope(scope, expiration));
+				} else {
+					unauthorizedScopes.add(scope);
+				}
+			}
 		}
-		revoke(client, user);
-		return false;
+		return new AuthResult(authorizedScopes, unauthorizedScopes, authCode(user, client));
 	}
 
-	@Override
-	public List<User> authorizedUsers(Client client) {
-		return List.of();
-	}
-
-	@Override
-	public List<Client> authorizedClients(User user) {
-		return List.of();
-	}
-
-	@Override
-	public AuthorizationService revoke(Client client, User user) {
-		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		var authId	   = authorizationId(user, client);
-		if (!authorizations.has(authId)) return this;
-		authorizations.remove(authId);
-		return save();
+	private String authCode(User user, Client client) {
+		var code = uuid();
+		authCodes.put(user.uuid() + "@" + client.id(), code);
+		return code;
 	}
 }
