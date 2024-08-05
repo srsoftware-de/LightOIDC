@@ -3,6 +3,8 @@ body {
     color: white;
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
     text-align: center;
+    margin: 0;
+    padding: 0;
 }
 
 a{
@@ -19,12 +21,17 @@ a{
 }
 
 button {
-    background: royalblue;
+    background: rgb(25, 118, 210);
     border: none;
     border-radius: 7px;
     padding: 10px;
     color: white;
     margin: 2px;
+}
+
+#login button{
+    width: 100%;
+    margin: 0;
 }
 
 .danger{
@@ -39,17 +46,25 @@ body fieldset {
     width: 600px;
 }
 
+
+input:-webkit-autofill{
+    filter: none;
+    box-shadow: 0 0 0 100px rgb(38, 103, 152) inset;
+}
 input, textarea{
-    border: none;
-    border-radius: 3px;
-    background-color: rgb(38, 103, 152);
+    border: 1px solid gray;
+    border-radius: 5px;
+    background: rgb(48,48,48);
     padding: 7px;
     color: white;
+    caret-color: white;
     margin: 2px;
+    -webkit-text-fill-color: white;
 }
 
 input:disabled{
-    color: indigo;
+    color: gray;
+    -webkit-text-fill-color: gray;
 }
 
 fieldset th,
@@ -72,4 +87,18 @@ form .centered th{
 
 .error{
     background-color: red;
+}
+
+legend {
+  position: relative;
+  top: 3px;
+  border: 1px solid white;
+  border-radius: 3px;
+  padding: 3px 3px 0 3px;
+}
+
+#ad {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }

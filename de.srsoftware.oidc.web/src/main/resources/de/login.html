@@ -8,17 +8,17 @@
     </head>
     <body>
         <div id="content">
-            <h1>Anmeldung</h1>
+            <h1>SRSoftware Light OIDC</h1>
             <fieldset id="login">
-                <legend>Zugangsdaten</legend>
+                <legend>Anmeldung</legend>
                 <table>
                     <tr>
                         <th>Benutzername</th>
-                        <td><input type="text" id="username" /></td>
+                        <td><input type="text" id="username" placeholder="Benutzername *"/></td>
                     </tr>
                     <tr>
                         <th>Passwort</th>
-                        <td><input type="password" id="password" onkeydown="keyDown()"/></td>
+                        <td><input type="password" id="password" onkeydown="keyDown()" placeholder="Passwort *"/></td>
                     </tr>
                     <tr id="error" style="display: none">
                         <th>Fehler</th>
@@ -30,6 +30,9 @@
                     </tr>
                 </table>
             </fieldset>
+        </div>
+        <div id="ad">
+            Dieser schlanke Login-Dienst wurde entwickelt von <b>SRSoftware</b>. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Mehr erfahren…</a>
         </div>
     </body>
 </html>
