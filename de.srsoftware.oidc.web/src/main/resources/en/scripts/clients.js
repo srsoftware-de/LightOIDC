@@ -1,3 +1,7 @@
+function edit(clientId){
+    redirect("edit_client.html?id="+clientId);
+}
+
 async function handleClients(response){
     if (response.status == UNAUTHORIZED) {
         redirect('login.html?return_to='+encodeURI(window.location.href))
@@ -8,7 +12,13 @@ async function handleClients(response){
     for (let id in clients){
         var row = document.createElement("tr");
         var client = clients[id];
-        row.innerHTML = "<td>"+client.name+"</td>\n<td>"+id+"</td>\n<td>"+client.redirect_uris.join("<br/>")+'</td>\n<td><button type="button" onclick="edit(\''+id+'\')">Edit</button><button class="danger" onclick="remove(\''+id+'\')" type="button">Remove</button></td>';
+        row.innerHTML = `<td>${client.name}</td>
+        <td>${id}</td>
+        <td>${client.redirect_uris.join("<br/>")}</td>
+        <td>
+            <button type="button" onclick="edit('${id}')">Edit</button>
+            <button class="danger" onclick="remove('${id}')" type="button">Remove</button>
+        </td>`;
         bottom.parentNode.insertBefore(row,bottom);
     }
 }
@@ -27,8 +37,6 @@ function remove(clientId){
     }
 }
 
-function edit(clientId){
-    redirect("edit_client.html?id="+clientId);
-}
+
 
 fetch(client_controller+"/list",{method:'POST'}).then(handleClients);

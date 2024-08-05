@@ -31,6 +31,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private static final String	   SESSIONS	 = "sessions";
 	private static final String	   USERS	 = "users";
 	private static final String	   USER	 = "user";
+	private static final List<String> KEYS	 = List.of(USERNAME, EMAIL, REALNAME);
 
 	private final Path       storageFile;
 	private final JSONObject json;
@@ -91,10 +92,24 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return this;
 	}
 
+	@Override
+	public Set<User> find(String key) {
+		var users  = json.getJSONObject(USERS);
+		var result = new HashSet<User>();
+		for (var id : users.keySet()) {
+			var data = users.getJSONObject(id);
+			if (id.equals(key)) User.of(data, id).ifPresent(result::add);
+			if (KEYS.stream().map(data::getString).anyMatch(val -> val.equals(key))) User.of(data, id).ifPresent(result::add);
+		}
+		return result;
+	}
 
 	@Override
 	public List<User> list() {
-		return List.of();
+		var        users  = json.getJSONObject(USERS);
+		List<User> result = new ArrayList<>();
+		for (var uid : users.keySet()) User.of(users.getJSONObject(uid), uid).ifPresent(result::add);
+		return result;
 	}
 
 
@@ -103,24 +118,23 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		try {
 			var users    = json.getJSONObject(USERS);
 			var userData = users.getJSONObject(userId);
-			return userOf(userData, userId);
+			return User.of(userData, userId);
 		} catch (Exception ignored) {
 		}
 		return empty();
 	}
 
 	@Override
-	public Optional<User> load(String username, String password) {
+	public Optional<User> load(String user, String password) {
 		try {
 			var users = json.getJSONObject(USERS);
 			var uuids = users.keySet();
 			for (String userId : uuids) {
 				var userData = users.getJSONObject(userId);
-				if (!userData.getString(USERNAME).equals(username)) continue;
+
+				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(user))) continue;
 				var hashedPass = userData.getString(PASSWORD);
-				if (passwordHasher.matches(password, hashedPass)) {
-					return userOf(userData, userId);
-				}
+				if (passwordHasher.matches(password, hashedPass)) return User.of(userData, userId);
 			}
 			return empty();
 		} catch (Exception e) {
@@ -141,33 +155,15 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		} else {
 			users = json.getJSONObject(USERS);
 		}
+
 		users.put(user.uuid(), user.map(true));
 		return save();
 	}
 
 	@Override
 	public FileStore updatePassword(User user, String plaintextPassword) {
-		var oldHashedPassword = user.hashedPassword();
-		var salt	      = passwordHasher.salt(oldHashedPassword);
-		user.hashedPassword(passwordHasher.hash(plaintextPassword, salt));
-		return save(user);
+		return save(user.hashedPassword(passwordHasher.hash(plaintextPassword, uuid())));
 	}
-
-	private Optional<User> userOf(JSONObject json, String userId) {
-		var user  = new User(json.getString(USERNAME), json.getString(PASSWORD), json.getString(REALNAME), json.getString(EMAIL), userId);
-		var perms = json.getJSONArray(PERMISSIONS);
-		for (Object perm : perms) {
-			try {
-				if (perm instanceof String s) perm = Permission.valueOf(s);
-				if (perm instanceof Permission p) user.add(p);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		return Optional.of(user);
-	}
-
 
 	/*** Session Service Methods ***/
 

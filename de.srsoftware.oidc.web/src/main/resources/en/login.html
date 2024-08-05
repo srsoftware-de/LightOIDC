@@ -14,7 +14,10 @@
                 <table>
                     <tr>
                         <th>User name</th>
-                        <td><input type="text" id="username" placeholder="User name *"/></td>
+                        <td style="position: relative">
+                            <input type="text" id="username" placeholder="User name *"/>
+                            <span id="bubble" style="display: none">Please enter a username or email to reset your password!</span>
+                        </td>
                     </tr>
                     <tr>
                         <th>Password</th>
@@ -28,8 +31,15 @@
                         <td></td>
                         <td><button type="button" onClick="tryLogin()">Login</button></td>
                     </tr>
+                    <tr>
+                        <td></td>
+                        <td><button type="button" class="light" onClick="resetPw()">reset password?</button></td>
+                    </tr>
                 </table>
             </fieldset>
+            <div id="sent" class="warning" style="display: none">
+                A link to reset your password has been sent.
+            </div>
         </div>
         <div id="ad">
             This tiny login provider is brought to you by <b>SRSoftware</b>. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Find out more…</a>

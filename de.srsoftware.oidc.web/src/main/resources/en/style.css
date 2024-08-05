@@ -29,6 +29,30 @@ button {
     margin: 2px;
 }
 
+button:hover{
+    padding: 9px;
+    border: 1px solid orange;
+}
+
+button[disabled]{
+    background: rgb(48,48,48);
+    border: 1px solid gray;
+    color: gray;
+    padding: 9px;
+}
+
+button.light{
+    background: rgb(48,48,48);
+    color: #444;
+    border: 1px solid #444;
+    padding: 9px;
+}
+
+button.light:hover{
+    background: indigo;
+    color: orange;
+}
+
 #login button{
     width: 100%;
     margin: 0;
@@ -72,8 +96,10 @@ form th{
     text-align: right;
 }
 
-fieldset .centered th,
-form .centered th{
+.centered,
+.centered input,
+.centered th,
+.centered th{
     text-align: center;
 }
 
@@ -101,4 +127,34 @@ legend {
   position: fixed;
   bottom: 0;
   width: 100%;
+}
+ul{
+    display: inline-block;
+    text-align: left;
+}
+
+#bubble {
+  --c: indigo;
+  background: var(--c);
+  color: orange;
+  padding: .5em 1em;
+    position: absolute;
+    top: 16px;
+    left: 100%;
+    width: 220px;
+
+  border-radius: 0 .25em .25em .25em;
+  &::after {
+    content: '';
+    position: absolute;
+    border: .5em solid transparent;
+    border-top-color: var(--c);
+    border-right-color: var(--c);
+    right: 100%;
+    top: 0%;
+
+    // magic
+    transform: skewY(20deg);
+    transform-origin: 100% 100%;
+  }
 }

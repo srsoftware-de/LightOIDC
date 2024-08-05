@@ -1,0 +1,48 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/user.js"></script>
+    <script src="scripts/users.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav></nav>
+<div id="content">
+    <h1>Users</h1>
+    <fieldset>
+        <legend>These are users that are registered with LightOIDC:</legend>
+        <table class="centered">
+            <tr>
+                <th>Username</th>
+                <th>Display name</th>
+                <th>Email</th>
+                <th>ID</th>
+                <th>Actions</th>
+            </tr>
+            <tr id="bottom">
+                <td>
+                    <input value="" type="text" id="username" placeholder="user name" />
+                </td>
+                <td>
+                    <input value="" type="text" id="realname" placeholder="display name" />
+                </td>
+                <td>
+                    <input value="" type="text" id="email" placeholder="email address" autocomplete="off" />
+                </td>
+                <td>
+                    <input value="" type="password" id="pw" placeholder="password" autocomplete="new-password" />
+                    <input value="" type="password" id="pw2" placeholder="repeat password" autocomplete="repeat-password" />
+                </td>
+                <td>
+                    <button onclick="addUser()">Add new user…</button>
+                </td>
+            </tr>
+
+        </table>
+        <span class="error" style="display: none" id="pw-mismatch">Passwords do not match!</span>
+    </fieldset>
+</div>
+</body>
+</html>

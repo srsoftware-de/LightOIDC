@@ -4,6 +4,7 @@ package de.srsoftware.oidc.app;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.MANAGE_CLIENTS;
+import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static de.srsoftware.utils.Paths.configDir;
 import static de.srsoftware.utils.Strings.uuid;
@@ -52,7 +53,7 @@ public class Application {
 		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_USERS);
 		KeyStorage     keyStore       = new PlaintextKeyStore(keyDir);
 		KeyManager     keyManager     = new RotatingKeyManager(keyStore);
 		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);

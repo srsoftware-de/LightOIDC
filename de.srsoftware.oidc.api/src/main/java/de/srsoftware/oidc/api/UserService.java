@@ -4,6 +4,7 @@ package de.srsoftware.oidc.api;
 import de.srsoftware.oidc.api.data.User;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserService {
 	/**
@@ -22,6 +23,7 @@ public interface UserService {
 	public Optional<User>	 forToken(String accessToken);
 	public UserService	 init(User defaultUser);
 	public List<User>	 list();
+	public Set<User>	 find(String key);
 	public Optional<User>	 load(String id);
 	public Optional<User>	 load(String username, String password);
 	public boolean		 passwordMatches(String password, String hashedPassword);

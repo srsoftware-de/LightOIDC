@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.api.data;
 
 import java.util.*;
+import org.json.JSONObject;
 
 public final class User {
 	public static final String EMAIL       = "email";
@@ -23,8 +24,8 @@ public final class User {
 		this.uuid	    = uuid;
 	}
 
-	public User add(Permission permission) {
-		permissions.add(permission);
+	public User add(Permission... newPermissions) {
+		for (var permission : newPermissions) permissions.add(permission);
 		return this;
 	}
 
@@ -66,6 +67,21 @@ public final class User {
 
 	public Map<String, Object> map(boolean includePassword) {
 		return includePassword ? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, PASSWORD, hashedPassword) : Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid);
+	}
+
+	public static Optional<User> of(JSONObject json, String userId) {
+		var user = new User(json.getString(USERNAME), json.getString(PASSWORD), json.getString(REALNAME), json.getString(EMAIL), userId);
+
+		var perms = json.has(PERMISSIONS) ? json.getJSONArray(PERMISSIONS) : Set.of();
+		for (Object perm : perms) {
+			try {
+				if (perm instanceof String s) perm = Permission.valueOf(s);
+				if (perm instanceof Permission p) user.add(p);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return Optional.of(user);
 	}
 
 	public String realName() {

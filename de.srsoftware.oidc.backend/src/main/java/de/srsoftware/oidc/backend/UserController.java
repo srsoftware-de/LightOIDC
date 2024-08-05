@@ -1,7 +1,10 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
+import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
 import static de.srsoftware.oidc.api.data.User.*;
+import static de.srsoftware.utils.Strings.uuid;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -20,6 +23,15 @@ public class UserController extends Controller {
 	public UserController(SessionService sessionService, UserService userService) {
 		super(sessionService);
 		users = userService;
+	}
+
+	private boolean addUser(HttpExchange ex, Session session) throws IOException {
+		var user = session.user();
+		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var json  = json(ex);
+		var newID = uuid();
+		User.of(json, uuid()).ifPresent(u -> users.updatePassword(u, json.getString(PASSWORD)));
+		return sendContent(ex, newID);
 	}
 
 	@Override
@@ -41,20 +53,14 @@ public class UserController extends Controller {
 		return notFound(ex);
 	}
 
-	private boolean userInfo(HttpExchange ex) throws IOException {
-		var optUser = getBearer(ex).flatMap(users::forToken);
-		if (optUser.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-		var user = optUser.get();
-		var map  = Map.of("sub", user.uuid(), "email", user.email());
-		return sendContent(ex, new JSONObject(map));
-	}
-
 
 	@Override
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
 		switch (path) {
 			case "/login":
 				return login(ex);
+			case "/reset":
+				return resetPassword(ex);
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
@@ -64,12 +70,24 @@ public class UserController extends Controller {
 		switch (path) {
 			case "/":
 				return sendUserAndCookie(ex, session);
+			case "/add":
+				return addUser(ex, session);
+			case "/list":
+				return list(ex, session);
 			case "/password":
 				return updatePassword(ex, session);
 			case "/update":
 				return updateUser(ex, session);
 		}
 		return notFound(ex);
+	}
+
+	private boolean list(HttpExchange ex, Session session) throws IOException {
+		var user = session.user();
+		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var json = new JSONObject();
+		users.list().forEach(u -> json.put(u.uuid(), u.map(false)));
+		return sendContent(ex, json);
 	}
 
 	private boolean login(HttpExchange ex) throws IOException {
@@ -87,6 +105,16 @@ public class UserController extends Controller {
 		sessions.dropSession(session.id());
 		new SessionToken("").addTo(ex);
 		return sendEmptyResponse(HTTP_OK, ex);
+	}
+
+	private boolean resetPassword(HttpExchange ex) throws IOException {
+		var idOrEmail = body(ex);
+		users.find(idOrEmail).forEach(this::senPasswordLink);
+		return sendEmptyResponse(HTTP_OK, ex);
+	}
+
+	private void senPasswordLink(User user) {
+		LOG.log(WARNING, "Sending password link to {0}", user.email());
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
@@ -122,7 +150,16 @@ public class UserController extends Controller {
 		}
 		user.username(json.getString(USERNAME));
 		user.email(json.getString(EMAIL));
+		user.realName(json.getString(REALNAME));
 		users.save(user);
 		return sendContent(ex, user.map(false));
+	}
+
+	private boolean userInfo(HttpExchange ex) throws IOException {
+		var optUser = getBearer(ex).flatMap(users::forToken);
+		if (optUser.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+		var user = optUser.get();
+		var map  = Map.of("sub", user.uuid(), "email", user.email());
+		return sendContent(ex, new JSONObject(map));
 	}
 }

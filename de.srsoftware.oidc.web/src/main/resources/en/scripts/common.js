@@ -10,7 +10,7 @@ function get(id){
 }
 
 function disable(id){
-    get(id).setAttribute('disabled',true);
+    get(id).setAttribute('disabled','disabled');
 }
 
 function enable(id){

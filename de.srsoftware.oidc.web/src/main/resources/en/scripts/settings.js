@@ -6,6 +6,7 @@ function fillForm(){
         setValue('username',user.username);
         setValue('email',user.email);
         setValue('uuid', user.uuid);
+        setValue('realname', user.realname);
     }
 }
 
@@ -29,6 +30,7 @@ function update(){
     var newData = {
         username : getValue('username'),
         email : getValue('email'),
+        realname : getValue('realname'),
         uuid : getValue('uuid')
     }
     fetch(user_controller+'/update',{

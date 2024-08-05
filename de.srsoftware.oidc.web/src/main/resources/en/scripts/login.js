@@ -1,3 +1,9 @@
+function doRedirect(){
+        let params = new URL(document.location.toString()).searchParams;
+        redirect( params.get("return_to") || 'index.html');
+        return false;
+}
+
 async function handleLogin(response){
     if (response.ok){
         var body = await response.json();
@@ -8,10 +14,24 @@ async function handleLogin(response){
     }
 }
 
-function doRedirect(){
-        let params = new URL(document.location.toString()).searchParams;
-        redirect( params.get("return_to") || 'index.html');
-        return false;
+function keyDown(ev){
+   if (event.keyCode == 13) tryLogin();
+}
+
+function resetPw(){
+    var user = getValue('username');
+    if (!user) {
+        show('bubble');
+        return;
+    }
+    hide('bubble');
+    fetch(user_controller+"/reset",{
+        method: 'POST',
+        body:user
+    }).then(() => {
+        hide('login');
+        show('sent');
+    });
 }
 
 function tryLogin(){
@@ -29,8 +49,4 @@ function tryLogin(){
         })
     }).then(handleLogin);
     return false;
-}
-
-function keyDown(ev){
-   if (event.keyCode == 13) tryLogin();
 }

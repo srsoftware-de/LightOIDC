@@ -16,8 +16,8 @@ async function handleNavigation(response){
         var nav = document.getElementsByTagName('nav')[0];
         nav.innerHTML = content;
         var links = nav.getElementsByTagName('a');
-        for (var index = 0; index < links.length; index++){
-            var link = links[index];
+        for (var index = links.length; index > 0; index--){
+            var link = links[index-1];
             var clazz = link.hasAttribute('class') ? link.getAttribute("class") : null;
             if (clazz != null && !user.permissions.includes(clazz)) nav.removeChild(link);
         }
