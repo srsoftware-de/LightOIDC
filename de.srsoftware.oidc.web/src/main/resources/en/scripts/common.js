@@ -39,7 +39,8 @@ function setText(id, text){
 
 
 function setValue(id,newVal){
-    get(id).value = newVal;
+    var elem = get(id);
+    if (elem) elem.value = newVal;
 }
 
 function show(id){

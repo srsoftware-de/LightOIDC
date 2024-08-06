@@ -27,6 +27,7 @@ public class Constants {
 	public static final String INVALID_REQUEST	  = "invalid_request";
 	public static final String INVALID_REQUEST_OBJECT = "invalid_request_object";
 	public static final String INVALID_SCOPE	  = "invalid_scope";
+	public static final String MAILCONFIG	  = "mail_config";
 	public static final String NAME		  = "name";
 	public static final String NONCE	  = "nonce";
 	public static final String OPENID	  = "openid";
@@ -36,8 +37,14 @@ public class Constants {
 	public static final String RESPONSE_TYPE	  = "response_type";
 	public static final String SCOPE	  = "scope";
 	public static final String SECRET	  = "secret";
+	public static final String SENDER_ADDRESS	  = "sender_address";
+	public static final String SMTP_AUTH	  = "smtp_auth";
+	public static final String SMTP_HOST	  = "smtp_host";
+	public static final String SMTP_PORT	  = "smtp_port";
 	public static final String STATE	  = "state";
+	public static final String START_TLS	  = "start_tls";
 	public static final String TOKEN	  = "token";
 	public static final String TOKEN_TYPE	  = "token_type";
 	public static final String UNAUTHORIZED_CLIENT	  = "unauthorized_client";
+	public static final String USER		  = "user";
 }

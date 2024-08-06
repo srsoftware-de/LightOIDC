@@ -12,17 +12,28 @@ import de.srsoftware.http.SessionToken;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import org.json.JSONObject;
 
 public class UserController extends Controller {
-	private final UserService users;
+	private final UserService   users;
+	private final MailConfig    mailConfig;
+	private final Authenticator auth;
 
-	public UserController(SessionService sessionService, UserService userService) {
+	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService) {
 		super(sessionService);
-		users = userService;
+		users	= userService;
+		this.mailConfig = mailConfig;
+		auth	= new Authenticator() {
+			           // override the getPasswordAuthentication method
+			           protected PasswordAuthentication getPasswordAuthentication() {
+				           return new PasswordAuthentication(mailConfig.senderAddress(), mailConfig.senderPassword());
+			           }
+		};
 	}
 
 	private boolean addUser(HttpExchange ex, Session session) throws IOException {
@@ -115,6 +126,29 @@ public class UserController extends Controller {
 
 	private void senPasswordLink(User user) {
 		LOG.log(WARNING, "Sending password link to {0}", user.email());
+		try {
+			var     session = jakarta.mail.Session.getDefaultInstance(mailConfig.props(), auth);
+			Message message = new MimeMessage(session);
+			message.setFrom(new InternetAddress(mailConfig.senderAddress()));
+			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(user.email()));
+			message.setSubject("Mail Subject");
+
+			String msg = "This is my first email using JavaMailer";
+
+			MimeBodyPart mimeBodyPart = new MimeBodyPart();
+			mimeBodyPart.setContent(msg, "text/html; charset=utf-8");
+
+			Multipart multipart = new MimeMultipart();
+			multipart.addBodyPart(mimeBodyPart);
+
+			message.setContent(multipart);
+
+			Transport.send(message);
+		} catch (AddressException e) {
+			throw new RuntimeException(e);
+		} catch (MessagingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {

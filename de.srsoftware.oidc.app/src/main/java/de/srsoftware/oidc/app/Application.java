@@ -3,8 +3,7 @@ package de.srsoftware.oidc.app;
 
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.oidc.api.data.Permission.MANAGE_CLIENTS;
-import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
+import static de.srsoftware.oidc.api.data.Permission.*;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static de.srsoftware.utils.Paths.configDir;
 import static de.srsoftware.utils.Strings.uuid;
@@ -33,6 +32,7 @@ public class Application {
 	public static final String  API_CLIENT      = "/api/client";
 	private static final String API_TOKEN       = "/api/token";
 	public static final String  API_USER        = "/api/user";
+	public static final String  API_EMAIL       = "/api/email";
 	public static final String  FIRST_USER      = "admin";
 	public static final String  FIRST_USER_PASS = "admin";
 	public static final String  FIRST_UUID      = uuid();
@@ -53,7 +53,7 @@ public class Application {
 		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_USERS);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_SMTP, MANAGE_USERS);
 		KeyStorage     keyStore       = new PlaintextKeyStore(keyDir);
 		KeyManager     keyManager     = new RotatingKeyManager(keyStore);
 		FileStore      fileStore      = new FileStore(storageFile, passwordHasher).init(firstUser);
@@ -61,11 +61,12 @@ public class Application {
 		new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
 		new WellKnownController().bindPath(WELL_KNOWN).on(server);
-		new UserController(fileStore, fileStore).bindPath(API_USER).on(server);
+		new UserController(fileStore, fileStore, fileStore).bindPath(API_USER).on(server);
 		var tokenControllerconfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
 		new TokenController(fileStore, fileStore, keyManager, fileStore, tokenControllerconfig).bindPath(API_TOKEN).on(server);
 		new ClientController(fileStore, fileStore, fileStore).bindPath(API_CLIENT).on(server);
 		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
+		new EmailController(fileStore, fileStore).bindPath(API_EMAIL).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}

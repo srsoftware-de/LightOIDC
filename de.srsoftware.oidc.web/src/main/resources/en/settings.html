@@ -78,6 +78,32 @@
                         </tr>
                     </table>
                 </fieldset>
+                <fieldset id="mail_settings" style="display: none">
+                    <legend>
+                        Mail settings
+                    </legend>
+                    <table>
+                        <tr>
+                            <th>Smtp host</th>
+                            <td><input type="text" id="smtp_host"></td>
+                        </tr>
+                        <tr>
+                            <th>Smtp port</th>
+                            <td><input type="text" id="smtp_port"></td>
+                        </tr>
+                        <tr>
+                            <th>Sender email address</th>
+                            <td><input type="text" id="sender_mail"></td>
+                        </tr>
+                        <tr>
+                            <th>Sender password</th>
+                            <td><input type="password" id="sender_password"></td>
+                        </tr>
+                            <td></td>
+                            <td><button id="smtpBtn" type="button" onClick="updateSmtp()">Update</button></td>
+                        </tr>
+                    </table>
+                </fieldset>
             </form>
         </div>
     </body>

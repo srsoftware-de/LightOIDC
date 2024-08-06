@@ -10,40 +10,6 @@ function fillForm(){
     }
 }
 
-
-function handleResponse(response){
-    if (response.ok){
-        hide('update_error')
-        setText('updateBtn', 'saved.');
-    } else {
-        show('update_error');
-        setText('updateBtn', 'Update failed!');
-    }
-    enable('updateBtn');
-    setTimeout(function(){
-        setText('updateBtn','Update');
-    },10000);
-}
-
-function update(){
-    disable('updateBtn');
-    var newData = {
-        username : getValue('username'),
-        email : getValue('email'),
-        realname : getValue('realname'),
-        uuid : getValue('uuid')
-    }
-    fetch(user_controller+'/update',{
-        method : 'POST',
-        headers : {
-           'Content-Type': 'application/json'
-        },
-        body : JSON.stringify(newData)
-    }).then(handleResponse)
-    setText('updateBtn','sent…');
-}
-
-
 async function handlePasswordResponse(response){
     if (response.ok){
         hide('wrong_password');
@@ -61,6 +27,38 @@ async function handlePasswordResponse(response){
         setText('passBtn','Update');
     },10000);
 }
+
+function handleResponse(response){
+    if (response.ok){
+        hide('update_error')
+        setText('updateBtn', 'saved.');
+    } else {
+        show('update_error');
+        setText('updateBtn', 'Update failed!');
+    }
+    enable('updateBtn');
+    setTimeout(function(){
+        setText('updateBtn','Update');
+    },10000);
+}
+
+async function handleSettings(response){
+    console.log('handleSettings(…)',response);
+    if (response.ok){
+        var json = await response.json();
+        for (var key in json){
+            setValue(key,json[key]);
+        }
+        show('mail_settings');
+    } else {
+      hide('mail_settings');
+    }
+}
+
+function passKeyDown(ev){
+   if (event.keyCode == 13) updatePass();
+}
+
 
 
 function updatePass(){
@@ -80,8 +78,25 @@ function updatePass(){
     setText('passBtn','sent…');
 }
 
-function passKeyDown(ev){
-   if (event.keyCode == 13) updatePass();
+
+
+function update(){
+    disable('updateBtn');
+    var newData = {
+        username : getValue('username'),
+        email : getValue('email'),
+        realname : getValue('realname'),
+        uuid : getValue('uuid')
+    }
+    fetch(user_controller+'/update',{
+        method : 'POST',
+        headers : {
+           'Content-Type': 'application/json'
+        },
+        body : JSON.stringify(newData)
+    }).then(handleResponse)
+    setText('updateBtn','sent…');
 }
 
 setTimeout(fillForm,100);
+fetch("/api/email/settings").then(handleSettings);

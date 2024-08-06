@@ -18,6 +18,8 @@ dependencies {
     implementation project(':de.srsoftware.utils')
     implementation 'org.json:json:20240303'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+
 }
 
 test {

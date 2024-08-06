@@ -1,6 +1,6 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
-import static de.srsoftware.oidc.api.Constants.EXPIRATION;
+import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
@@ -20,18 +20,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.json.JSONObject;
 
-public class FileStore implements AuthorizationService, ClientService, SessionService, UserService {
-	private static final String AUTHORIZATIONS	 = "authorizations";
-	private static final String CLIENTS	 = "clients";
-	private static final String CODES	 = "codes";
-	private static final System.Logger LOG	 = System.getLogger(FileStore.class.getSimpleName());
-	private static final String	   NAME	 = "name";
-	private static final String	   REDIRECT_URIS = "redirect_uris";
-	private static final String	   SECRET	 = "secret";
-	private static final String	   SESSIONS	 = "sessions";
-	private static final String	   USERS	 = "users";
-	private static final String	   USER	 = "user";
-	private static final List<String> KEYS	 = List.of(USERNAME, EMAIL, REALNAME);
+public class FileStore implements AuthorizationService, ClientService, SessionService, UserService, MailConfig {
+	private static final System.Logger LOG	  = System.getLogger(FileStore.class.getSimpleName());
+	private static final String	   AUTHORIZATIONS = "authorizations";
+	private static final String	   CLIENTS	  = "clients";
+	private static final String	   CODES	  = "codes";
+	private static final String	   REDIRECT_URIS  = "redirect_uris";
+	private static final String	   SESSIONS	  = "sessions";
+	private static final String	   USERS	  = "users";
+	private static final List<String> KEYS	  = List.of(USERNAME, EMAIL, REALNAME);
 
 	private final Path       storageFile;
 	private final JSONObject json;
@@ -87,6 +84,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public FileStore init(User defaultUser) {
 		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
 		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
+		if (!json.has(MAILCONFIG)) json.put(MAILCONFIG, new JSONObject());
 		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
 		if (!json.has(USERS)) save(defaultUser);
 		return this;
@@ -317,5 +315,84 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	private AuthResult unauthorized(Collection<String> scopes) {
 		return new AuthResult(null, new HashSet<>(scopes), null);
+	}
+
+	/*** MailConfig implementation ***/
+
+	private String mailConfig(String key) {
+		var config = json.getJSONObject(MAILCONFIG);
+		if (config.has(key)) return config.getString(key);
+		return "";
+	}
+
+	private FileStore mailConfig(String key, Object newValue) {
+		var config = json.getJSONObject(MAILCONFIG);
+		config.put(key, newValue);
+		return this;
+	}
+
+	@Override
+	public String smtpHost() {
+		return mailConfig("smtp_host");
+	}
+
+
+	@Override
+	public MailConfig smtpHost(String newValue) {
+		return mailConfig("smtp_host", newValue);
+	}
+
+	@Override
+	public int smtpPort() {
+		try {
+			return Integer.parseInt(mailConfig("smtp_port"));
+		} catch (NumberFormatException nfe) {
+			return 0;
+		}
+	}
+
+	@Override
+	public MailConfig smtpPort(int newValue) {
+		return mailConfig("smtp_port", newValue);
+	}
+
+	@Override
+	public String senderAddress() {
+		return mailConfig("sender_address");
+	}
+
+	@Override
+	public MailConfig senderAddress(String newValue) {
+		return mailConfig("sender_address", newValue);
+	}
+
+	@Override
+	public String senderPassword() {
+		return mailConfig("smtp_password");
+	}
+
+	@Override
+	public MailConfig senderPassword(String newValue) {
+		return mailConfig("smtp_password", newValue);
+	}
+
+	@Override
+	public boolean startTls() {
+		return "true".equals(mailConfig("start_tls"));
+	}
+
+	@Override
+	public MailConfig startTls(boolean newValue) {
+		return mailConfig("start_tls", newValue);
+	}
+
+	@Override
+	public boolean smtpAuth() {
+		return "true".equals(mailConfig("smtp_auth"));
+	}
+
+	@Override
+	public MailConfig smtpAuth(boolean newValue) {
+		return mailConfig("smtp_auth", newValue);
 	}
 }
