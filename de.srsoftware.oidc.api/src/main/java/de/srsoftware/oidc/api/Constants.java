@@ -37,7 +37,8 @@ public class Constants {
 	public static final String RESPONSE_TYPE	  = "response_type";
 	public static final String SCOPE	  = "scope";
 	public static final String SECRET	  = "secret";
-	public static final String SENDER_ADDRESS	  = "sender_address";
+	public static final String SMTP_USER	  = "smtp_user";
+	public static final String SMTP_PASSWORD	  = "smtp_pass";
 	public static final String SMTP_AUTH	  = "smtp_auth";
 	public static final String SMTP_HOST	  = "smtp_host";
 	public static final String SMTP_PORT	  = "smtp_port";

@@ -78,6 +78,7 @@
                         </tr>
                     </table>
                 </fieldset>
+                <br/>
                 <fieldset id="mail_settings" style="display: none">
                     <legend>
                         Mail settings
@@ -85,20 +86,32 @@
                     <table>
                         <tr>
                             <th>Smtp host</th>
-                            <td><input type="text" id="smtp_host"></td>
+                            <td><input type="text" id="smtp_host" placeholder="smtp host"></td>
                         </tr>
                         <tr>
                             <th>Smtp port</th>
-                            <td><input type="text" id="smtp_port"></td>
+                            <td><input type="number" id="smtp_port"></td>
                         </tr>
                         <tr>
-                            <th>Sender email address</th>
-                            <td><input type="text" id="sender_mail"></td>
+                            <th>Smtp user</th>
+                            <td><input type="text" id="smtp_user" placeholder="smtp user"></td>
                         </tr>
                         <tr>
-                            <th>Sender password</th>
-                            <td><input type="password" id="sender_password"></td>
+                            <th>Smtp password</th>
+                            <td><input type="password" id="smtp_pass" placeholder="password"></td>
                         </tr>
+                        <tr>
+                            <th>Security</th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" id="smtp_auth"> Auth
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="start_tls"> StartTLS
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
                             <td></td>
                             <td><button id="smtpBtn" type="button" onClick="updateSmtp()">Update</button></td>
                         </tr>

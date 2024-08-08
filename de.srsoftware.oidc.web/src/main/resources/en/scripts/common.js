@@ -25,6 +25,10 @@ function hide(id){
     get(id).style.display = 'none';
 }
 
+function isChecked(id){
+    return get(id).checked;
+}
+
 function login(){
     redirect('login.html?return_to='+encodeURIComponent(window.location.href));
 }

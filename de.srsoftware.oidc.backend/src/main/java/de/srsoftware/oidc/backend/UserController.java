@@ -20,20 +20,13 @@ import java.util.Optional;
 import org.json.JSONObject;
 
 public class UserController extends Controller {
-	private final UserService   users;
-	private final MailConfig    mailConfig;
-	private final Authenticator auth;
+	private final UserService users;
+	private final MailConfig  mailConfig;
 
 	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService) {
 		super(sessionService);
 		users	= userService;
 		this.mailConfig = mailConfig;
-		auth	= new Authenticator() {
-			           // override the getPasswordAuthentication method
-			           protected PasswordAuthentication getPasswordAuthentication() {
-				           return new PasswordAuthentication(mailConfig.senderAddress(), mailConfig.senderPassword());
-			           }
-		};
 	}
 
 	private boolean addUser(HttpExchange ex, Session session) throws IOException {
@@ -127,7 +120,7 @@ public class UserController extends Controller {
 	private void senPasswordLink(User user) {
 		LOG.log(WARNING, "Sending password link to {0}", user.email());
 		try {
-			var     session = jakarta.mail.Session.getDefaultInstance(mailConfig.props(), auth);
+			var     session = jakarta.mail.Session.getDefaultInstance(mailConfig.props(), mailConfig.authenticator());
 			Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(mailConfig.senderAddress()));
 			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(user.email()));

@@ -3,6 +3,7 @@ package de.srsoftware.oidc.api;
 
 import static de.srsoftware.oidc.api.Constants.*;
 
+import jakarta.mail.Authenticator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -35,15 +36,20 @@ public interface MailConfig {
 		props.put("mail.smtp.port", smtpPort());
 		props.put("mail.smtp.auth", smtpAuth() ? "true" : "false");
 		props.put("mail.smtp.starttls.enable", startTls() ? "true" : "false");
+		props.put("mail.smtp.ssl.trust", smtpHost());
 		return props;
 	}
 
 	default Map<String, Object> map() {
-		return Map.of(		      //
-		    SMTP_HOST, smtpHost(),	      //
-		    SMTP_PORT, smtpPort(),	      //
-		    SMTP_AUTH, smtpAuth(),	      //
-		    SENDER_ADDRESS, senderAddress(),  //
+		return Map.of(		 //
+		    SMTP_HOST, smtpHost(),	 //
+		    SMTP_PORT, smtpPort(),	 //
+		    SMTP_AUTH, smtpAuth(),	 //
+		    SMTP_USER, senderAddress(),	 //
 		    START_TLS, startTls());
 	}
+
+	Authenticator authenticator();
+
+	MailConfig save();
 }

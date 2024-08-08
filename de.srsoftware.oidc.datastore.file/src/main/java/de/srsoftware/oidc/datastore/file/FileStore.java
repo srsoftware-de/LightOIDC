@@ -9,6 +9,8 @@ import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,6 +39,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private Map<String, Client>	     clients	     = new HashMap<>();
 	private Map<String, User>	     accessTokens    = new HashMap<>();
 	private Map<String, Authorization>   authCodes	     = new HashMap<>();
+	private Authenticator	     auth;
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
 		this.storageFile    = storage.toPath();
@@ -48,9 +51,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			Files.writeString(storageFile, "{}");
 		}
 		json = new JSONObject(Files.readString(storageFile));
+		auth = null;  // lazy init!
 	}
 
-	private FileStore save() {
+	public FileStore save() {
 		try {
 			Files.writeString(storageFile, json.toString(2));
 			return this;
@@ -319,6 +323,19 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	/*** MailConfig implementation ***/
 
+	@Override
+	public Authenticator authenticator() {
+		if (auth == null) {
+			auth = new Authenticator() {
+				// override the getPasswordAuthentication method
+				protected PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication(senderAddress(), senderPassword());
+				}
+			};
+		}
+		return auth;
+	}
+
 	private String mailConfig(String key) {
 		var config = json.getJSONObject(MAILCONFIG);
 		if (config.has(key)) return config.getString(key);
@@ -328,71 +345,71 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private FileStore mailConfig(String key, Object newValue) {
 		var config = json.getJSONObject(MAILCONFIG);
 		config.put(key, newValue);
+		auth = null;
 		return this;
 	}
 
 	@Override
 	public String smtpHost() {
-		return mailConfig("smtp_host");
+		return mailConfig(SMTP_HOST);
 	}
 
 
 	@Override
 	public MailConfig smtpHost(String newValue) {
-		return mailConfig("smtp_host", newValue);
+		return mailConfig(SMTP_HOST, newValue);
 	}
 
 	@Override
 	public int smtpPort() {
-		try {
-			return Integer.parseInt(mailConfig("smtp_port"));
-		} catch (NumberFormatException nfe) {
-			return 0;
-		}
+		var config = json.getJSONObject(MAILCONFIG);
+		return config.has(SMTP_PORT) ? config.getInt(SMTP_PORT) : 0;
 	}
 
 	@Override
 	public MailConfig smtpPort(int newValue) {
-		return mailConfig("smtp_port", newValue);
+		return mailConfig(SMTP_PORT, newValue);
 	}
 
 	@Override
 	public String senderAddress() {
-		return mailConfig("sender_address");
+		return mailConfig(SMTP_USER);
 	}
 
 	@Override
 	public MailConfig senderAddress(String newValue) {
-		return mailConfig("sender_address", newValue);
+		return mailConfig(SMTP_USER, newValue);
 	}
 
 	@Override
 	public String senderPassword() {
-		return mailConfig("smtp_password");
+		return mailConfig(SMTP_PASSWORD);
 	}
 
 	@Override
 	public MailConfig senderPassword(String newValue) {
-		return mailConfig("smtp_password", newValue);
+		return mailConfig(SMTP_PASSWORD, newValue);
 	}
 
 	@Override
 	public boolean startTls() {
-		return "true".equals(mailConfig("start_tls"));
+		var config = json.getJSONObject(MAILCONFIG);
+		return config.has(START_TLS) ? config.getBoolean(START_TLS) : false;
 	}
 
 	@Override
 	public MailConfig startTls(boolean newValue) {
-		return mailConfig("start_tls", newValue);
+		return mailConfig(START_TLS, newValue);
 	}
 
 	@Override
 	public boolean smtpAuth() {
-		return "true".equals(mailConfig("smtp_auth"));
+		var config = json.getJSONObject(MAILCONFIG);
+		return config.has(SMTP_AUTH) ? config.getBoolean(SMTP_AUTH) : false;
 	}
 
 	@Override
 	public MailConfig smtpAuth(boolean newValue) {
-		return mailConfig("smtp_auth", newValue);
+		return mailConfig(SMTP_AUTH, newValue);
 	}
 }
