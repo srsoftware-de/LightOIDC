@@ -16,15 +16,16 @@ import java.util.stream.Stream;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
-	public static final String  AUTHORIZATION  = "Authorization";
-	public static final String  CONTENT_TYPE   = "Content-Type";
-	public static final String  DELETE         = "DELETE";
-	private static final String FORWARDED_HOST = "x-forwarded-host";
-	public static final String  GET	           = "GET";
-	public static final String  HOST           = "host";
-	public static final String  JSON           = "application/json";
-	public static System.Logger LOG	           = System.getLogger(PathHandler.class.getSimpleName());
-	public static final String  POST           = "POST";
+	public static final String  AUTHORIZATION    = "Authorization";
+	public static final String  CONTENT_TYPE     = "Content-Type";
+	public static final String  DEFAULT_LANGUAGE = "en";
+	public static final String  DELETE           = "DELETE";
+	private static final String FORWARDED_HOST   = "x-forwarded-host";
+	public static final String  GET	             = "GET";
+	public static final String  HOST             = "host";
+	public static final String  JSON             = "application/json";
+	public static System.Logger LOG	             = System.getLogger(PathHandler.class.getSimpleName());
+	public static final String  POST             = "POST";
 
 	private String[] paths;
 
@@ -35,9 +36,9 @@ public abstract class PathHandler implements HttpHandler {
 		Bond(String[] paths) {
 			PathHandler.this.paths = paths;
 		}
-		public HttpServer on(HttpServer server) {
+		public PathHandler on(HttpServer server) {
 			for (var path : paths) server.createContext(path, PathHandler.this);
-			return server;
+			return PathHandler.this;
 		}
 	}
 
@@ -132,8 +133,11 @@ public abstract class PathHandler implements HttpHandler {
 			return new JSONObject(body(ex));
 		}
 
-		public static Optional<String> language(HttpExchange ex) {
-			return getHeader(ex, "Accept-Language").map(s -> Arrays.stream(s.split(","))).flatMap(Stream::findFirst);
+		public static String language(HttpExchange ex) {
+			return getHeader(ex, "Accept-Language")  //
+			    .map(s -> Arrays.stream(s.split(",")))
+			    .flatMap(Stream::findFirst)
+			    .orElse(DEFAULT_LANGUAGE);
 		}
 
 		public static boolean notFound(HttpExchange ex) throws IOException {
@@ -171,5 +175,9 @@ public abstract class PathHandler implements HttpHandler {
 
 		public static boolean sendContent(HttpExchange ex, Object o) throws IOException {
 			return sendContent(ex, HTTP_OK, o);
+		}
+
+		public static String url(HttpExchange ex) {
+			return hostname(ex) + ex.getRequestURI();
 		}
 	}

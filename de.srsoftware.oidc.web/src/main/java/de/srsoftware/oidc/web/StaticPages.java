@@ -6,6 +6,7 @@ import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.PathHandler;
+import de.srsoftware.oidc.api.ResourceLoader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -14,9 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class StaticPages extends PathHandler {
-	private static final String DEFAULT_LANGUAGE = "en";
-	private static final String FAVICON          = "favicon.ico";
+public class StaticPages extends PathHandler implements ResourceLoader {
+	private static final String FAVICON = "favicon.ico";
 	private final Optional<Path> base;
 	private ClassLoader          loader;
 
@@ -25,22 +25,21 @@ public class StaticPages extends PathHandler {
 		base = basePath;
 	}
 
-	private record Response(String contentType, byte[] content) {
-	}
+
 	private static final String INDEX = "en/index.html";
 
 	@Override
 	public boolean doGet(String relativePath, HttpExchange ex) throws IOException {
-		String lang = language(ex).orElse(DEFAULT_LANGUAGE);
+		String lang = language(ex);
 		if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
 		if (relativePath.isBlank()) {
 			relativePath = ex.getRequestURI().toString().endsWith(FAVICON) ? FAVICON : INDEX;
 		}
 		try {
-			Response response = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
-			ex.getResponseHeaders().add(CONTENT_TYPE, response.contentType);
+			Resource resource = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
+			ex.getResponseHeaders().add(CONTENT_TYPE, resource.contentType());
 			LOG.log(DEBUG, "Loaded {0} for language {1}…success.", relativePath, lang);
-			return sendContent(ex, response.content);
+			return sendContent(ex, resource.content());
 		} catch (FileNotFoundException fnf) {
 			LOG.log(WARNING, "Loaded {0} for language {1}…failed.", relativePath, lang);
 			return notFound(ex);
@@ -67,14 +66,14 @@ public class StaticPages extends PathHandler {
 		return resource;
 	}
 
-	private Optional<Response> loadFile(String language, String path) {
+	public Optional<Resource> loadFile(String language, String path) {
 		try {
 			var resource = base.map(b -> getLocalUrl(b, language, path)).orElseGet(() -> getResource(language, path));
 			if (resource == null) return empty();
 			var connection	= resource.openConnection();
 			var contentType = connection.getContentType();
 			try (var in = connection.getInputStream()) {
-				return Optional.of(new Response(contentType, in.readAllBytes()));
+				return Optional.of(new Resource(contentType, in.readAllBytes()));
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

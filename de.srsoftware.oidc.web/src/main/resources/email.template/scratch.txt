@@ -1,0 +1,12 @@
+Password reset link for {service}
+Dear {displayname},
+
+Someone – probably you – requested to reset you password on {service}.
+
+If that was you, please open the following link in your browser:
+
+{link}
+
+If you *did not request* to reset you password, simply ignore this mail.
+
+Best wishes, you OIDC admin.

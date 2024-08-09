@@ -1,11 +1,13 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
+import static de.srsoftware.oidc.api.Constants.APP_NAME;
 import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
 import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.net.HttpURLConnection.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.SessionToken;
@@ -17,16 +19,19 @@ import jakarta.mail.internet.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.json.JSONObject;
 
 public class UserController extends Controller {
-	private final UserService users;
-	private final MailConfig  mailConfig;
+	private final UserService    users;
+	private final MailConfig     mailConfig;
+	private final ResourceLoader resourceLoader;
 
-	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService) {
+	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService, ResourceLoader resourceLoader) {
 		super(sessionService);
-		users	= userService;
-		this.mailConfig = mailConfig;
+		users	    = userService;
+		this.mailConfig	    = mailConfig;
+		this.resourceLoader = resourceLoader;
 	}
 
 	private boolean addUser(HttpExchange ex, Session session) throws IOException {
@@ -43,6 +48,9 @@ public class UserController extends Controller {
 		switch (path) {
 			case "/info":
 				return userInfo(ex);
+
+			case "/reset":
+				return checkResetLink(ex);
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
@@ -86,6 +94,11 @@ public class UserController extends Controller {
 		return notFound(ex);
 	}
 
+	private boolean checkResetLink(HttpExchange ex) {
+		// TODO
+		throw new RuntimeException("not implemented");
+	}
+
 	private boolean list(HttpExchange ex, Session session) throws IOException {
 		var user = session.user();
 		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
@@ -112,24 +125,42 @@ public class UserController extends Controller {
 	}
 
 	private boolean resetPassword(HttpExchange ex) throws IOException {
-		var idOrEmail = body(ex);
-		users.find(idOrEmail).forEach(this::senPasswordLink);
+		var       idOrEmail     = body(ex);
+		var       url	        = url(ex);
+		Set<User> matchingUsers = users.find(idOrEmail);
+		if (!matchingUsers.isEmpty()) {
+			resourceLoader	//
+			    .loadFile(language(ex), "reset_password.template.txt")
+			    .map(ResourceLoader.Resource::content)
+			    .map(bytes -> new String(bytes, UTF_8))
+			    .ifPresent(template -> {  //
+				    matchingUsers.forEach(user -> senPasswordLink(user, template, url));
+			    });
+		}
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private void senPasswordLink(User user) {
+	private void senPasswordLink(User user, String template, String url) {
 		LOG.log(WARNING, "Sending password link to {0}", user.email());
+		var token = users.accessToken(user);
+
+		var parts = template  //
+			.replace("{service}", APP_NAME)
+			.replace("{displayname}", user.realName())
+			.replace("{link}", String.join("?token=", url, token.id()))
+			.split("\n", 2);
+		var subj    = parts[0];
+		var content = parts[1];
 		try {
 			var     session = jakarta.mail.Session.getDefaultInstance(mailConfig.props(), mailConfig.authenticator());
 			Message message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(mailConfig.senderAddress()));
 			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(user.email()));
-			message.setSubject("Mail Subject");
+			message.setSubject(subj);
 
-			String msg = "This is my first email using JavaMailer";
 
 			MimeBodyPart mimeBodyPart = new MimeBodyPart();
-			mimeBodyPart.setContent(msg, "text/html; charset=utf-8");
+			mimeBodyPart.setContent(content, "text/plain; charset=utf-8");
 
 			Multipart multipart = new MimeMultipart();
 			multipart.addBodyPart(mimeBodyPart);

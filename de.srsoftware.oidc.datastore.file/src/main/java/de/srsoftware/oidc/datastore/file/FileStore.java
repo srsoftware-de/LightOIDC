@@ -37,7 +37,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private final PasswordHasher<String> passwordHasher;
 	private Duration	     sessionDuration = Duration.of(10, ChronoUnit.MINUTES);
 	private Map<String, Client>	     clients	     = new HashMap<>();
-	private Map<String, User>	     accessTokens    = new HashMap<>();
+	private Map<String, AccessToken>     accessTokens    = new HashMap<>();
 	private Map<String, Authorization>   authCodes	     = new HashMap<>();
 	private Authenticator	     auth;
 
@@ -67,9 +67,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	/*** User Service Methods ***/
 
 	@Override
-	public String accessToken(User user) {
-		var token = uuid();
-		accessTokens.put(token, Objects.requireNonNull(user));
+	public AccessToken accessToken(User user) {
+		var token = new AccessToken(uuid(), Objects.requireNonNull(user), Instant.now().plus(1, ChronoUnit.HOURS));
+		accessTokens.put(token.id(), token);
 		return token;
 	}
 
@@ -80,8 +80,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Optional<User> forToken(String accessToken) {
-		return nullable(accessTokens.get(accessToken));
+	public Optional<User> forToken(String id) {
+		AccessToken token = accessTokens.get(id);
+		if (token == null) return empty();
+		if (token.valid()) return Optional.of(token.user());
+		accessTokens.remove(token.id());
+		return empty();
 	}
 
 	@Override

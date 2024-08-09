@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +13,7 @@ public interface UserService {
 	 * @param user
 	 * @return
 	 */
-	public String	   accessToken(User user);
+	public AccessToken accessToken(User user);
 	public UserService delete(User user);
 
 	/**
