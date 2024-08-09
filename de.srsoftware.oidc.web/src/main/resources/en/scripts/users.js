@@ -57,10 +57,7 @@ function remove(userId){
 }
 
 function reset_password(userid){
-    fetch(user_controller+"/reset",{
-        method: 'POST',
-        body:userid
-    }).then(() => {
+    fetch(user_controller+"/reset?user="+userid).then(() => {
         disable('reset-'+userid);
     });
 }

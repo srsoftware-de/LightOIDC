@@ -81,10 +81,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<User> forToken(String id) {
-		AccessToken token = accessTokens.get(id);
+		AccessToken token = accessTokens.remove(id);
 		if (token == null) return empty();
 		if (token.valid()) return Optional.of(token.user());
-		accessTokens.remove(token.id());
 		return empty();
 	}
 

@@ -1,4 +1,4 @@
-function doRedirect(){
+    function doRedirect(){
         let params = new URL(document.location.toString()).searchParams;
         redirect( params.get("return_to") || 'index.html');
         return false;
@@ -25,10 +25,9 @@ function resetPw(){
         return;
     }
     hide('bubble');
-    fetch(user_controller+"/reset",{
-        method: 'POST',
-        body:user
-    }).then(() => {
+    disable('resetBtn');
+    setText('resetBtn','sending…');
+    fetch(user_controller+"/reset?user="+user).then(() => {
         hide('login');
         show('sent');
     });

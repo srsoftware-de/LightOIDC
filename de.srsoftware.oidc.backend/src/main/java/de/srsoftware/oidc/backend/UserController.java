@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.APP_NAME;
+import static de.srsoftware.oidc.api.Constants.TOKEN;
 import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
 import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Strings.uuid;
@@ -48,9 +49,8 @@ public class UserController extends Controller {
 		switch (path) {
 			case "/info":
 				return userInfo(ex);
-
 			case "/reset":
-				return checkResetLink(ex);
+				return generateResetLink(ex);
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
@@ -94,9 +94,27 @@ public class UserController extends Controller {
 		return notFound(ex);
 	}
 
-	private boolean checkResetLink(HttpExchange ex) {
-		// TODO
-		throw new RuntimeException("not implemented");
+	private boolean resetPassword(HttpExchange ex) throws IOException {
+		var data = json(ex);
+		if (!data.has(TOKEN)) return sendContent(ex, HTTP_UNAUTHORIZED, "token missing");
+		var newpass  = data.getJSONArray("newpass");
+		var newPass1 = newpass.getString(0);
+		if (!newPass1.equals(newpass.getString(1))) {
+			return badRequest(ex, "password mismatch");
+		}
+		if (!strong(newPass1)) return sendContent(ex, HTTP_BAD_REQUEST, "weak password");
+		var token   = data.getString(TOKEN);
+		var optUser = users.forToken(token);
+		if (optUser.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "invalid token");
+		var user = optUser.get();
+		users.updatePassword(user, newPass1);
+		var session = sessions.createSession(user);
+		new SessionToken(session.id()).addTo(ex);
+		return sendRedirect(ex, "/");
+	}
+
+	private boolean strong(String pass) {
+		return pass.length() > 10;  // TODO
 	}
 
 	private boolean list(HttpExchange ex, Session session) throws IOException {
@@ -124,9 +142,12 @@ public class UserController extends Controller {
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private boolean resetPassword(HttpExchange ex) throws IOException {
-		var       idOrEmail     = body(ex);
-		var       url	        = url(ex);
+	private boolean generateResetLink(HttpExchange ex) throws IOException {
+		var idOrEmail = queryParam(ex).get("user");
+		var url       = url(ex)  //
+		              .replace("/api/user/", "/web/")
+		              .split("\\?")[0] +
+		          ".html";
 		Set<User> matchingUsers = users.find(idOrEmail);
 		if (!matchingUsers.isEmpty()) {
 			resourceLoader	//
@@ -134,13 +155,13 @@ public class UserController extends Controller {
 			    .map(ResourceLoader.Resource::content)
 			    .map(bytes -> new String(bytes, UTF_8))
 			    .ifPresent(template -> {  //
-				    matchingUsers.forEach(user -> senPasswordLink(user, template, url));
+				    matchingUsers.forEach(user -> sendResetLink(user, template, url));
 			    });
 		}
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private void senPasswordLink(User user, String template, String url) {
+	private void sendResetLink(User user, String template, String url) {
 		LOG.log(WARNING, "Sending password link to {0}", user.email());
 		var token = users.accessToken(user);
 

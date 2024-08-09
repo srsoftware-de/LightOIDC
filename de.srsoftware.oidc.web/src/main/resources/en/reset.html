@@ -1,0 +1,53 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/reset.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav></nav>
+<div id="content">
+    <h1>Reset password</h1>
+    <div>Welcome! You may now reset your password!</div>
+    <form>
+        <fieldset>
+            <legend>
+                Password
+            </legend>
+            <table>
+                <tr>
+                    <th>New Password</th>
+                    <td><input id="newpass1" type="password"></td>
+                </tr>
+                <tr>
+                    <th>Repeat Password</th>
+                    <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
+                </tr>
+                <tr id="password_mismatch" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Mismatch between new password and repetition!</td>
+                </tr>
+                <tr id="weak_password" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Your password is too weak!</td>
+                </tr>
+                <tr id="missing_token" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Access token missing!</td>
+                </tr>
+                <tr id="invalid_token" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">I received an access token, but it is invalid!</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button id="passBtn" type="button" onClick="updatePass()">Update</button></td>
+                </tr>
+            </table>
+        </fieldset>
+    </form>
+</div>
+</body>
+</html>

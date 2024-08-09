@@ -12,6 +12,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.json.JSONObject;
 
@@ -143,6 +144,13 @@ public abstract class PathHandler implements HttpHandler {
 		public static boolean notFound(HttpExchange ex) throws IOException {
 			LOG.log(ERROR, "not implemented");
 			return sendEmptyResponse(HTTP_NOT_FOUND, ex);
+		}
+
+		public Map<String, String> queryParam(HttpExchange ex) {
+			return Arrays
+			    .stream(ex.getRequestURI().getQuery().split("&"))  //
+			    .map(s -> s.split("=", 2))
+			    .collect(Collectors.toMap(arr -> arr[0], arr -> arr[1]));
 		}
 
 		public static boolean sendEmptyResponse(int statusCode, HttpExchange ex) throws IOException {
