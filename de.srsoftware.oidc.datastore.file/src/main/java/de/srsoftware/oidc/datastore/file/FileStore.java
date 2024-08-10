@@ -4,7 +4,7 @@ import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
-import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.Logger.Level.*;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
@@ -20,6 +20,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService, MailConfig {
@@ -54,7 +57,48 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		auth = null;  // lazy init!
 	}
 
+	private void cleanUp() {
+		var now = Instant.now();
+		var sessions = json.getJSONObject(SESSIONS);
+		LOG.log(DEBUG,"cleaning up sessions…");
+		var sessionIds = Set.copyOf(sessions.keySet());
+		for (var sessionId : sessionIds) {
+			var session    = sessions.getJSONObject(sessionId);
+			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
+			if (expiration.isBefore(now)) {
+				sessions.remove(sessionId);
+				LOG.log(DEBUG,"removed old session {0}.",sessionId);
+			}
+		}
+
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		var authorizationUsers = Set.copyOf(authorizations.keySet());
+		var userIds = list().stream().map(User::uuid).collect(Collectors.toSet());
+		for (var userId : authorizationUsers){
+			if (!userIds.contains(userId)) {
+				authorizations.remove(userId);
+				continue;
+			}
+			var clients = authorizations.getJSONObject(userId);
+			var clientIds = Set.copyOf(clients.keySet());
+			for (var clientId : clientIds){
+				var client = clients.getJSONObject(clientId);
+				var scopes = Set.copyOf(client.keySet());
+				for (var scope : scopes){
+					var expiration = Instant.ofEpochSecond(client.getLong(scope));
+					if (expiration.isBefore(now)) {
+						client.remove(scope);
+					}
+				}
+				if (client.isEmpty()) clients.remove(clientId);
+			}
+			if (clients.isEmpty()) authorizations.remove(userId);
+		}
+	}
+
+
 	public FileStore save() {
+		cleanUp();
 		try {
 			Files.writeString(storageFile, json.toString(2));
 			return this;
@@ -62,7 +106,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			throw new RuntimeException(e);
 		}
 	}
-
 
 	/*** User Service Methods ***/
 
