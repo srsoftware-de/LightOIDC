@@ -76,7 +76,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public UserService delete(User user) {
-		return null;
+		var users = json.getJSONObject(USERS);
+		users.remove(user.uuid());
+		return save();
 	}
 
 	@Override

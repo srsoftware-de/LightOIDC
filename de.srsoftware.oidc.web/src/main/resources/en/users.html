@@ -41,7 +41,10 @@
             </tr>
 
         </table>
-        <span class="error" style="display: none" id="pw-mismatch">Passwords do not match!</span>
+        <span class="hidden" id="message">Really remove client "{}"?</span>
+        <span class="error" style="display: none" id="missing_user_id">Server did not receive a valid user_id for removal!</span>
+        <span class="error" style="display: none" id="missing_confirmation">Server did not receive confirmation for this request!</span>
+        <span class="error" style="display: none" id="unknown_user">The backend does not know this user!</span>
     </fieldset>
 </div>
 </body>

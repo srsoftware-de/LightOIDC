@@ -22,7 +22,15 @@ function getValue(id){
 }
 
 function hide(id){
-    get(id).style.display = 'none';
+    var elem = get(id);
+    if (elem) elem.style.display = 'none';
+}
+
+function hideAll(clazz){
+    var elems = document.getElementsByTagName('*'), i;
+    for (i in elems) {
+        if((' ' + elems[i].className + ' ').indexOf(' ' + clazz + ' ') > -1)  elems[i].style.display = 'none';
+    }
 }
 
 function isChecked(id){
@@ -48,5 +56,6 @@ function setValue(id,newVal){
 }
 
 function show(id){
-    get(id).style.display = '';
+    var elem = get(id);
+    if (elem) elem.style.display = '';
 }

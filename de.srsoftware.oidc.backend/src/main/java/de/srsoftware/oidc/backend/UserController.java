@@ -1,8 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.backend;
 
-import static de.srsoftware.oidc.api.Constants.APP_NAME;
-import static de.srsoftware.oidc.api.Constants.TOKEN;
+import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.MANAGE_USERS;
 import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Strings.uuid;
@@ -42,6 +41,33 @@ public class UserController extends Controller {
 		var newID = uuid();
 		User.of(json, uuid()).ifPresent(u -> users.updatePassword(u, json.getString(PASSWORD)));
 		return sendContent(ex, newID);
+	}
+
+	@Override
+	public boolean doDelete(String path, HttpExchange ex) throws IOException {
+		var optSession = getSession(ex);
+		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+
+		// post-login paths
+		var session = optSession.get();
+		switch (path) {
+			case "/delete":
+				return deleteUser(ex, session);
+		}
+		return badRequest(ex, "%s not found".formatted(path));
+	}
+
+	private boolean deleteUser(HttpExchange ex, Session session) throws IOException {
+		var json = json(ex);
+		if (!json.has(USER_ID)) return badRequest(ex, "missing_user_id");
+		var uuid = json.getString(USER_ID);
+		if (uuid == null || uuid.isBlank()) return badRequest(ex, "missing_user_id");
+		if (session.user().uuid().equals(uuid)) return badRequest(ex, "must_not_delete_self");
+		if (!json.has(CONFIRMED) || !json.getBoolean(CONFIRMED)) return badRequest(ex, "missing_confirmation");
+		Optional<User> targetUser = users.load(uuid);
+		if (targetUser.isEmpty()) return badRequest(ex, "unknown_user");
+		users.delete(targetUser.get());
+		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
 	@Override

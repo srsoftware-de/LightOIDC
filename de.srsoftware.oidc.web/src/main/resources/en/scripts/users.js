@@ -29,29 +29,42 @@ async function handleUsers(response){
     var bottom = document.getElementById('bottom');
     for (let id in users){
         var row = document.createElement("tr");
-        var user = users[id];
-        row.innerHTML = `<td>${user.username}</td>
-        <td>${user.realname}</td>
-        <td>${user.email}</td>
+        var u = users[id];
+        row.innerHTML = `<td>${u.username}</td>
+        <td>${u.realname}</td>
+        <td>${u.email}</td>
         <td>${id}</td>
         <td>
             <button type="button" onclick="reset_password('${id}')" id="reset-${id}">Reset password</button>
-            <button class="danger" onclick="remove('${id}')" type="button">Remove</button>
+            <button id="remove-${u.uuid}" class="danger" onclick="remove('${id}','${u.realname}')" type="button">Remove</button>
         </td>`;
         bottom.parentNode.insertBefore(row,bottom);
     }
 }
 
-function handleRemove(response){
-    redirect("users.html");
+async function handleRemove(response){
+    if (response.ok){
+        redirect("users.html");
+    } else {
+        var info = await response.text();
+        console.log(info);
+        show(info);
+    }
+
 }
 
-function remove(userId){
+function remove(userId,name){
+    disable(`remove-${userId}`);
+    if (userId == user.uuid) {
+        //return;
+    }
+    setText(`remove-${userId}`,"sent…");
+    hideAll('error');
     var message = document.getElementById('message').innerHTML;
-    if (confirm(message.replace("{}",userId))) {
+    if (confirm(message.replace("{}",name))) {
         fetch(user_controller+"/delete",{
             method: 'DELETE',
-            body : JSON.stringify({ userId : userId })
+            body : JSON.stringify({ user_id : userId, confirmed : true })
         }).then(handleRemove);
     }
 }
