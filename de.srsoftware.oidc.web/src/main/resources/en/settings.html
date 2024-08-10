@@ -30,12 +30,12 @@
                             <td><input id="email" type="email"></td>
                         </tr>
                         <tr>
-                            <th>ID</th>
-                            <td><input id="uuid" type="text" disabled="true"></td>
-                        </tr>
-                        <tr id="update_error" style="display: none">
-                            <th>Error</th>
-                            <td class="warning">Failed to update settings!</td>
+                            <th>Session duration</th>
+                            <td>
+                                <input id="session_duration" type="range" value="50" min="1" max="103" oninput="durationUpdate()"/>
+                                <br/>
+                                <span id="days"></span> days, <span id="hours"></span> hours, <span id="minutes"></span> minutes
+                            </td>
                         </tr>
                         <tr>
                             <td></td>
@@ -53,8 +53,12 @@
                             <td><input id="oldpass" type="password"></td>
                         </tr>
                         <tr>
-                            <th></th>
-                            <td><input type="text" style="visibility: hidden"></td>
+                            <th>ID</th>
+                            <td><input id="uuid" type="text" disabled="true"></td>
+                        </tr>
+                        <tr id="update_error" style="display: none">
+                            <th>Error</th>
+                            <td class="warning">Failed to update settings!</td>
                         </tr>
                         <tr>
                             <th>New Password</th>

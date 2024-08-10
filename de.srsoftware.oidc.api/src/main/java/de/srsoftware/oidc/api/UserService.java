@@ -13,8 +13,9 @@ public interface UserService {
 	 * @param user
 	 * @return
 	 */
-	public AccessToken accessToken(User user);
-	public UserService delete(User user);
+	public AccessToken    accessToken(User user);
+	public Optional<User> consumeToken(String accessToken);
+	public UserService    delete(User user);
 
 	/**
 	 * return the user identified by its access token

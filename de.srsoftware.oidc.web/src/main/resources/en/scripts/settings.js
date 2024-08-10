@@ -1,3 +1,5 @@
+var session_duration_minutes = 10;
+
 function fillForm(){
     if (user == null){
         setTimeout(fillForm,100);
@@ -7,6 +9,9 @@ function fillForm(){
         setValue('email',user.email);
         setValue('uuid', user.uuid);
         setValue('realname', user.realname);
+        session_duration_minutes = user.session_duration | 10;
+        displayDuration();
+
     }
 }
 
@@ -64,6 +69,7 @@ async function handleSettings(response){
     console.log('handleSettings(…)',response);
     if (response.ok){
         var json = await response.json();
+        console.log("json: ",json);
         for (var key in json){
             setValue(key,json[key]);
         }
@@ -125,7 +131,8 @@ function update(){
         username : getValue('username'),
         email : getValue('email'),
         realname : getValue('realname'),
-        uuid : getValue('uuid')
+        uuid : getValue('uuid'),
+        session_duration : session_duration_minutes
     }
     fetch(user_controller+'/update',{
         method : 'POST',
@@ -135,6 +142,38 @@ function update(){
         body : JSON.stringify(newData)
     }).then(handleResponse)
     setText('updateBtn','sent…');
+}
+
+function displayDuration(){
+    var mins = session_duration_minutes;
+    hrs = Math.floor(mins/60);
+    mins-=60*hrs;
+    days = Math.floor(hrs/24);
+    hrs-=24*days;
+    setText('days',days);
+    setText('hours',hrs);
+    setText('minutes',mins);
+}
+
+function durationUpdate(){
+    var raw = getValue('session_duration');
+    console.log(raw);
+    var mins = 0;
+    var hrs = 0;
+    var days = 0;
+    if (raw<30){
+        mins = raw;
+    } else if(raw<37) {
+        mins=5*(raw-24);
+    } else if(raw<57){
+        mins=15*(raw-32);
+    } else if(raw<75){
+        mins=60*(raw-50);
+    } else {
+        mins=60*24*(raw-73);
+    }
+    session_duration_minutes = mins;
+    displayDuration();
 }
 
 setTimeout(fillForm,100);

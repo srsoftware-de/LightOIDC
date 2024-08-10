@@ -111,7 +111,7 @@ public class TokenController extends PathHandler {
 		String jwToken = createJWT(client, user.get());
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
-		response.put(ACCESS_TOKEN, users.accessToken(user.get()));
+		response.put(ACCESS_TOKEN, users.accessToken(user.get()).id());
 		response.put(TOKEN_TYPE, BEARER);
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);

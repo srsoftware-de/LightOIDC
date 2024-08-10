@@ -1,6 +1,9 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api.data;
 
+import static de.srsoftware.oidc.api.Constants.SESSION_DURATION;
+
+import java.time.Duration;
 import java.util.*;
 import org.json.JSONObject;
 
@@ -14,7 +17,8 @@ public final class User {
 
 	private final Set<Permission> permissions = new HashSet<>();
 
-	private String email, hashedPassword, realName, uuid, username;
+	private String	 email, hashedPassword, realName, uuid, username;
+	private Duration sessionDuration = Duration.ofMinutes(10);
 
 	public User(String username, String hashedPassword, String realName, String email, String uuid) {
 		this.username	    = username;
@@ -66,7 +70,9 @@ public final class User {
 
 
 	public Map<String, Object> map(boolean includePassword) {
-		return includePassword ? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, PASSWORD, hashedPassword) : Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid);
+		return includePassword  //
+		    ? Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, SESSION_DURATION, sessionDuration.toMinutes(), PASSWORD, hashedPassword)
+		    : Map.of(USERNAME, username, REALNAME, realName, EMAIL, email, PERMISSIONS, permissions, UUID, uuid, SESSION_DURATION, sessionDuration.toMinutes());
 	}
 
 	public static Optional<User> of(JSONObject json, String userId) {
@@ -81,6 +87,7 @@ public final class User {
 				e.printStackTrace();
 			}
 		}
+		if (json.has(SESSION_DURATION)) user.sessionDuration(Duration.ofMinutes(json.getInt(SESSION_DURATION)));
 		return Optional.of(user);
 	}
 
@@ -114,5 +121,13 @@ public final class User {
 
 	public String uuid() {
 		return uuid;
+	}
+
+	public void sessionDuration(Duration newVal) {
+		sessionDuration = newVal;
+	}
+
+	public Duration sessionDuration() {
+		return sessionDuration;
 	}
 }

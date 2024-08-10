@@ -17,6 +17,7 @@ import de.srsoftware.oidc.api.data.User;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -130,7 +131,7 @@ public class UserController extends Controller {
 		}
 		if (!strong(newPass1)) return sendContent(ex, HTTP_BAD_REQUEST, "weak password");
 		var token   = data.getString(TOKEN);
-		var optUser = users.forToken(token);
+		var optUser = users.consumeToken(token);
 		if (optUser.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "invalid token");
 		var user = optUser.get();
 		users.updatePassword(user, newPass1);
@@ -256,6 +257,7 @@ public class UserController extends Controller {
 		user.username(json.getString(USERNAME));
 		user.email(json.getString(EMAIL));
 		user.realName(json.getString(REALNAME));
+		user.sessionDuration(Duration.ofMinutes(json.getInt(SESSION_DURATION)));
 		users.save(user);
 		return sendContent(ex, user.map(false));
 	}

@@ -21,8 +21,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService, MailConfig {
@@ -38,10 +36,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private final Path       storageFile;
 	private final JSONObject json;
 	private final PasswordHasher<String> passwordHasher;
-	private Duration	     sessionDuration = Duration.of(10, ChronoUnit.MINUTES);
-	private Map<String, Client>	     clients	     = new HashMap<>();
-	private Map<String, AccessToken>     accessTokens    = new HashMap<>();
-	private Map<String, Authorization>   authCodes	     = new HashMap<>();
+	private Map<String, Client>	     clients	  = new HashMap<>();
+	private Map<String, AccessToken>     accessTokens = new HashMap<>();
+	private Map<String, Authorization>   authCodes	  = new HashMap<>();
 	private Authenticator	     auth;
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
@@ -58,33 +55,33 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private void cleanUp() {
-		var now = Instant.now();
-		var sessions = json.getJSONObject(SESSIONS);
-		LOG.log(DEBUG,"cleaning up sessions…");
+		var now      = Instant.now();
+		var sessions = sessions();
+		LOG.log(DEBUG, "cleaning up sessions…");
 		var sessionIds = Set.copyOf(sessions.keySet());
 		for (var sessionId : sessionIds) {
 			var session    = sessions.getJSONObject(sessionId);
 			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
 			if (expiration.isBefore(now)) {
 				sessions.remove(sessionId);
-				LOG.log(DEBUG,"removed old session {0}.",sessionId);
+				LOG.log(DEBUG, "removed old session {0}.", sessionId);
 			}
 		}
 
-		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
 		var authorizationUsers = Set.copyOf(authorizations.keySet());
-		var userIds = list().stream().map(User::uuid).collect(Collectors.toSet());
-		for (var userId : authorizationUsers){
+		var userIds	       = list().stream().map(User::uuid).collect(Collectors.toSet());
+		for (var userId : authorizationUsers) {
 			if (!userIds.contains(userId)) {
 				authorizations.remove(userId);
 				continue;
 			}
-			var clients = authorizations.getJSONObject(userId);
+			var clients   = authorizations.getJSONObject(userId);
 			var clientIds = Set.copyOf(clients.keySet());
-			for (var clientId : clientIds){
+			for (var clientId : clientIds) {
 				var client = clients.getJSONObject(clientId);
 				var scopes = Set.copyOf(client.keySet());
-				for (var scope : scopes){
+				for (var scope : scopes) {
 					var expiration = Instant.ofEpochSecond(client.getLong(scope));
 					if (expiration.isBefore(now)) {
 						client.remove(scope);
@@ -116,6 +113,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return token;
 	}
 
+	@Override
+	public Optional<User> consumeToken(String id) {
+		var user = forToken(id);
+		accessTokens.remove(id);
+		return user;
+	}
 
 	@Override
 	public UserService delete(User user) {
@@ -126,9 +129,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<User> forToken(String id) {
-		AccessToken token = accessTokens.remove(id);
+		AccessToken token = accessTokens.get(id);
 		if (token == null) return empty();
 		if (token.valid()) return Optional.of(token.user());
+		accessTokens.remove(id);
 		return empty();
 	}
 
@@ -223,13 +227,13 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public Session createSession(User user) {
 		var now	 = Instant.now();
-		var endOfSession = now.plus(sessionDuration);
+		var endOfSession = now.plus(user.sessionDuration());
 		return save(new Session(user, endOfSession, uuid().toString()));
 	}
 
 	@Override
 	public SessionService dropSession(String sessionId) {
-		json.getJSONObject(SESSIONS).remove(sessionId);
+		sessions().remove(sessionId);
 		save();
 		return this;
 	}
@@ -239,11 +243,14 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return null;
 	}
 
+	private JSONObject sessions() {
+		return json.getJSONObject(SESSIONS);
+	}
+
 	@Override
 	public Optional<Session> retrieve(String sessionId) {
-		var sessions = json.getJSONObject(SESSIONS);
 		try {
-			var session    = sessions.getJSONObject(sessionId);
+			var session    = sessions().getJSONObject(sessionId);
 			var userId     = session.getString(USER);
 			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
 			if (expiration.isAfter(Instant.now())) {
@@ -256,7 +263,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private Session save(Session session) {
-		json.getJSONObject(SESSIONS).put(session.id(), Map.of(USER, session.user().uuid(), EXPIRATION, session.expiration().getEpochSecond()));
+		sessions().put(session.id(), Map.of(USER, session.user().uuid(), EXPIRATION, session.expiration().getEpochSecond()));
 		save();
 		return session;
 	}
