@@ -110,6 +110,7 @@ public class ClientController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
+		sessions.extend(session);
 		switch (path) {
 			case "/":
 				return deleteClient(ex, session);
@@ -125,6 +126,7 @@ public class ClientController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
+		sessions.extend(session);
 		switch (path) {
 			case "/":
 				return load(ex, session);

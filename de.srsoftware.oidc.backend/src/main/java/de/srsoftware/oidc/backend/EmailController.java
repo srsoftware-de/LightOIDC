@@ -9,7 +9,7 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.MailConfig;
 import de.srsoftware.oidc.api.SessionService;
-import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.oidc.api.data.Session;
 import java.io.IOException;
 
 public class EmailController extends Controller {
@@ -24,10 +24,11 @@ public class EmailController extends Controller {
 	public boolean doGet(String path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-		var user = optSession.get().user();
+		var session = optSession.get();
+		sessions.extend(session);
 		switch (path) {
 			case "/settings":
-				return provideSettings(ex, user);
+				return provideSettings(ex, session);
 		}
 		return notFound(ex);
 	}
@@ -36,21 +37,23 @@ public class EmailController extends Controller {
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-		var user = optSession.get().user();
+		var session = optSession.get();
+		sessions.extend(session);
+
 		switch (path) {
 			case "/settings":
-				return saveSettings(ex, user);
+				return saveSettings(ex, session);
 		}
 		return notFound(ex);
 	}
 
-	private boolean provideSettings(HttpExchange ex, User user) throws IOException {
-		if (!user.hasPermission(MANAGE_SMTP)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+	private boolean provideSettings(HttpExchange ex, Session session) throws IOException {
+		if (!session.user().hasPermission(MANAGE_SMTP)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		return sendContent(ex, mailConfig.map());
 	}
 
-	private boolean saveSettings(HttpExchange ex, User user) throws IOException {
-		if (!user.hasPermission(MANAGE_SMTP)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+	private boolean saveSettings(HttpExchange ex, Session session) throws IOException {
+		if (!session.user().hasPermission(MANAGE_SMTP)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var data = json(ex);
 		if (data.has(SMTP_HOST)) mailConfig.smtpHost(data.getString(SMTP_HOST));
 		if (data.has(SMTP_PORT)) mailConfig.smtpPort(data.getInt(SMTP_PORT));

@@ -239,8 +239,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Session extend(String sessionId) {
-		return null;
+	public Session extend(Session session) {
+		var user	 = session.user();
+		var endOfSession = Instant.now().plus(user.sessionDuration());
+		return save(new Session(user, endOfSession, session.id()));
 	}
 
 	private JSONObject sessions() {

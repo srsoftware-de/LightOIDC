@@ -51,6 +51,8 @@ public class UserController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
+		sessions.extend(session);
+
 		switch (path) {
 			case "/delete":
 				return deleteUser(ex, session);
@@ -84,6 +86,8 @@ public class UserController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
+		sessions.extend(session);
+
 		switch (path) {
 			case "/logout":
 				return logout(ex, session);
@@ -106,6 +110,8 @@ public class UserController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
+		sessions.extend(session);
+
 		switch (path) {
 			case "/":
 				return sendUserAndCookie(ex, session);
@@ -121,28 +127,26 @@ public class UserController extends Controller {
 		return notFound(ex);
 	}
 
-	private boolean resetPassword(HttpExchange ex) throws IOException {
-		var data = json(ex);
-		if (!data.has(TOKEN)) return sendContent(ex, HTTP_UNAUTHORIZED, "token missing");
-		var newpass  = data.getJSONArray("newpass");
-		var newPass1 = newpass.getString(0);
-		if (!newPass1.equals(newpass.getString(1))) {
-			return badRequest(ex, "password mismatch");
+
+	private boolean generateResetLink(HttpExchange ex) throws IOException {
+		var idOrEmail = queryParam(ex).get("user");
+		var url       = url(ex)  //
+		              .replace("/api/user/", "/web/")
+		              .split("\\?")[0] +
+		          ".html";
+		Set<User> matchingUsers = users.find(idOrEmail);
+		if (!matchingUsers.isEmpty()) {
+			resourceLoader	//
+			    .loadFile(language(ex), "reset_password.template.txt")
+			    .map(ResourceLoader.Resource::content)
+			    .map(bytes -> new String(bytes, UTF_8))
+			    .ifPresent(template -> {  //
+				    matchingUsers.forEach(user -> sendResetLink(user, template, url));
+			    });
 		}
-		if (!strong(newPass1)) return sendContent(ex, HTTP_BAD_REQUEST, "weak password");
-		var token   = data.getString(TOKEN);
-		var optUser = users.consumeToken(token);
-		if (optUser.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "invalid token");
-		var user = optUser.get();
-		users.updatePassword(user, newPass1);
-		var session = sessions.createSession(user);
-		new SessionToken(session.id()).addTo(ex);
-		return sendRedirect(ex, "/");
+		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private boolean strong(String pass) {
-		return pass.length() > 10;  // TODO
-	}
 
 	private boolean list(HttpExchange ex, Session session) throws IOException {
 		var user = session.user();
@@ -169,24 +173,30 @@ public class UserController extends Controller {
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 
-	private boolean generateResetLink(HttpExchange ex) throws IOException {
-		var idOrEmail = queryParam(ex).get("user");
-		var url       = url(ex)  //
-		              .replace("/api/user/", "/web/")
-		              .split("\\?")[0] +
-		          ".html";
-		Set<User> matchingUsers = users.find(idOrEmail);
-		if (!matchingUsers.isEmpty()) {
-			resourceLoader	//
-			    .loadFile(language(ex), "reset_password.template.txt")
-			    .map(ResourceLoader.Resource::content)
-			    .map(bytes -> new String(bytes, UTF_8))
-			    .ifPresent(template -> {  //
-				    matchingUsers.forEach(user -> sendResetLink(user, template, url));
-			    });
+
+	private boolean resetPassword(HttpExchange ex) throws IOException {
+		var data = json(ex);
+		if (!data.has(TOKEN)) return sendContent(ex, HTTP_UNAUTHORIZED, "token missing");
+		var passwords = data.getJSONArray("newpass");
+		var newPass   = passwords.getString(0);
+		if (!newPass.equals(passwords.getString(1))) {
+			return badRequest(ex, "password mismatch");
 		}
-		return sendEmptyResponse(HTTP_OK, ex);
+		try {
+			strong(newPass);
+		} catch (RuntimeException e) {
+			return sendContent(ex, HTTP_BAD_REQUEST, e.getMessage());
+		}
+		var token   = data.getString(TOKEN);
+		var optUser = users.consumeToken(token);
+		if (optUser.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "invalid token");
+		var user = optUser.get();
+		users.updatePassword(user, newPass);
+		var session = sessions.createSession(user);
+		new SessionToken(session.id()).addTo(ex);
+		return sendRedirect(ex, "/");
 	}
+
 
 	private void sendResetLink(User user, String template, String url) {
 		LOG.log(WARNING, "Sending password link to {0}", user.email());
@@ -228,6 +238,30 @@ public class UserController extends Controller {
 		return sendContent(ex, session.user().map(false));
 	}
 
+
+	private void strong(String pass) {
+		var digits  = false;
+		var special = false;
+		var alpha   = false;
+		for (int i = 0; i < pass.length(); i++) {
+			char c = pass.charAt(i);
+			if (Character.isDigit(c)) {
+				digits = true;
+			} else if (Character.isAlphabetic(c)) {
+				alpha = true;
+			} else
+				special = true;
+		}
+		if (pass.length() < 16) {
+			if (!alpha) throw new RuntimeException("Passwords shorter than 16 characters must contain alphabetic characters!");
+			if (!digits && !special) throw new RuntimeException("Passwords shorter than 16 characters must contain at least one digit or special character!");
+			if (pass.length() < 10) {
+				if (!digits || !special) throw new RuntimeException("Passwords shorter than 10 characters must contain digits as well as alphabetic and special characters!");
+				if (pass.length() < 6) throw new RuntimeException("Password must have at least 6 characters!");
+			}
+		}
+	}
+
 	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
 		var user = session.user();
 		var json = json(ex);
@@ -238,12 +272,17 @@ public class UserController extends Controller {
 		var oldPass = json.getString("oldpass");
 		if (!users.passwordMatches(oldPass, user.hashedPassword())) return badRequest(ex, "wrong password");
 
-		var newpass  = json.getJSONArray("newpass");
-		var newPass1 = newpass.getString(0);
-		if (!newPass1.equals(newpass.getString(1))) {
+		var passwords = json.getJSONArray("newpass");
+		var newPass   = passwords.getString(0);
+		if (!newPass.equals(passwords.getString(1))) {
 			return badRequest(ex, "password mismatch");
 		}
-		users.updatePassword(user, newPass1);
+		try {
+			strong(newPass);
+		} catch (RuntimeException e) {
+			return sendContent(ex, HTTP_BAD_REQUEST, e.getMessage());
+		}
+		users.updatePassword(user, newPass);
 		return sendContent(ex, user.map(false));
 	}
 

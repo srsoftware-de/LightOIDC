@@ -10,6 +10,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsExchange;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -127,7 +128,8 @@ public abstract class PathHandler implements HttpHandler {
 			var headers = ex.getRequestHeaders();
 			var host    = headers.getFirst(FORWARDED_HOST);
 			if (host == null) host = headers.getFirst(HOST);
-			return host == null ? null : "https://" + host;
+			var proto = nullable(headers.getFirst("X-forwarded-proto")).orElseGet(() -> ex instanceof HttpsExchange ? "https" : "http");
+			return host == null ? null : proto + "://" + host;
 		}
 
 		public static JSONObject json(HttpExchange ex) throws IOException {
