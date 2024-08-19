@@ -5,6 +5,7 @@ package de.srsoftware.oidc.api;
 public class Constants {
 	public static final String ACCESS_TOKEN	  = "access_token";
 	public static final String APP_NAME	  = "LightOIDC";
+	public static final String AT_HASH	  = "at_hash";
 	public static final String AUTH_CODE	  = "authorization_code";
 	public static final String AUTHORZED	  = "authorized";
 	public static final String BEARER	  = "Bearer";
@@ -12,6 +13,7 @@ public class Constants {
 	public static final String CLIENT_ID	  = "client_id";
 	public static final String CLIENT_SECRET	  = "client_secret";
 	public static final String CODE		  = "code";
+	public static final String EMAIL	  = "email";
 	public static final String ERROR	  = "error";
 	public static final String CONFIG_PATH	  = "LIGHTOIDC_CONFIG_PATH";
 	public static final String CONFIRMED	  = "confirmed";

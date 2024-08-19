@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api.data;
 
+import static de.srsoftware.oidc.api.Constants.EMAIL;
 import static de.srsoftware.oidc.api.Constants.SESSION_DURATION;
 
 import java.time.Duration;
@@ -8,7 +9,6 @@ import java.util.*;
 import org.json.JSONObject;
 
 public final class User {
-	public static final String EMAIL       = "email";
 	public static final String PASSWORD    = "password";
 	public static final String PERMISSIONS = "permissions";
 	public static final String REALNAME    = "realname";

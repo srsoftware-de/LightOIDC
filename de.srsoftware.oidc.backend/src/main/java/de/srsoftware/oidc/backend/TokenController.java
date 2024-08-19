@@ -5,15 +5,19 @@ import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Constants.ERROR;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.PathHandler;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.User;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jose4j.jwk.PublicJsonWebKey;
@@ -30,6 +34,7 @@ public class TokenController extends PathHandler {
 	private final UserService	   users;
 	private final KeyManager	   keyManager;
 	private Configuration	   config;
+	private static final Base64.Encoder BASE64 = Base64.getUrlEncoder();
 
 	public TokenController(AuthorizationService authorizationService, ClientService clientService, KeyManager keyManager, UserService userService, Configuration configuration) {
 		authorizations	= authorizationService;
@@ -103,15 +108,17 @@ public class TokenController extends PathHandler {
 		if (!client.redirectUris().contains(uri)) return badRequest(ex, tokenResponse(INVALID_REQUEST, "unknown redirect uri: \"%s\"".formatted(uri)));
 
 		// verify user is valid
-		var user = users.load(authorization.userId());
-		if (user.isEmpty()) return badRequest(ex, tokenResponse(INVALID_REQUEST, "unknown user"));
+		var optUser = users.load(authorization.userId());
+		if (optUser.isEmpty()) return badRequest(ex, tokenResponse(INVALID_REQUEST, "unknown user"));
 
 		if (!authorization.scopes().scopes().contains(OPENID)) return badRequest(ex, tokenResponse(INVALID_REQUEST, "Token invalid for OpenID scope"));
+		var user = optUser.get();
 
-		String jwToken = createJWT(client, user.get());
+		var    accessToken = users.accessToken(user);
+		String jwToken	   = createJWT(client, user, accessToken);
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
-		response.put(ACCESS_TOKEN, users.accessToken(user.get()).id());
+		response.put(ACCESS_TOKEN, accessToken.id());
 		response.put(TOKEN_TYPE, BEARER);
 		response.put(EXPIRES_IN, 3600);
 		response.put(ID_TOKEN, jwToken);
@@ -119,11 +126,13 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user) {
+	private String createJWT(Client client, User user, AccessToken accessToken) {
 		try {
-			PublicJsonWebKey key = keyManager.getKey();
+			PublicJsonWebKey key    = keyManager.getKey();
+			var	 algo   = key.getAlgorithm();
+			var	 atHash = this.atHash(algo, accessToken);
 			key.setUse("sig");
-			JwtClaims claims = createIdTokenClaims(user, client);
+			JwtClaims claims = createIdTokenClaims(user, client, atHash);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
@@ -133,7 +142,7 @@ public class TokenController extends PathHandler {
 			jws.setPayload(claims.toJson());
 			jws.setKey(key.getPrivateKey());
 			jws.setKeyIdHeaderValue(key.getKeyId());
-			jws.setAlgorithmHeaderValue(key.getAlgorithm());
+			jws.setAlgorithmHeaderValue(algo);
 
 			return jws.getCompactSerialization();
 		} catch (JoseException | KeyManager.KeyCreationException | IOException e) {
@@ -141,7 +150,24 @@ public class TokenController extends PathHandler {
 		}
 	}
 
-	private JwtClaims createIdTokenClaims(User user, Client client) {
+	private String atHash(String algo, AccessToken accessToken) {
+		algo = "SHA" + algo.replaceAll("[^0-9]", "");
+		try {
+			var    digest = MessageDigest.getInstance(algo);
+			byte[] hash   = digest.digest(accessToken.id().getBytes(US_ASCII));
+			if (hash.length < 16) throw new RuntimeException("invalid hash (less than 128 bits)");
+			if (hash.length > 16) {
+				var trimmed = new byte[16];
+				for (var i = 0; i < 16; i++) trimmed[i] = hash[i];
+				hash = trimmed;
+			}
+			return BASE64.withoutPadding().encodeToString(hash);  // https://stackoverflow.com/a/30356461
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private JwtClaims createIdTokenClaims(User user, Client client, String atHash) {
 		JwtClaims claims = new JwtClaims();
 
 		// required claims:
@@ -149,10 +175,10 @@ public class TokenController extends PathHandler {
 		claims.setSubject(user.uuid());	  // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
 		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
-		claims.setIssuedAtToNow();			            // when the token was issued/created (now)
-
-		claims.setClaim("client_id", client.id());
-		claims.setClaim("email", user.email());  // additional claims/attributes about the subject can be added
+		claims.setIssuedAtToNow();
+		claims.setClaim(AT_HASH, atHash);
+		claims.setClaim(CLIENT_ID, client.id());
+		claims.setClaim(EMAIL, user.email());  // additional claims/attributes about the subject can be added
 		client.nonce().ifPresent(nonce -> claims.setClaim(NONCE, nonce));
 		claims.setGeneratedJwtId();  // a unique identifier for the token
 		return claims;
