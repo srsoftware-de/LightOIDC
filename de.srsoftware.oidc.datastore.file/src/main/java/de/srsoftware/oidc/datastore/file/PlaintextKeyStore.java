@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file;
 
+import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static org.jose4j.jwk.JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE;
 
@@ -26,7 +27,8 @@ public class PlaintextKeyStore implements KeyStorage {
 	}
 	@Override
 	public KeyStorage drop(String keyId) {
-		return null;
+		if (dir.resolve(keyId + ".key").toFile().delete()) LOG.log(DEBUG, "Removed key {0}", keyId);
+		return this;
 	}
 
 	@Override
