@@ -31,7 +31,7 @@ function handleRemove(response){
 function remove(clientId){
     var message = document.getElementById('message').innerHTML;
     if (confirm(message.replace("{}",clientId))) {
-        fetch(client_controller+"/delete",{
+        fetch(client_controller,{
             method: 'DELETE',
             body : JSON.stringify({ client_id : clientId }),
             credentials:'include'

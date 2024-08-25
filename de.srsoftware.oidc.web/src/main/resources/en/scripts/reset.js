@@ -1,20 +1,20 @@
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 
-async function handlePasswordResponse(response){
+function handlePasswordResponse(response){
     if (response.ok){
-        console.log(response);
         setText('passBtn', 'saved.');
         if (response.redirected){
           redirect(response.url);
         }
     } else {
         setText('passBtn', 'Update failed!');
-        var text = await response.text();
-        if (text == 'invalid token') show('invalid_token');
-        if (text == 'token missing') show('missing_token');
-        if (text == 'password mismatch') show('password_mismatch');
-        if (text == 'weak password') show('weak_password');
+        response.text().then(text => {
+            if (text == 'invalid token') show('invalid_token');
+            if (text == 'token missing') show('missing_token');
+            if (text == 'password mismatch') show('password_mismatch');
+            if (text == 'weak password') show('weak_password');
+        });
     }
     enable('passBtn');
     setTimeout(function(){
@@ -41,7 +41,8 @@ function updatePass(){
         headers : {
            'Content-Type': 'application/json'
         },
-        body : JSON.stringify(newData)
+        body : JSON.stringify(newData),
+        credentials:'include'
     }).then(handlePasswordResponse);
     setText('passBtn','sent…');
 }

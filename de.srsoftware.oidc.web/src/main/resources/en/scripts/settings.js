@@ -14,18 +14,17 @@ function fillForm(){
 
     }
 }
-
-async function handlePasswordResponse(response){
+ function handlePasswordResponse(response){
     if (response.ok){
         hide('wrong_password');
         hide('password_mismatch');
         setText('passBtn', 'saved.');
     } else {
         setText('passBtn', 'Update failed!');
-        var text = await response.text();
-        if (text == 'wrong password') show('wrong_password');
-        if (text == 'password mismatch') show('password_mismatch');
-
+        response.text().then(text => {
+            if (text == 'wrong password') show('wrong_password');
+            if (text == 'password mismatch') show('password_mismatch');
+        });
     }
     enable('passBtn');
     setTimeout(function(){
@@ -33,16 +32,17 @@ async function handlePasswordResponse(response){
     },10000);
 }
 
-async function handleSmtpResponse(response){
+function handleSmtpResponse(response){
     if (response.ok){
         hide('wrong_password');
         hide('password_mismatch');
         setText('smtpBtn', 'saved.');
     } else {
         setText('smtpBtn', 'Update failed!');
-        var text = await response.text();
-        if (text == 'wrong password') show('wrong_password');
-        if (text == 'password mismatch') show('password_mismatch');
+        response.text().then(text => {
+            if (text == 'wrong password') show('wrong_password');
+            if (text == 'password mismatch') show('password_mismatch');
+        });
 
     }
     setTimeout(function(){
@@ -65,17 +65,15 @@ function handleResponse(response){
     },10000);
 }
 
-async function handleSettings(response){
+function handleSettings(response){
     console.log('handleSettings(…)',response);
     if (response.ok){
-        var json = await response.json();
-        console.log("json: ",json);
-        for (var key in json){
-            setValue(key,json[key]);
-        }
-        get('start_tls').checked = json.start_tls;
-        get('smtp_auth').checked = json.smtp_auth;
-        show('mail_settings');
+        response.json().then(json => {
+            for (var key in json) setValue(key,json[key]);
+            get('start_tls').checked = json.start_tls;
+            get('smtp_auth').checked = json.smtp_auth;
+            show('mail_settings');
+        });
     } else {
       hide('mail_settings');
     }
@@ -100,7 +98,8 @@ function updateSmtp(){
         headers : {
            'Content-Type': 'application/json'
         },
-        body : JSON.stringify(newData)
+        body : JSON.stringify(newData),
+        credentials:'include'
     }).then(handleSmtpResponse);
     setText('smtpBtn','sent…');
 }
@@ -118,7 +117,8 @@ function updatePass(){
         headers : {
            'Content-Type': 'application/json'
         },
-        body : JSON.stringify(newData)
+        body : JSON.stringify(newData),
+        credentials:'include'
     }).then(handlePasswordResponse);
     setText('passBtn','sent…');
 }
@@ -139,7 +139,8 @@ function update(){
         headers : {
            'Content-Type': 'application/json'
         },
-        body : JSON.stringify(newData)
+        body : JSON.stringify(newData),
+        credentials:'include'
     }).then(handleResponse)
     setText('updateBtn','sent…');
 }
@@ -176,5 +177,9 @@ function durationUpdate(){
     displayDuration();
 }
 
-setTimeout(fillForm,100);
-fetch("/api/email/settings").then(handleSettings);
+
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+    alert('loaded settings.js');
+    fillForm();
+    fetch("/api/email/settings",{credentials:'include'}).then(handleSettings);
+});
