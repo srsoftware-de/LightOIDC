@@ -41,6 +41,15 @@ function login(){
     redirect('login.html?return_to='+encodeURIComponent(window.location.href));
 }
 
+// Replacement for Object.toEntries(…)
+function paramsToObject(entries) {
+  const result = {};
+  for(var key of entries) { // each 'entry' is a [key, value] tupple
+    result[key[0]] = key[1];
+  }
+  return result;
+}
+
 function redirect(page){
     window.location.href = page;
 }

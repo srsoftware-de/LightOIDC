@@ -2,16 +2,6 @@ var params = new URLSearchParams(window.location.search)
 var json = paramsToObject(params);
 var scopes = {};
 
-// Replacement for Object.toEntries(…)
-function paramsToObject(entries) {
-  const result = {};
-  for(var key of entries) { // each 'entry' is a [key, value] tupple
-    result[key[0]] = key[1];
-  }
-  return result;
-}
-
-
 function showConfirmationDialog(name){
     get('name').innerHTML = name;
     show('content');

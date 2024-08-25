@@ -11,7 +11,8 @@ function addClient(){
         headers : {
            'Content-Type': 'application/json'
         },
-        body : JSON.stringify(newData)
+        body : JSON.stringify(newData),
+        credentials:'include'
     }).then(handleClientdResponse);
 
     setText('button','sent…');

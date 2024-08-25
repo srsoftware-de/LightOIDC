@@ -19,6 +19,7 @@ function handleNavigation(response){
             var nav = document.getElementsByTagName('nav')[0];
             nav.innerHTML = content;
             var links = nav.getElementsByTagName('a');
+
             for (var index = links.length; index > 0; index--){
                 var link = links[index-1];
                 var clazz = link.hasAttribute('class') ? link.getAttribute("class") : null;
@@ -28,7 +29,9 @@ function handleNavigation(response){
     }
 }
 
-fetch(user_controller+"/",{
-    method:'POST',
-    credentials:'include'
-}).then(handleUser);
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+    fetch(user_controller+"/",{
+        method:'POST',
+        credentials:'include'
+    }).then(handleUser);
+});
