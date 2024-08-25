@@ -71,8 +71,8 @@ public class Application {
 		new Forward(INDEX).bindPath(ROOT).on(server);
 		new WellKnownController().bindPath(WELL_KNOWN).on(server);
 		new UserController(fileStore, fileStore, fileStore, staticPages).bindPath(API_USER).on(server);
-		var tokenControllerconfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
-		new TokenController(fileStore, fileStore, keyManager, fileStore, tokenControllerconfig).bindPath(API_TOKEN).on(server);
+		var tokenControllerConfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
+		new TokenController(fileStore, fileStore, keyManager, fileStore, tokenControllerConfig).bindPath(API_TOKEN).on(server);
 		new ClientController(fileStore, fileStore, fileStore).bindPath(API_CLIENT).on(server);
 		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
 		new EmailController(fileStore, fileStore).bindPath(API_EMAIL).on(server);

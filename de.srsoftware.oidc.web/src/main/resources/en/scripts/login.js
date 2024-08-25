@@ -1,14 +1,19 @@
-    function doRedirect(){
-        let params = new URL(document.location.toString()).searchParams;
-        redirect( params.get("return_to") || 'index.html');
-        return false;
+function doRedirect(){
+    let params = new URL(document.location.toString()).searchParams;
+    redirect( params.get("return_to") || 'index.html');
+    return false;
 }
 
-async function handleLogin(response){
-    if (response.ok){
-        var body = await response.json();
-        hide('error');
-        setTimeout(doRedirect,100);
+function handleLogin(response){
+    if (response.ok){ 
+        response.headers.forEach(function(val, key) {
+            // in newer browsers, the cookie is set from fetch response. In older browsers this does not seem to work
+            if (key == 'session') document.cookie = 'sessionToken='+val+"; path=/api"
+        });
+       response.json().then(body => {
+          hide('error');
+          setTimeout(doRedirect,100);
+       });
     } else {
         show('error');
     }
