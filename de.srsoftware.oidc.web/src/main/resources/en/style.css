@@ -159,3 +159,15 @@ ul{
     transform-origin: 100% 100%;
   }
 }
+.permissions button{
+  background: orange;
+  color: black;
+}
+
+.permissions button span{
+    display: none;
+}
+
+.permissions button:hover span{
+    display: initial;
+}

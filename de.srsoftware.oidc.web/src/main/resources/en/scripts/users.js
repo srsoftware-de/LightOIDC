@@ -54,10 +54,10 @@ function handleUsers(response){
             <td>${u.email}</td>
             <td>${id}</td>
             <td style="display: none" class="permissions">
-                <button onclick="editPermission('${id}','MANAGE_CLIENTS',${manage.clients})">${manage.clients ?'-':'+'} Manage Clients</button>
-                <button onclick="editPermission('${id}','MANAGE_PERMISSIONS',${manage.perms})">${manage.perms ?'-':'+'} Manage Permissions</button>
-                <button onclick="editPermission('${id}','MANAGE_SMTP',${manage.smtp})">${manage.smtp ?'-':'+'} Manage SMTP</button>
-                <button onclick="editPermission('${id}','MANAGE_USERS',${manage.users})">${manage.users ?'-':'+'} Manage Users</button>
+                <button onclick="editPermission('${id}','MANAGE_CLIENTS',${manage.clients})">${manage.clients ?'-':'+'} <span>Manage</span> Clients</button>
+                <button onclick="editPermission('${id}','MANAGE_PERMISSIONS',${manage.perms})">${manage.perms ?'-':'+'} <span>Manage</span> Permissions</button>
+                <button onclick="editPermission('${id}','MANAGE_SMTP',${manage.smtp})">${manage.smtp ?'-':'+'} <span>Manage</span> SMTP</button>
+                <button onclick="editPermission('${id}','MANAGE_USERS',${manage.users})">${manage.users ?'-':'+'} <span>Manage</span> Users</button>
             </td>
             <td>
                 <button type="button" onclick="reset_password('${id}')" id="reset-${id}">Reset password</button>
