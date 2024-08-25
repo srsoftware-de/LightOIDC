@@ -68,3 +68,10 @@ function show(id){
     var elem = get(id);
     if (elem) elem.style.display = '';
 }
+
+function showAll(clazz){
+    var elems = document.getElementsByTagName('*'), i;
+    for (i in elems) {
+        if((' ' + elems[i].className + ' ').indexOf(' ' + clazz + ' ') > -1)  elems[i].style.display = '';
+    }
+}

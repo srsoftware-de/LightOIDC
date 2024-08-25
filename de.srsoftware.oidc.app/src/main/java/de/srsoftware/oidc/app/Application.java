@@ -55,7 +55,7 @@ public class Application {
 		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_SMTP, MANAGE_USERS);
+		var            firstUser      = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_PERMISSIONS, MANAGE_SMTP, MANAGE_USERS);
 		KeyStorage     keyStore       = new PlaintextKeyStore(keyDir);
 		{  // SQLite
 			SQLiteDataSource dataSource = new SQLiteDataSource();

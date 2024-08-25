@@ -18,7 +18,7 @@ public class SessionToken extends Cookie {
 	@Override
 	public <T extends Cookie> T addTo(Headers headers) {
 		headers.add("session", sessionId);
-		return (T)this;//super.addTo(headers);
+		return (T)this;	 // super.addTo(headers);
 	}
 
 	public static Optional<SessionToken> from(HttpExchange ex) {

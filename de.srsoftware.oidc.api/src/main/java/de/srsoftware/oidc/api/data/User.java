@@ -33,6 +33,11 @@ public final class User {
 		return this;
 	}
 
+	public User drop(Permission... perms) {
+		for (var permission : perms) permissions.remove(permission);
+		return this;
+	}
+
 	public String email() {
 		return email;
 	}

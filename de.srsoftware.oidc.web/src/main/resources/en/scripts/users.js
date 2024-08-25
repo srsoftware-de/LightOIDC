@@ -1,3 +1,15 @@
+function editPermission(userId,permission,drop){
+    fetch(user_controller+"/permission",{
+        method : drop ? 'DELETE' : 'POST',
+        credentials:'include',
+        body : JSON.stringify({ user_id : userId, permission : permission }),
+    }).then(handleEdit);
+}
+
+function handleEdit(response){
+    redirect('users.html');
+}
+
 function addUser(){
     var pw = getValue('pw');
     var pw2 = getValue('pw2');
@@ -31,15 +43,28 @@ function handleUsers(response){
         for (let id in users){
             var row = document.createElement("tr");
             var u = users[id];
+            var manage = {
+                clients : u.permissions.includes('MANAGE_CLIENTS'),
+                perms : u.permissions.includes('MANAGE_PERMISSIONS'),
+                smtp : u.permissions.includes('MANAGE_SMTP'),
+                users : u.permissions.includes('MANAGE_USERS')
+            };
             row.innerHTML = `<td>${u.username}</td>
             <td>${u.realname}</td>
             <td>${u.email}</td>
             <td>${id}</td>
+            <td style="display: none" class="permissions">
+                <button onclick="editPermission('${id}','MANAGE_CLIENTS',${manage.clients})">${manage.clients ?'-':'+'} Manage Clients</button>
+                <button onclick="editPermission('${id}','MANAGE_PERMISSIONS',${manage.perms})">${manage.perms ?'-':'+'} Manage Permissions</button>
+                <button onclick="editPermission('${id}','MANAGE_SMTP',${manage.smtp})">${manage.smtp ?'-':'+'} Manage SMTP</button>
+                <button onclick="editPermission('${id}','MANAGE_USERS',${manage.users})">${manage.users ?'-':'+'} Manage Users</button>
+            </td>
             <td>
                 <button type="button" onclick="reset_password('${id}')" id="reset-${id}">Reset password</button>
                 <button id="remove-${u.uuid}" class="danger" onclick="remove('${id}','${u.realname}')" type="button">Remove</button>
             </td>`;
             bottom.parentNode.insertBefore(row,bottom);
+            if (user.permissions.includes('MANAGE_PERMISSIONS')) showAll('permissions');
         }
     });
 
@@ -59,7 +84,7 @@ function handleRemove(response){
 function remove(userId,name){
     disable(`remove-${userId}`);
     if (userId == user.uuid) {
-        //return;
+        return;
     }
     setText(`remove-${userId}`,"sent…");
     hideAll('error');
@@ -77,4 +102,7 @@ function reset_password(userid){
     fetch(user_controller+"/reset?user="+userid,{credentials:'include'}).then(() => { disable('reset-'+userid); });
 }
 
-fetch(user_controller+"/list",{method:'POST',credentials:'include'}).then(handleUsers);
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+       fetch(user_controller+"/list",{method:'POST',credentials:'include'}).then(handleUsers);
+});
+

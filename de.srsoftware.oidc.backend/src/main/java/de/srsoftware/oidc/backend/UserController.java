@@ -12,6 +12,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.SessionToken;
 import de.srsoftware.oidc.api.*;
+import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
 import jakarta.mail.*;
@@ -35,8 +36,7 @@ public class UserController extends Controller {
 		this.resourceLoader = resourceLoader;
 	}
 
-	private boolean addUser(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
+	private boolean addUser(HttpExchange ex, User user) throws IOException {
 		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json  = json(ex);
 		var newID = uuid();
@@ -50,22 +50,24 @@ public class UserController extends Controller {
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 
 		// post-login paths
-		var session = optSession.get();
-		sessions.extend(session);
+		var user = sessions.extend(optSession.get()).user();
 
 		switch (path) {
 			case "/delete":
-				return deleteUser(ex, session);
+				return deleteUser(ex, user);
+			case "/permission":
+				return editPermission(ex, user, true);
 		}
 		return badRequest(ex, "%s not found".formatted(path));
 	}
 
-	private boolean deleteUser(HttpExchange ex, Session session) throws IOException {
+	private boolean deleteUser(HttpExchange ex, User user) throws IOException {
+		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = json(ex);
 		if (!json.has(USER_ID)) return badRequest(ex, "missing_user_id");
 		var uuid = json.getString(USER_ID);
 		if (uuid == null || uuid.isBlank()) return badRequest(ex, "missing_user_id");
-		if (session.user().uuid().equals(uuid)) return badRequest(ex, "must_not_delete_self");
+		if (user.uuid().equals(uuid)) return badRequest(ex, "must_not_delete_self");
 		if (!json.has(CONFIRMED) || !json.getBoolean(CONFIRMED)) return badRequest(ex, "missing_confirmation");
 		Optional<User> targetUser = users.load(uuid);
 		if (targetUser.isEmpty()) return badRequest(ex, "unknown_user");
@@ -111,22 +113,47 @@ public class UserController extends Controller {
 		// post-login paths
 		var session = optSession.get();
 		sessions.extend(session);
+		var user = session.user();
 
 		switch (path) {
 			case "/":
 				return sendUserAndCookie(ex, session);
 			case "/add":
-				return addUser(ex, session);
+				return addUser(ex, user);
 			case "/list":
-				return list(ex, session);
+				return list(ex, user);
 			case "/password":
-				return updatePassword(ex, session);
+				return updatePassword(ex, user);
+			case "/permission":
+				return editPermission(ex, user, false);
 			case "/update":
-				return updateUser(ex, session);
+				return updateUser(ex, user);
 		}
 		return notFound(ex);
 	}
 
+	private boolean editPermission(HttpExchange ex, User user, boolean drop) throws IOException {
+		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var json = json(ex);
+		if (!json.has(USER_ID)) return badRequest(ex, "Missing user_id in request!");
+		if (!json.has(PERMISSION)) return badRequest(ex, "Missing permission in request");
+		try {
+			var permission = Permission.valueOf(json.getString(PERMISSION));
+			var userId     = json.getString(USER_ID);
+			var optUer     = users.load(userId);
+			if (optUer.isEmpty()) return badRequest(ex, "Unknown user id (%s)".formatted(userId));
+			user = optUer.get();
+			if (drop) {
+				user.drop(permission);
+			} else {
+				user.add(permission);
+			}
+			users.save(user);
+			return sendEmptyResponse(HTTP_OK, ex);
+		} catch (IllegalArgumentException iae) {
+			return badRequest(ex, iae.getMessage());
+		}
+	}
 
 	private boolean generateResetLink(HttpExchange ex) throws IOException {
 		var idOrEmail = queryParam(ex).get("user");
@@ -148,8 +175,7 @@ public class UserController extends Controller {
 	}
 
 
-	private boolean list(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
+	private boolean list(HttpExchange ex, User user) throws IOException {
 		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
 		users.list().forEach(u -> json.put(u.uuid(), u.map(false)));
@@ -262,8 +288,7 @@ public class UserController extends Controller {
 		}
 	}
 
-	private boolean updatePassword(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
+	private boolean updatePassword(HttpExchange ex, User user) throws IOException {
 		var json = json(ex);
 		var uuid = json.getString(UUID);
 		if (!uuid.equals(user.uuid())) {
@@ -286,8 +311,7 @@ public class UserController extends Controller {
 		return sendContent(ex, user.map(false));
 	}
 
-	private boolean updateUser(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
+	private boolean updateUser(HttpExchange ex, User user) throws IOException {
 		var json = json(ex);
 		var uuid = json.getString(UUID);
 		if (!uuid.equals(user.uuid())) {

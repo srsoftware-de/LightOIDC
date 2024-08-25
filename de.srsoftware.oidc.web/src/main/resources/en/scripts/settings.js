@@ -179,7 +179,6 @@ function durationUpdate(){
 
 
 document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
-    alert('loaded settings.js');
     fillForm();
     fetch("/api/email/settings",{credentials:'include'}).then(handleSettings);
 });

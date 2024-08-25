@@ -32,6 +32,7 @@ public class Constants {
 	public static final String MAILCONFIG	  = "mail_config";
 	public static final String NAME		  = "name";
 	public static final String NONCE	  = "nonce";
+	public static final String PERMISSION	  = "permission";
 	public static final String OPENID	  = "openid";
 	public static final String REDIRECT_URI	  = "redirect_uri";
 	public static final String REDIRECT_URIS	  = "redirect_uris";
