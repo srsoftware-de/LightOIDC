@@ -51,7 +51,8 @@ public class Application {
 	public static void main(String[] args) throws Exception {
 		var            argMap         = map(args);
 		Optional<Path> basePath       = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : empty();
-		var            storageFile    = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir(APP_NAME).resolve("data.json")).toFile();
+		var            configFile     = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir(APP_NAME).resolve("config.json")).toFile();
+		var            storageFile    = configDir(APP_NAME).resolve("data.json").toFile();
 		var            keyDir         = storageFile.getParentFile().toPath().resolve("keys");
 		var            passwordHasher = new UuidHasher();
 		var            firstHash      = passwordHasher.hash(FIRST_USER_PASS, FIRST_UUID);
