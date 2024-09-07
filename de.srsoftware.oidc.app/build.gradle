@@ -21,6 +21,8 @@ dependencies {
     implementation project(':de.srsoftware.utils')
     implementation project(':de.srsoftware.oidc.datastore.file')
     implementation project(':de.srsoftware.oidc.datastore.sqlite')
+    implementation 'org.json:json:20240303'
+
 }
 
 test {

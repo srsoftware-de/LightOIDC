@@ -16,6 +16,8 @@ dependencies {
     implementation project(':de.srsoftware.utils')
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
     implementation 'org.xerial:sqlite-jdbc:3.46.0.0'
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+
 }
 
 test {
