@@ -15,8 +15,7 @@ import java.util.List;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.lang.JoseException;
 
-public class SqliteKeyStore implements KeyStorage {
-	private static final String CREATE_MIGRATION_TABLE  = "CREATE TABLE IF NOT EXISTS metainfo(key VARCHAR(255) PRIMARY KEY, value TEXT);";
+public class SqliteKeyStore extends SqliteStore implements KeyStorage {
 	private static final String SELECT_KEYSTORE_VERSION = "SELECT * FROM metainfo WHERE key = 'key_store_version'";
 	private static final String SET_KEYSTORE_VERSION    = "UPDATE metainfo SET value = ? WHERE key = 'key_store_version'";
 	private static final String CREATE_KEYSTORE_TABLE   = "CREATE TABLE IF NOT EXISTS keystore(key_id VARCHAR(255) PRIMARY KEY, json TEXT NOT NULL);";
@@ -24,18 +23,15 @@ public class SqliteKeyStore implements KeyStorage {
 	private static final String SELECT_KEY_IDS	    = "SELECT key_id FROM keystore";
 	private static final String LOAD_KEY	    = "SELECT json FROM keystore WHERE key_id = ?";
 	private static final String DROP_KEY	    = "DELETE FROM keystore WHERE key_id = ?";
-	public static System.Logger LOG		    = System.getLogger(SqliteKeyStore.class.getSimpleName());
 
 	private HashMap<String, PublicJsonWebKey> loaded = new HashMap<>();
-	private final Connection	          conn;
 
 	public SqliteKeyStore(Connection connection) throws SQLException {
-		conn = connection;
-		initTables();
+		super(connection);
 	}
 
-	private void initTables() throws SQLException {
-		conn.prepareStatement(CREATE_MIGRATION_TABLE).execute();
+	@Override
+	protected void initTables() throws SQLException {
 		var rs	     = conn.prepareStatement(SELECT_KEYSTORE_VERSION).executeQuery();
 		int availableVersion = 1;
 		int lastVersion	     = 1;

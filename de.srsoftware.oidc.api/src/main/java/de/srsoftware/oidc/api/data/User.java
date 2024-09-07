@@ -128,8 +128,9 @@ public final class User {
 		return uuid;
 	}
 
-	public void sessionDuration(Duration newVal) {
+	public User sessionDuration(Duration newVal) {
 		sessionDuration = newVal;
+		return this;
 	}
 
 	public Duration sessionDuration() {

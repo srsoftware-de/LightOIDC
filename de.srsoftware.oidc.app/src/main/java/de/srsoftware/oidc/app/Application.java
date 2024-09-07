@@ -116,7 +116,7 @@ public class Application {
 		};
 	}
 
-	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) {
+	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var userStorageLocation = new File(config.getOrDefault("user_storage",defaultFile));
 		return switch (extension(userStorageLocation).toLowerCase()){
 			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation));

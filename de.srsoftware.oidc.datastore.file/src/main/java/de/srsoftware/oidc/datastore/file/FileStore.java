@@ -27,7 +27,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private static final System.Logger LOG	  = System.getLogger(FileStore.class.getSimpleName());
 	private static final String	   AUTHORIZATIONS = "authorizations";
 	private static final String	   CLIENTS	  = "clients";
-	private static final String	   CODES	  = "codes";
 	private static final String	   REDIRECT_URIS  = "redirect_uris";
 	private static final String	   SESSIONS	  = "sessions";
 	private static final String	   USERS	  = "users";
