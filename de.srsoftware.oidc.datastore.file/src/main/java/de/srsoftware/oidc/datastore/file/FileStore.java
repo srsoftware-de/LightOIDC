@@ -247,13 +247,13 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Optional<Session> retrieve(String sessionId) {
+	public Optional<Session> retrieve(String sessionId, UserService userService) {
 		try {
 			var session    = sessions().getJSONObject(sessionId);
 			var userId     = session.getString(USER);
 			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
 			if (expiration.isAfter(Instant.now())) {
-				return load(userId).map(user -> new Session(user, expiration, sessionId));
+				return userService.load(userId).map(user -> new Session(user, expiration, sessionId));
 			}
 			dropSession(sessionId);
 		} catch (Exception ignored) {

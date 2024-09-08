@@ -30,7 +30,7 @@ public class UserController extends Controller {
 	private final ResourceLoader resourceLoader;
 
 	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService, ResourceLoader resourceLoader) {
-		super(sessionService);
+		super(sessionService, userService);
 		users	    = userService;
 		this.mailConfig	    = mailConfig;
 		this.resourceLoader = resourceLoader;
@@ -40,7 +40,10 @@ public class UserController extends Controller {
 		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json  = json(ex);
 		var newID = uuid();
-		User.of(json, uuid()).ifPresent(u -> users.updatePassword(u, json.getString(PASSWORD)));
+		User.of(json, uuid()).ifPresent(newUser -> {
+			users.save(newUser);
+			users.updatePassword(newUser, json.getString(PASSWORD));
+		});
 		return sendContent(ex, newID);
 	}
 

@@ -23,8 +23,8 @@ public class ClientController extends Controller {
 	private final AuthorizationService authorizations;
 	private final ClientService	   clients;
 
-	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService) {
-		super(sessionService);
+	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService, UserService userService) {
+		super(sessionService, userService);
 		authorizations = authorizationService;
 		clients        = clientService;
 	}

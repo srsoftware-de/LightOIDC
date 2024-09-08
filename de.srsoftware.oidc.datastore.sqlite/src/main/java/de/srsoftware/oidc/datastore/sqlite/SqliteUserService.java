@@ -23,9 +23,9 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	private static final String CREATE_USER_PERMISSION_TABLE = "CREATE TABLE IF NOT EXISTS user_permissions(uuid VARCHAR(255), permission VARCHAR(50), PRIMARY KEY(uuid,permission));";
 	private static final String COUNT_USERS	         = "SELECT count(*) FROM users";
 	private static final String LOAD_USER	         = "SELECT * FROM users WHERE uuid = ?";
+	private static final String LOAD_PERMISSIONS	         = "SELECT permission FROM user_permissions WHERE uuid = ?";
 	private static final String FIND_USER	         = "SELECT * FROM users WHERE uuid = ? OR username LIKE ? OR realname LIKE ? ORDER BY COALESCE(uuid, ?), username";
 	private static final String LIST_USERS	         = "SELECT * FROM users";
-	private static final String LIST_USER_PERMISSIONS        = "SELECT * FROM user_permissions WHERE uuid = ?";
 	private static final String SELECT_USERSTORE_VERSION     = "SELECT * FROM metainfo WHERE key = 'user_store_version'";
 	private static final String SET_USERSTORE_VERSION        = "UPDATE metainfo SET value = ? WHERE key = 'user_store_version'";
 	private static final String INSERT_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?)";
@@ -143,24 +143,11 @@ public class SqliteUserService extends SqliteStore implements UserService {
 			var        rs	  = conn.prepareStatement(LIST_USERS).executeQuery();
 			while (rs.next()) result.add(userFrom(rs));
 			rs.close();
-			for (User user : result) listPermissions(user.uuid()).forEach(user::add);
+			for (User user : result) addPermissions(user);
+			return result;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return List.of();
-	}
-
-	private List<Permission> listPermissions(String uuid) throws SQLException {
-		var perms = new ArrayList<Permission>();
-		var stmt  = conn.prepareStatement(LIST_USER_PERMISSIONS);
-		stmt.setString(1, uuid);
-		var rs = stmt.executeQuery();
-		while (rs.next()) {
-			var perm = rs.getString("permission");
-			perms.add(Permission.valueOf(perm));
-		}
-		rs.close();
-		return perms;
 	}
 
 	private User userFrom(ResultSet rs) throws SQLException {
@@ -199,7 +186,24 @@ public class SqliteUserService extends SqliteStore implements UserService {
 			stmt.setString(1, id);
 			var rs = stmt.executeQuery();
 			if (rs.next()) user = userFrom(rs);
-			return nullable(user);
+			rs.close();
+			return nullable(user).map(this::addPermissions);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private User addPermissions(User user) {
+		try {
+			var stmt = conn.prepareStatement(LOAD_PERMISSIONS);
+			stmt.setString(1, user.uuid());
+			var rs = stmt.executeQuery();
+			while (rs.next()) try {
+					user.add(Permission.valueOf(rs.getString("permission")));
+				} catch (IllegalArgumentException ignored) {
+				}
+			rs.close();
+			return user;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

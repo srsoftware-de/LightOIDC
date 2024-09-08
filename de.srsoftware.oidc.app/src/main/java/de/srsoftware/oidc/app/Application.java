@@ -77,9 +77,9 @@ public class Application {
 		new UserController(mailConfig, sessionService, userService, staticPages).bindPath(API_USER).on(server);
 		var tokenControllerConfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
 		new TokenController(authService, clientService, keyManager, userService, tokenControllerConfig).bindPath(API_TOKEN).on(server);
-		new ClientController(authService, clientService, sessionService).bindPath(API_CLIENT).on(server);
+		new ClientController(authService, clientService, sessionService, userService).bindPath(API_CLIENT).on(server);
 		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
-		new EmailController(mailConfig, sessionService).bindPath(API_EMAIL).on(server);
+		new EmailController(mailConfig, sessionService, userService).bindPath(API_EMAIL).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());
 		server.start();
 	}

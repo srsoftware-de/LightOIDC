@@ -9,14 +9,15 @@ import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.MailConfig;
 import de.srsoftware.oidc.api.SessionService;
+import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.Session;
 import java.io.IOException;
 
 public class EmailController extends Controller {
 	private final MailConfig mailConfig;
 
-	public EmailController(MailConfig mailConfig, SessionService sessionService) {
-		super(sessionService);
+	public EmailController(MailConfig mailConfig, SessionService sessionService, UserService userService) {
+		super(sessionService, userService);
 		this.mailConfig = mailConfig;
 	}
 

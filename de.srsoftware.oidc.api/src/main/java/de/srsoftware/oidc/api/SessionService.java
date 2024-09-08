@@ -10,6 +10,6 @@ public interface SessionService {
 	Session	  createSession(User user);
 	SessionService	  dropSession(String sessionId);
 	Session	  extend(Session session);
-	Optional<Session> retrieve(String sessionId);
+	Optional<Session> retrieve(String sessionId, UserService userService);
 	SessionService	  setDuration(Duration duration);
 }
