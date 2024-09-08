@@ -63,7 +63,7 @@ public class Application {
 
 
 		FileStoreProvider fileStoreProvider = new FileStoreProvider(passHasher);
-		var	  userService	    = setupUserService(config, defaultFile, fileStoreProvider).init(firstUser);
+		var	  userService	    = setupUserService(config, defaultFile, fileStoreProvider, passHasher).init(firstUser);
 		var	  sessionService    = setupSessionService(config, defaultFile, fileStoreProvider);
 		var	  mailConfig	    = setupMailConfig(config, defaultFile, fileStoreProvider);
 		var	  keyStore	    = setupKeyStore(config, configDir);
@@ -116,10 +116,10 @@ public class Application {
 		};
 	}
 
-	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
+	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
 		var userStorageLocation = new File(config.getOrDefault("user_storage",defaultFile));
 		return switch (extension(userStorageLocation).toLowerCase()){
-			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation));
+			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation),passHasher);
 			default -> fileStoreProvider.get(userStorageLocation);
 		};
 	}

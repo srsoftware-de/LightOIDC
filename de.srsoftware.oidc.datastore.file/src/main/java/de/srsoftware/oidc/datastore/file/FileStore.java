@@ -151,7 +151,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		var result = new HashSet<User>();
 		for (var id : users.keySet()) {
 			var data = users.getJSONObject(id);
-			if (id.equals(key)) User.of(data, id).ifPresent(result::add);
 			if (KEYS.stream().map(data::getString).anyMatch(val -> val.equals(key))) User.of(data, id).ifPresent(result::add);
 		}
 		return result;
@@ -181,13 +180,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public Optional<User> load(String user, String password) {
 		try {
 			var users = json.getJSONObject(USERS);
-			var uuids = users.keySet();
-			for (String userId : uuids) {
+			for (String userId : users.keySet()) {
 				var userData = users.getJSONObject(userId);
 
 				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(user))) continue;
 				var hashedPass = userData.getString(PASSWORD);
-				if (passwordHasher.matches(password, hashedPass)) return User.of(userData, userId);
+				if (passwordMatches(password, hashedPass)) return User.of(userData, userId);
 			}
 			return empty();
 		} catch (Exception e) {
