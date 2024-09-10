@@ -50,6 +50,11 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			Files.writeString(storageFile, "{}");
 		}
 		json = new JSONObject(Files.readString(storageFile));
+		json.put(AUTHORIZATIONS, new JSONObject());
+		json.put(CLIENTS, new JSONObject());
+		json.put(MAILCONFIG, new JSONObject());
+		json.put(SESSIONS, new JSONObject());
+		json.put(USERS, new JSONObject());
 		auth = null;  // lazy init!
 	}
 
@@ -137,11 +142,8 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public FileStore init(User defaultUser) {
-		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
-		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
-		if (!json.has(MAILCONFIG)) json.put(MAILCONFIG, new JSONObject());
-		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
-		if (!json.has(USERS)) save(defaultUser);
+		var users = json.getJSONObject(USERS);
+		if (users.length() < 1) save(defaultUser);
 		return this;
 	}
 

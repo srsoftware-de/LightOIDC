@@ -28,7 +28,7 @@ public class UuidHasher implements PasswordHasher<String> {
 
 	@Override
 	public String salt(String hashedPassword) {
-		return hashedPassword.split("@")[1];
+		return hashedPassword.split("@", 2)[1];
 	}
 
 	public static String hex(byte[] bytes) {

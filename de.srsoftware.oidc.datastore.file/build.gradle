@@ -12,6 +12,7 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation project(path: ':de.srsoftware.oidc.api', configuration: "testOutput")
     implementation project(':de.srsoftware.oidc.api')
     implementation project(':de.srsoftware.utils')
     implementation 'org.json:json:20240303'

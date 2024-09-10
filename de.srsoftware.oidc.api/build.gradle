@@ -20,3 +20,16 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+task jarTest (type: Jar) {
+    from sourceSets.test.output
+    archiveClassifier = 'test'
+}
+
+configurations {
+    testOutput
+}
+
+artifacts {
+    testOutput jarTest
+}
