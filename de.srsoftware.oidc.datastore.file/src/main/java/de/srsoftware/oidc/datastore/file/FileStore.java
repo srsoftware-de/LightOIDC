@@ -5,6 +5,7 @@ import static de.srsoftware.oidc.api.data.User.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.*;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
@@ -17,7 +18,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -221,7 +221,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public Session createSession(User user) {
 		var now	 = Instant.now();
-		var endOfSession = now.plus(user.sessionDuration());
+		var endOfSession = now.plus(user.sessionDuration()).truncatedTo(SECONDS);
 		return save(new Session(user.uuid(), endOfSession, uuid()));
 	}
 
@@ -247,7 +247,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		try {
 			var session    = sessions().getJSONObject(sessionId);
 			var userId     = session.getString(USER);
-			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
+			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION)).truncatedTo(SECONDS);
 			if (expiration.isAfter(Instant.now())) return Optional.of(new Session(userId, expiration, sessionId));
 			dropSession(sessionId);
 		} catch (Exception ignored) {
@@ -259,11 +259,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		sessions().put(session.id(), Map.of(USER, session.userId(), EXPIRATION, session.expiration().getEpochSecond()));
 		save();
 		return session;
-	}
-
-	@Override
-	public SessionService setDuration(Duration duration) {
-		return null;
 	}
 
 	/** client service methods **/

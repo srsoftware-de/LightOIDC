@@ -5,7 +5,6 @@ import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
 import java.sql.Connection;
-import java.time.Duration;
 import java.util.Optional;
 
 public class SqliteSessionService implements SessionService {
@@ -30,10 +29,5 @@ public class SqliteSessionService implements SessionService {
 	@Override
 	public Optional<Session> retrieve(String sessionId) {
 		return Optional.empty();
-	}
-
-	@Override
-	public SessionService setDuration(Duration duration) {
-		return null;
 	}
 }

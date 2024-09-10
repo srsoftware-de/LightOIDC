@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.datastore.file;
 
 import static de.srsoftware.utils.Strings.uuid;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.srsoftware.oidc.api.SessionService;
@@ -45,7 +46,7 @@ public class SessionServiceTest {
 	}
 
 	@Test
-	public void testCreate() {
+	public void testCreateAndLoad() {
 		var uuid = uuid();
 		var pass = hasher().hash(PASSWORD, uuid);
 		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
@@ -55,5 +56,55 @@ public class SessionServiceTest {
 		var     expiration = session.expiration();
 		assertTrue(expiration.isAfter(now.plus(5, ChronoUnit.MINUTES).minusSeconds(1)));
 		assertTrue(expiration.isBefore(now.plus(5, ChronoUnit.MINUTES).plusSeconds(1)));
+
+		var loaded = sessionService.retrieve(session.id());
+		assertTrue(loaded.isPresent());
+		assertEquals(session, loaded.get());
+	}
+
+	@Test
+	public void testCreateAndExtend() {
+		var uuid = uuid();
+		var pass = hasher().hash(PASSWORD, uuid);
+		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
+
+		var session = sessionService.createSession(user);
+
+		Instant now = Instant.now();
+		sessionService.extend(session, user.sessionDuration(Duration.ofMinutes(10)));
+		var loaded = sessionService.retrieve(session.id());
+		assertTrue(loaded.isPresent());
+		assertEquals(session.id(), loaded.get().id());
+		var expiration = loaded.get().expiration();
+		assertTrue(expiration.isAfter(now.plus(10, ChronoUnit.MINUTES).minusSeconds(1)));
+		assertTrue(expiration.isBefore(now.plus(10, ChronoUnit.MINUTES).plusSeconds(1)));
+	}
+
+	@Test
+	public void textCreateAndDrop() {
+		var uuid = uuid();
+		var pass = hasher().hash(PASSWORD, uuid);
+		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
+
+		var session = sessionService.createSession(user);
+		assertTrue(sessionService.retrieve(session.id()).isPresent());
+
+		sessionService.dropSession(session.id());
+		var loaded = sessionService.retrieve(session.id());
+		assertTrue(sessionService.retrieve(session.id()).isEmpty());
+	}
+
+	@Test
+	public void testExpiration() throws InterruptedException {
+		var uuid = uuid();
+		var pass = hasher().hash(PASSWORD, uuid);
+		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofSeconds(2));
+
+		var session = sessionService.createSession(user);
+		assertTrue(sessionService.retrieve(session.id()).isPresent());
+
+		Thread.sleep(2500);
+
+		assertTrue(sessionService.retrieve(session.id()).isEmpty());
 	}
 }
