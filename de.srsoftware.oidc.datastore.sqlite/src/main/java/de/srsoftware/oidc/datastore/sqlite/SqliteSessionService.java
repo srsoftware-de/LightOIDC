@@ -2,7 +2,6 @@
 package de.srsoftware.oidc.datastore.sqlite;
 
 import de.srsoftware.oidc.api.SessionService;
-import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
 import java.sql.Connection;
@@ -24,12 +23,12 @@ public class SqliteSessionService implements SessionService {
 	}
 
 	@Override
-	public Session extend(Session session) {
+	public Session extend(Session session, User user) {
 		return null;
 	}
 
 	@Override
-	public Optional<Session> retrieve(String sessionId, UserService users) {
+	public Optional<Session> retrieve(String sessionId) {
 		return Optional.empty();
 	}
 

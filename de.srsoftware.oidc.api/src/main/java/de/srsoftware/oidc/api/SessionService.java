@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface SessionService {
 	Session	  createSession(User user);
 	SessionService	  dropSession(String sessionId);
-	Session	  extend(Session session);
-	Optional<Session> retrieve(String sessionId, UserService userService);
+	Session	  extend(Session session, User user);
+	Optional<Session> retrieve(String sessionId);
 	SessionService	  setDuration(Duration duration);
 }

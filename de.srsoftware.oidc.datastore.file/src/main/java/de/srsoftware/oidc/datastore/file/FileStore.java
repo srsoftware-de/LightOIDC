@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class FileStore implements AuthorizationService, ClientService, SessionService, UserService, MailConfig {
@@ -75,12 +74,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
 		var authorizationUsers = Set.copyOf(authorizations.keySet());
-		var userIds	       = list().stream().map(User::uuid).collect(Collectors.toSet());
 		for (var userId : authorizationUsers) {
-			if (!userIds.contains(userId)) {
-				authorizations.remove(userId);
-				continue;
-			}
 			var clients   = authorizations.getJSONObject(userId);
 			var clientIds = Set.copyOf(clients.keySet());
 			for (var clientId : clientIds) {
@@ -228,7 +222,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public Session createSession(User user) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(user.sessionDuration());
-		return save(new Session(user, endOfSession, uuid()));
+		return save(new Session(user.uuid(), endOfSession, uuid()));
 	}
 
 	@Override
@@ -239,10 +233,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Session extend(Session session) {
-		var user	 = session.user();
+	public Session extend(Session session, User user) {
 		var endOfSession = Instant.now().plus(user.sessionDuration());
-		return save(new Session(user, endOfSession, session.id()));
+		return save(new Session(user.uuid(), endOfSession, session.id()));
 	}
 
 	private JSONObject sessions() {
@@ -250,14 +243,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Optional<Session> retrieve(String sessionId, UserService userService) {
+	public Optional<Session> retrieve(String sessionId) {
 		try {
 			var session    = sessions().getJSONObject(sessionId);
 			var userId     = session.getString(USER);
 			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION));
-			if (expiration.isAfter(Instant.now())) {
-				return userService.load(userId).map(user -> new Session(user, expiration, sessionId));
-			}
+			if (expiration.isAfter(Instant.now())) return Optional.of(new Session(userId, expiration, sessionId));
 			dropSession(sessionId);
 		} catch (Exception ignored) {
 		}
@@ -265,7 +256,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private Session save(Session session) {
-		sessions().put(session.id(), Map.of(USER, session.user().uuid(), EXPIRATION, session.expiration().getEpochSecond()));
+		sessions().put(session.id(), Map.of(USER, session.userId(), EXPIRATION, session.expiration().getEpochSecond()));
 		save();
 		return session;
 	}

@@ -22,11 +22,13 @@ public class ClientController extends Controller {
 	private static final System.Logger LOG = System.getLogger(ClientController.class.getSimpleName());
 	private final AuthorizationService authorizations;
 	private final ClientService	   clients;
+	private final UserService	   users;
 
 	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService, UserService userService) {
-		super(sessionService, userService);
+		super(sessionService);
 		authorizations = authorizationService;
 		clients        = clientService;
+		users          = userService;
 	}
 
 	private boolean authorizationError(HttpExchange ex, String errorCode, String description, String state) throws IOException {
@@ -38,7 +40,9 @@ public class ClientController extends Controller {
 	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
-		var user  = session.user();
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user  = optUser.get();
 		var json  = json(ex);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
 		if (!json.has(CLIENT_ID)) return authorizationError(ex, INVALID_REQUEST, "Missing required parameter \"%s\"!".formatted(CLIENT_ID), state);
@@ -95,7 +99,9 @@ public class ClientController extends Controller {
 	}
 
 	private boolean deleteClient(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
 		var json = json(ex);
 		var id   = json.getString(CLIENT_ID);
 		clients.getClient(id).ifPresent(clients::remove);
@@ -110,7 +116,11 @@ public class ClientController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
-		sessions.extend(session);
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
+
 		switch (path) {
 			case "/":
 				return deleteClient(ex, session);
@@ -126,7 +136,11 @@ public class ClientController extends Controller {
 
 		// post-login paths
 		var session = optSession.get();
-		sessions.extend(session);
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
+
 		switch (path) {
 			case "/":
 				return load(ex, session);
@@ -141,8 +155,9 @@ public class ClientController extends Controller {
 	}
 
 	private boolean list(HttpExchange ex, Session session) throws IOException {
-		var user = session.user();
-		if (!user.hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
 		clients.listClients().forEach(client -> json.put(client.id(), Map.of("name", client.name(), "redirect_uris", client.redirectUris())));
 		return sendContent(ex, json);
@@ -150,7 +165,9 @@ public class ClientController extends Controller {
 
 
 	private boolean load(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = json(ex);
 		if (json.has(CLIENT_ID)) {
 			var clientID = json.getString(CLIENT_ID);
@@ -161,7 +178,9 @@ public class ClientController extends Controller {
 	}
 
 	private boolean save(HttpExchange ex, Session session) throws IOException {
-		if (!session.user().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
 		var json      = json(ex);
 		var redirects = new HashSet<String>();
 		for (Object o : json.getJSONArray(REDIRECT_URIS)) {

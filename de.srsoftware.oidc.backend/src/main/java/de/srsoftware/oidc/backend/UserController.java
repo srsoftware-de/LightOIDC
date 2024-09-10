@@ -30,7 +30,7 @@ public class UserController extends Controller {
 	private final ResourceLoader resourceLoader;
 
 	public UserController(MailConfig mailConfig, SessionService sessionService, UserService userService, ResourceLoader resourceLoader) {
-		super(sessionService, userService);
+		super(sessionService);
 		users	    = userService;
 		this.mailConfig	    = mailConfig;
 		this.resourceLoader = resourceLoader;
@@ -51,9 +51,11 @@ public class UserController extends Controller {
 	public boolean doDelete(String path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-
-		// post-login paths
-		var user = sessions.extend(optSession.get()).user();
+		var session = optSession.get();
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
 
 		switch (path) {
 			case "/delete":
@@ -88,10 +90,11 @@ public class UserController extends Controller {
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-
-		// post-login paths
 		var session = optSession.get();
-		sessions.extend(session);
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
 
 		switch (path) {
 			case "/logout":
@@ -112,15 +115,15 @@ public class UserController extends Controller {
 		}
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
-
-		// post-login paths
 		var session = optSession.get();
-		sessions.extend(session);
-		var user = session.user();
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
 
 		switch (path) {
 			case "/":
-				return sendUserAndCookie(ex, session);
+				return sendUserAndCookie(ex, session, user);
 			case "/add":
 				return addUser(ex, user);
 			case "/list":
@@ -192,7 +195,7 @@ public class UserController extends Controller {
 		var password = body.has(PASSWORD) ? body.getString(PASSWORD) : null;
 
 		Optional<User> user = users.load(username, password);
-		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get()));
+		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get()), user.get());
 		return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 	}
 
@@ -262,9 +265,9 @@ public class UserController extends Controller {
 		}
 	}
 
-	private boolean sendUserAndCookie(HttpExchange ex, Session session) throws IOException {
+	private boolean sendUserAndCookie(HttpExchange ex, Session session, User user) throws IOException {
 		new SessionToken(session.id()).addTo(ex);
-		return sendContent(ex, session.user().map(false));
+		return sendContent(ex, user.map(false));
 	}
 
 

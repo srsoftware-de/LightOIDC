@@ -3,5 +3,5 @@ package de.srsoftware.oidc.api.data;
 
 import java.time.Instant;
 
-public record Session(User user, Instant expiration, String id) {
+public record Session(String userId, Instant expiration, String id) {
 }

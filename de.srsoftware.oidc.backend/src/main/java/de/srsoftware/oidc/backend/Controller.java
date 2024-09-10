@@ -5,20 +5,22 @@ import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.PathHandler;
 import de.srsoftware.http.SessionToken;
 import de.srsoftware.oidc.api.SessionService;
-import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.Session;
+import java.io.IOException;
 import java.util.Optional;
 
 public abstract class Controller extends PathHandler {
 	protected final SessionService sessions;
-	private final UserService      users;
 
-	Controller(SessionService sessionService, UserService userService) {
+	Controller(SessionService sessionService) {
 		sessions = sessionService;
-		users    = userService;
 	}
 
 	protected Optional<Session> getSession(HttpExchange ex) {
-		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessionId -> sessions.retrieve(sessionId, users));
+		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessionId -> sessions.retrieve(sessionId));
+	}
+
+	protected boolean invalidSessionUser(HttpExchange ex) throws IOException {
+		return serverError(ex, "Session object refers to missing user");
 	}
 }

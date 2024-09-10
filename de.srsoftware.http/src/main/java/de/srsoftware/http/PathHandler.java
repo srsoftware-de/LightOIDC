@@ -187,6 +187,11 @@ public abstract class PathHandler implements HttpHandler {
 			return sendContent(ex, HTTP_OK, o);
 		}
 
+		public static boolean serverError(HttpExchange ex, Object o) throws IOException {
+			sendContent(ex, HTTP_INTERNAL_ERROR, o);
+			return false;
+		}
+
 		public static String url(HttpExchange ex) {
 			return hostname(ex) + ex.getRequestURI();
 		}
