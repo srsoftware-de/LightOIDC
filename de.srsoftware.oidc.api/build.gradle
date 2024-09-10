@@ -21,15 +21,15 @@ test {
     useJUnitPlatform()
 }
 
-task jarTest (type: Jar) {
+task jarTests (type: Jar) {
     from sourceSets.test.output
     archiveClassifier = 'test'
 }
 
 configurations {
-    testOutput
+    testBundle
 }
 
 artifacts {
-    testOutput jarTest
+    testBundle jarTests
 }

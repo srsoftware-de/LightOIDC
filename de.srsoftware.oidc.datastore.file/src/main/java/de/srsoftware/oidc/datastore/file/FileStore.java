@@ -9,6 +9,7 @@ import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
+import de.srsoftware.utils.PasswordHasher;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import java.io.File;
@@ -186,8 +187,8 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 				var userData = users.getJSONObject(userId);
 
 				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(user))) continue;
-				var hashedPass = userData.getString(PASSWORD);
-				if (passwordMatches(password, hashedPass)) return User.of(userData, userId);
+				var loadedUser = User.of(userData, userId).filter(u -> passwordMatches(password, u));
+				if (loadedUser.isPresent()) return loadedUser;
 			}
 			return empty();
 		} catch (Exception e) {
@@ -196,8 +197,8 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public boolean passwordMatches(String password, String hashedPassword) {
-		return passwordHasher.matches(password, hashedPassword);
+	public boolean passwordMatches(String password, User user) {
+		return passwordHasher.matches(password, user.hashedPassword());
 	}
 
 	@Override
@@ -227,7 +228,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public Session createSession(User user) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(user.sessionDuration());
-		return save(new Session(user, endOfSession, uuid().toString()));
+		return save(new Session(user, endOfSession, uuid()));
 	}
 
 	@Override

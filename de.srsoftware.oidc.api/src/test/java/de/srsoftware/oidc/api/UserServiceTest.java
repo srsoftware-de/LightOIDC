@@ -2,9 +2,13 @@
 package de.srsoftware.oidc.api;
 
 import static de.srsoftware.oidc.api.data.Permission.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.PasswordHasher;
+import de.srsoftware.utils.UuidHasher;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,8 +25,17 @@ public abstract class UserServiceTest {
 
 	protected abstract UserService userService();
 
+	private PasswordHasher<String> hasher = null;
 
-	protected abstract PasswordHasher<String> hasher();
+	protected PasswordHasher<String> hasher() {
+		if (hasher == null) try {
+				hasher = new UuidHasher();
+			} catch (NoSuchAlgorithmException e) {
+				throw new RuntimeException(e);
+			}
+
+		return hasher;
+	}
 
 
 	@Test
@@ -40,7 +53,7 @@ public abstract class UserServiceTest {
 		var users = userService().list();
 		Assertions.assertEquals(1, users.size());
 		var saved = users.get(0);
-		Assertions.assertTrue(hasher().matches(PASSWORD, saved.hashedPassword()));
+		assertTrue(hasher().matches(PASSWORD, saved.hashedPassword()));
 		Assertions.assertEquals(firstUser, saved);
 	}
 
@@ -55,12 +68,12 @@ public abstract class UserServiceTest {
 		var users = userService().list();
 		Assertions.assertEquals(1, users.size());
 		var saved = users.get(0);
-		Assertions.assertTrue(hasher().matches(PASSWORD, saved.hashedPassword()));
+		assertTrue(hasher().matches(PASSWORD, saved.hashedPassword()));
 		Assertions.assertEquals(newUser, saved);
 		Assertions.assertFalse(saved.hasPermission(Permission.MANAGE_USERS));
 		Assertions.assertFalse(saved.hasPermission(Permission.MANAGE_SMTP));
-		Assertions.assertTrue(saved.hasPermission(MANAGE_CLIENTS));
-		Assertions.assertTrue(saved.hasPermission(MANAGE_PERMISSIONS));
+		assertTrue(saved.hasPermission(MANAGE_CLIENTS));
+		assertTrue(saved.hasPermission(MANAGE_PERMISSIONS));
 	}
 
 	@Test
@@ -72,7 +85,7 @@ public abstract class UserServiceTest {
 		newUser.add(MANAGE_PERMISSIONS);
 		userService().save(newUser);
 		var saved = userService().load(uuid);
-		Assertions.assertTrue(saved.isPresent());
+		assertTrue(saved.isPresent());
 		Assertions.assertEquals(newUser, saved.get());
 	}
 
@@ -111,17 +124,22 @@ public abstract class UserServiceTest {
 		userService().init(firstUser);
 
 		var loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		var oldPass = loaded.get().hashedPassword();
-		Assertions.assertTrue(hasher().matches(PASSWORD, oldPass));
+		assertTrue(hasher().matches(PASSWORD, oldPass));
 
 		var newPass = hasher().hash(PASSWORD2, uuid);
 		userService().save(firstUser.hashedPassword(newPass));
 
 		loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		newPass = loaded.get().hashedPassword();
-		Assertions.assertTrue(hasher().matches(PASSWORD2, newPass));
+		assertTrue(hasher().matches(PASSWORD2, newPass));
+
+		userService().updatePassword(firstUser, PASSWORD);
+		loaded = userService().load(uuid);
+		assertTrue(loaded.isPresent());
+		assertTrue(userService().passwordMatches(PASSWORD, loaded.get()));
 	}
 
 	@Test
@@ -132,13 +150,13 @@ public abstract class UserServiceTest {
 		userService().init(firstUser);
 
 		var loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(USERNAME, loaded.get().username());
 
 		userService().save(firstUser.username(USERNAME2));
 
 		loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(USERNAME2, loaded.get().username());
 	}
 
@@ -150,13 +168,13 @@ public abstract class UserServiceTest {
 		userService().init(firstUser);
 
 		var loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(NAME, loaded.get().realName());
 
 		userService().save(firstUser.realName(NAME2));
 
 		loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(NAME2, loaded.get().realName());
 	}
 
@@ -168,13 +186,13 @@ public abstract class UserServiceTest {
 		userService().init(firstUser);
 
 		var loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(NAME, loaded.get().realName());
 
 		userService().save(firstUser.email(EMAIL2));
 
 		loaded = userService().load(uuid);
-		Assertions.assertTrue(loaded.isPresent());
+		assertTrue(loaded.isPresent());
 		Assertions.assertEquals(EMAIL2, loaded.get().email());
 	}
 
@@ -186,27 +204,27 @@ public abstract class UserServiceTest {
 		userService().init(firstUser);
 
 		var opt = userService().load(uuid);
-		Assertions.assertTrue(opt.isPresent());
+		assertTrue(opt.isPresent());
 		var loaded = opt.get();
 		for (var permission : Permission.values()) Assertions.assertFalse(loaded.hasPermission(permission));
 
 		userService().save(loaded.add(MANAGE_CLIENTS, MANAGE_PERMISSIONS));
 
 		opt = userService().load(uuid);
-		Assertions.assertTrue(opt.isPresent());
+		assertTrue(opt.isPresent());
 		loaded = opt.get();
-		Assertions.assertTrue(loaded.hasPermission(MANAGE_CLIENTS));
-		Assertions.assertTrue(loaded.hasPermission(MANAGE_PERMISSIONS));
+		assertTrue(loaded.hasPermission(MANAGE_CLIENTS));
+		assertTrue(loaded.hasPermission(MANAGE_PERMISSIONS));
 		Assertions.assertFalse(loaded.hasPermission(MANAGE_SMTP));
 		Assertions.assertFalse(loaded.hasPermission(MANAGE_USERS));
 
 		userService().save(loaded.add(MANAGE_SMTP, MANAGE_USERS).drop(MANAGE_CLIENTS, MANAGE_PERMISSIONS));
 		opt = userService().load(uuid);
-		Assertions.assertTrue(opt.isPresent());
+		assertTrue(opt.isPresent());
 		loaded = opt.get();
 		Assertions.assertFalse(loaded.hasPermission(MANAGE_CLIENTS));
 		Assertions.assertFalse(loaded.hasPermission(MANAGE_PERMISSIONS));
-		Assertions.assertTrue(loaded.hasPermission(MANAGE_SMTP));
-		Assertions.assertTrue(loaded.hasPermission(MANAGE_USERS));
+		assertTrue(loaded.hasPermission(MANAGE_SMTP));
+		assertTrue(loaded.hasPermission(MANAGE_USERS));
 	}
 }

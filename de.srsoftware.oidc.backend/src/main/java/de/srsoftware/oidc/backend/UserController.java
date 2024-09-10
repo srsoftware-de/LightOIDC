@@ -298,7 +298,7 @@ public class UserController extends Controller {
 			return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		}
 		var oldPass = json.getString("oldpass");
-		if (!users.passwordMatches(oldPass, user.hashedPassword())) return badRequest(ex, "wrong password");
+		if (!users.passwordMatches(oldPass, user)) return badRequest(ex, "wrong password");
 
 		var passwords = json.getJSONArray("newpass");
 		var newPass   = passwords.getString(0);

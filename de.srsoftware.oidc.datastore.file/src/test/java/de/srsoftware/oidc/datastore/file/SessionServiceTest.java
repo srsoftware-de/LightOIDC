@@ -1,8 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.file;
 
-import de.srsoftware.oidc.api.UserService;
-import de.srsoftware.oidc.api.UserServiceTest;
+import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.utils.PasswordHasher;
 import de.srsoftware.utils.UuidHasher;
 import java.io.File;
@@ -11,12 +10,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 
-public class FileStoreUserServiceTest extends UserServiceTest {
+public class SessionServiceTest {
 	private PasswordHasher<String> hasher  = null;
 	private File	               storage = new File("/tmp/" + UUID.randomUUID());
-	private UserService            userService;
+	private SessionService         sessionService;
 
-	@Override
 	protected PasswordHasher<String> hasher() {
 		if (hasher == null) try {
 				hasher = new UuidHasher();
@@ -30,11 +28,6 @@ public class FileStoreUserServiceTest extends UserServiceTest {
 	@BeforeEach
 	public void setup() throws IOException {
 		if (storage.exists()) storage.delete();
-		userService = new FileStore(storage, hasher());
-	}
-
-	@Override
-	protected UserService userService() {
-		return userService;
+		sessionService = new FileStore(storage, hasher());
 	}
 }

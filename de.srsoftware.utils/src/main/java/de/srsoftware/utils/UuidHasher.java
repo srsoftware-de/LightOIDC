@@ -1,9 +1,8 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.oidc.datastore.file;
+package de.srsoftware.utils;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import de.srsoftware.oidc.api.PasswordHasher;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 

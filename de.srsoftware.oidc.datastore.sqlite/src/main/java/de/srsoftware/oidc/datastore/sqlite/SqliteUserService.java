@@ -5,11 +5,11 @@ import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.util.Optional.empty;
 
-import de.srsoftware.oidc.api.PasswordHasher;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.PasswordHasher;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,16 +24,15 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	private static final String COUNT_USERS	         = "SELECT count(*) FROM users";
 	private static final String LOAD_USER	         = "SELECT * FROM users WHERE uuid = ?";
 	private static final String LOAD_PERMISSIONS	         = "SELECT permission FROM user_permissions WHERE uuid = ?";
-	private static final String FIND_USER	         = "SELECT * FROM users WHERE uuid = ? OR username LIKE ? OR realname LIKE ? ORDER BY COALESCE(uuid, ?), username";
+	private static final String FIND_USER	         = "SELECT * FROM users WHERE uuid = ? OR username LIKE ? OR realname LIKE ? OR email = ? ORDER BY COALESCE(uuid, ?), username";
 	private static final String LIST_USERS	         = "SELECT * FROM users";
 	private static final String SELECT_USERSTORE_VERSION     = "SELECT * FROM metainfo WHERE key = 'user_store_version'";
 	private static final String SET_USERSTORE_VERSION        = "UPDATE metainfo SET value = ? WHERE key = 'user_store_version'";
-	private static final String INSERT_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?)";
+	private static final String INSERT_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?) ON CONFLICT DO UPDATE SET password = ?, email = ?, session_duration = ?, username = ?, realname = ?;";
 	private static final String INSERT_PERMISSIONS	         = "INSERT INTO user_permissions (uuid, permission) VALUES (?,?)";
-
-	private static final String DROP_PERMISSIONS = "DELETE FROM user_permissions WHERE uuid = ?";
-	private static final String DROP_USER        = "DELETE FROM users WHERE uuid = ?";
-	private static final String UPDATE_PASSWORD  = "UPDATE users SET password = ? WHERE uuid = ?";
+	private static final String DROP_PERMISSIONS	         = "DELETE FROM user_permissions WHERE uuid = ?";
+	private static final String DROP_USER	         = "DELETE FROM users WHERE uuid = ?";
+	private static final String UPDATE_PASSWORD	         = "UPDATE users SET password = ? WHERE uuid = ?";
 	private final PasswordHasher<String> hasher;
 
 	private Map<String, AccessToken> accessTokens = new HashMap<>();
@@ -169,6 +168,7 @@ public class SqliteUserService extends SqliteStore implements UserService {
 			stmt.setString(2, "%" + idOrEmail + "%");
 			stmt.setString(3, "%" + idOrEmail + "%");
 			stmt.setString(4, idOrEmail);
+			stmt.setString(5, idOrEmail);
 			var rs = stmt.executeQuery();
 			while (rs.next()) result.add(userFrom(rs));
 			rs.close();
@@ -213,14 +213,14 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	public Optional<User> load(String username, String password) {
 		var candidates = find(username);
 		for (var user : candidates) {
-			if (passwordMatches(password, user.hashedPassword())) return Optional.of(user);
+			if (passwordMatches(password, user)) return Optional.of(user);
 		}
 		return empty();
 	}
 
 	@Override
-	public boolean passwordMatches(String password, String hashedPassword) {
-		return hasher.matches(password, hashedPassword);
+	public boolean passwordMatches(String password, User user) {
+		return hasher.matches(password, user.hashedPassword());
 	}
 
 	@Override
@@ -234,6 +234,11 @@ public class SqliteUserService extends SqliteStore implements UserService {
 			stmt.setLong(4, user.sessionDuration().toMinutes());
 			stmt.setString(5, user.username());
 			stmt.setString(6, user.realName());
+			stmt.setString(7, user.hashedPassword());
+			stmt.setString(8, user.email());
+			stmt.setLong(9, user.sessionDuration().toMinutes());
+			stmt.setString(10, user.username());
+			stmt.setString(11, user.realName());
 			stmt.execute();
 			dropPermissionsOf(user.uuid());
 
@@ -246,24 +251,14 @@ public class SqliteUserService extends SqliteStore implements UserService {
 				}
 			}
 			conn.commit();
-
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-		return this;
-	}
-
-	@Override
-	public SqliteUserService updatePassword(User user, String plaintextPassword) {
-		try {
-			var stmt = conn.prepareStatement(UPDATE_PASSWORD);
-			stmt.setString(1, user.uuid());
-			var hashedPassword = hasher.hash(plaintextPassword, uuid());
-			stmt.setString(2, hashedPassword);
-			stmt.execute();
 			return this;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public SqliteUserService updatePassword(User user, String plaintextPassword) {
+		return save(user.hashedPassword(hasher.hash(plaintextPassword, uuid())));
 	}
 }

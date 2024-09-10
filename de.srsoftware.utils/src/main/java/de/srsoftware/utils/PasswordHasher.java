@@ -1,5 +1,5 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.oidc.api;
+package de.srsoftware.utils;
 
 public interface PasswordHasher<T> {
 	public String hash(String password, String salt);
