@@ -100,7 +100,7 @@ public class Application {
 		};
 	}
 
-	private static SessionService setupSessionService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) {
+	private static SessionService setupSessionService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var sessionStore = new File(config.getOrDefault("session_storage",defaultFile));
 		return switch (extension(sessionStore)){
 			case "db", "sqlite", "sqlite3" -> new SqliteSessionService(connectionProvider.get(sessionStore));

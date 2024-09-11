@@ -19,6 +19,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class SqliteUserService extends SqliteStore implements UserService {
+	private static final String STORE_VERSION	 = "user_store_version";
+	private static final String CREATE_STORE_VERSION = "INSERT INTO metainfo (key,value) VALUES ('" + STORE_VERSION + "','0')";
+	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
+	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
+
 	private static final String CREATE_USER_TABLE	         = "CREATE TABLE IF NOT EXISTS users(uuid VARCHAR(255) NOT NULL PRIMARY KEY, password VARCHAR(255), email VARCHAR(255), session_duration INT NOT NULL DEFAULT 10, username VARCHAR(255), realname VARCHAR(255));";
 	private static final String CREATE_USER_PERMISSION_TABLE = "CREATE TABLE IF NOT EXISTS user_permissions(uuid VARCHAR(255), permission VARCHAR(50), PRIMARY KEY(uuid,permission));";
 	private static final String COUNT_USERS	         = "SELECT count(*) FROM users";
@@ -26,8 +31,6 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	private static final String LOAD_PERMISSIONS	         = "SELECT permission FROM user_permissions WHERE uuid = ?";
 	private static final String FIND_USER	         = "SELECT * FROM users WHERE uuid = ? OR username LIKE ? OR realname LIKE ? OR email = ? ORDER BY COALESCE(uuid, ?), username";
 	private static final String LIST_USERS	         = "SELECT * FROM users";
-	private static final String SELECT_USERSTORE_VERSION     = "SELECT * FROM metainfo WHERE key = 'user_store_version'";
-	private static final String SET_USERSTORE_VERSION        = "UPDATE metainfo SET value = ? WHERE key = 'user_store_version'";
 	private static final String INSERT_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?) ON CONFLICT DO UPDATE SET password = ?, email = ?, session_duration = ?, username = ?, realname = ?;";
 	private static final String INSERT_PERMISSIONS	         = "INSERT INTO user_permissions (uuid, permission) VALUES (?,?)";
 	private static final String DROP_PERMISSIONS	         = "DELETE FROM user_permissions WHERE uuid = ?";
@@ -57,7 +60,7 @@ public class SqliteUserService extends SqliteStore implements UserService {
 		return user;
 	}
 
-	private void createUserStoreTables() throws SQLException {
+	private void createStoreTables() throws SQLException {
 		conn.prepareStatement(CREATE_USER_TABLE).execute();
 		conn.prepareStatement(CREATE_USER_PERMISSION_TABLE).execute();
 	}
@@ -107,27 +110,33 @@ public class SqliteUserService extends SqliteStore implements UserService {
 
 	@Override
 	protected void initTables() throws SQLException {
-		var rs	     = conn.prepareStatement(SELECT_USERSTORE_VERSION).executeQuery();
+		var rs	     = conn.prepareStatement(SELECT_STORE_VERSION).executeQuery();
 		int availableVersion = 1;
-		int lastVersion	     = 1;
+		int currentVersion;
 		if (rs.next()) {
-			lastVersion = rs.getInt(1);
+			currentVersion = rs.getInt(1);
+			rs.close();
+		} else {
+			rs.close();
+			conn.prepareStatement(CREATE_STORE_VERSION).execute();
+			currentVersion = 0;
 		}
-		rs.close();
+
 		conn.setAutoCommit(false);
-		var stmt = conn.prepareStatement(SET_USERSTORE_VERSION);
-		for (int version = lastVersion; version <= availableVersion; version++) {
+		var stmt = conn.prepareStatement(SET_STORE_VERSION);
+		while (currentVersion < availableVersion) {
 			try {
-				switch (version) {
-					case 1:
-						createUserStoreTables();
+				switch (currentVersion) {
+					case 0:
+						createStoreTables();
+						break;
 				}
-				stmt.setInt(1, version);
+				stmt.setInt(1, ++currentVersion);
 				stmt.execute();
 				conn.commit();
 			} catch (Exception e) {
 				conn.rollback();
-				LOG.log(System.Logger.Level.ERROR, "Failed to update at user store version = {0}", version);
+				LOG.log(System.Logger.Level.ERROR, "Failed to update at {} = {}", STORE_VERSION, currentVersion);
 				break;
 			}
 		}
