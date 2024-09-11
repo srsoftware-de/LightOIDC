@@ -62,7 +62,7 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 		int availableVersion = 1;
 		int currentVersion;
 		if (rs.next()) {
-			currentVersion = rs.getInt(1);
+			currentVersion = rs.getInt("value");
 			rs.close();
 		} else {
 			rs.close();

@@ -50,11 +50,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			Files.writeString(storageFile, "{}");
 		}
 		json = new JSONObject(Files.readString(storageFile));
-		json.put(AUTHORIZATIONS, new JSONObject());
-		json.put(CLIENTS, new JSONObject());
-		json.put(MAILCONFIG, new JSONObject());
-		json.put(SESSIONS, new JSONObject());
-		json.put(USERS, new JSONObject());
 		auth = null;  // lazy init!
 	}
 
@@ -71,24 +66,25 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 				LOG.log(DEBUG, "removed old session {0}.", sessionId);
 			}
 		}
-
-		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
-		var authorizationUsers = Set.copyOf(authorizations.keySet());
-		for (var userId : authorizationUsers) {
-			var clients   = authorizations.getJSONObject(userId);
-			var clientIds = Set.copyOf(clients.keySet());
-			for (var clientId : clientIds) {
-				var client = clients.getJSONObject(clientId);
-				var scopes = Set.copyOf(client.keySet());
-				for (var scope : scopes) {
-					var expiration = Instant.ofEpochSecond(client.getLong(scope));
-					if (expiration.isBefore(now)) {
-						client.remove(scope);
+		if (json.has(AUTHORIZATIONS)) {
+			var authorizations     = json.getJSONObject(AUTHORIZATIONS);
+			var authorizationUsers = Set.copyOf(authorizations.keySet());
+			for (var userId : authorizationUsers) {
+				var clients   = authorizations.getJSONObject(userId);
+				var clientIds = Set.copyOf(clients.keySet());
+				for (var clientId : clientIds) {
+					var client = clients.getJSONObject(clientId);
+					var scopes = Set.copyOf(client.keySet());
+					for (var scope : scopes) {
+						var expiration = Instant.ofEpochSecond(client.getLong(scope));
+						if (expiration.isBefore(now)) {
+							client.remove(scope);
+						}
 					}
+					if (client.isEmpty()) clients.remove(clientId);
 				}
-				if (client.isEmpty()) clients.remove(clientId);
+				if (clients.isEmpty()) authorizations.remove(userId);
 			}
-			if (clients.isEmpty()) authorizations.remove(userId);
 		}
 	}
 
@@ -121,6 +117,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public UserService delete(User user) {
+		if (!json.has(USERS)) return this;
 		var users = json.getJSONObject(USERS);
 		users.remove(user.uuid());
 		return save();
@@ -137,6 +134,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public FileStore init(User defaultUser) {
+		if (!json.has(USERS)) json.put(USERS, new JSONObject());
 		var users = json.getJSONObject(USERS);
 		if (users.length() < 1) save(defaultUser);
 		return this;
@@ -144,6 +142,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Set<User> find(String key) {
+		if (!json.has(USERS)) return Set.of();
 		var users  = json.getJSONObject(USERS);
 		var result = new HashSet<User>();
 		for (var id : users.keySet()) {
@@ -155,8 +154,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public List<User> list() {
-		var        users  = json.getJSONObject(USERS);
 		List<User> result = new ArrayList<>();
+		if (!json.has(USERS)) return result;
+		var users = json.getJSONObject(USERS);
 		for (var uid : users.keySet()) User.of(users.getJSONObject(uid), uid).ifPresent(result::add);
 		return result;
 	}
@@ -164,6 +164,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<User> load(String userId) {
+		if (!json.has(USERS)) return empty();
 		try {
 			var users    = json.getJSONObject(USERS);
 			var userData = users.getJSONObject(userId);
@@ -175,6 +176,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<User> load(String user, String password) {
+		if (!json.has(USERS)) return empty();
 		try {
 			var users = json.getJSONObject(USERS);
 			for (String userId : users.keySet()) {
@@ -239,6 +241,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private JSONObject sessions() {
+		if (!json.has(SESSIONS)) json.put(SESSIONS, new JSONObject());
 		return json.getJSONObject(SESSIONS);
 	}
 
@@ -267,6 +270,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	public Optional<Client> getClient(String clientId) {
 		var client = clients.get(clientId);
 		if (client != null) return Optional.of(client);
+		if (!json.has(CLIENTS)) return empty();
 		var clientsJson = json.getJSONObject(CLIENTS);
 		if (clientsJson.has(clientId)) {
 			client = toClient(clientId, clientsJson.getJSONObject(clientId));
@@ -279,6 +283,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public List<Client> listClients() {
+		if (!json.has(CLIENTS)) return List.of();
 		var clients = json.getJSONObject(CLIENTS);
 		var list    = new ArrayList<Client>();
 		for (var clientId : clients.keySet()) list.add(toClient(clientId, clients.getJSONObject(clientId)));
@@ -287,6 +292,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public FileStore remove(Client client) {
+		if (!json.has(CLIENTS)) return this;
 		var clients = json.getJSONObject(CLIENTS);
 		if (clients.has(client.id())) clients.remove(client.id());
 		return save();
@@ -294,6 +300,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public ClientService save(Client client) {
+		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
 		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
 		save();
 		return this;
@@ -316,7 +323,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public AuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
-		LOG.log(WARNING, "{0}.authorize({1}, {2}, {3}, {4}) not implemented", getClass().getSimpleName(), user.realName(), client.name(), scopes, expiration);
+		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
 		if (!authorizations.has(user.uuid())) authorizations.put(user.uuid(), new JSONObject());
 		var userAuthorizations = authorizations.getJSONObject(user.uuid());
@@ -335,6 +342,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public AuthResult getAuthorization(User user, Client client, Collection<String> scopes) {
+		if (!json.has(AUTHORIZATIONS)) return unauthorized(scopes);
 		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
 		var userAuthorizations = authorizations.has(user.uuid()) ? authorizations.getJSONObject(user.uuid()) : null;
 		if (userAuthorizations == null) return unauthorized(scopes);
@@ -380,12 +388,14 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private String mailConfig(String key) {
+		if (!json.has(MAILCONFIG)) return "";
 		var config = json.getJSONObject(MAILCONFIG);
 		if (config.has(key)) return config.getString(key);
 		return "";
 	}
 
 	private FileStore mailConfig(String key, Object newValue) {
+		if (!json.has(MAILCONFIG)) json.put(MAILCONFIG, new JSONObject());
 		var config = json.getJSONObject(MAILCONFIG);
 		config.put(key, newValue);
 		auth = null;
@@ -405,6 +415,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public int smtpPort() {
+		if (!json.has(MAILCONFIG)) return 0;
 		var config = json.getJSONObject(MAILCONFIG);
 		return config.has(SMTP_PORT) ? config.getInt(SMTP_PORT) : 0;
 	}
@@ -436,6 +447,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public boolean startTls() {
+		if (!json.has(MAILCONFIG)) return false;
 		var config = json.getJSONObject(MAILCONFIG);
 		return config.has(START_TLS) ? config.getBoolean(START_TLS) : false;
 	}
@@ -447,6 +459,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public boolean smtpAuth() {
+		if (!json.has(MAILCONFIG)) return false;
 		var config = json.getJSONObject(MAILCONFIG);
 		return config.has(SMTP_AUTH) ? config.getBoolean(SMTP_AUTH) : false;
 	}
