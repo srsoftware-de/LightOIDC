@@ -19,9 +19,41 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
 
 	private static final String CREATE_SESSION_TABLE = "CREATE TABLE sessions (id VARCHAR(64) PRIMARY KEY, userId VARCHAR(64) NOT NULL, expiration LONG NOT NULL)";
+	private static final String SAVE_SESSION	 = "INSERT INTO sessions (id, userId, expiration) VALUES (?,?,?) ON CONFLICT DO UPDATE SET expiration = ?;";
+	private static final String DROP_SESSION	 = "DELETE FROM sessions WHERE id = ?";
+	private static final String SELECT_SESSION	 = "SELECT * FROM sessions WHERE id = ?";
 
 	public SqliteSessionService(Connection connection) throws SQLException {
 		super(connection);
+	}
+
+	@Override
+	public Session createSession(User user) {
+		var now	 = Instant.now();
+		var endOfSession = now.plus(user.sessionDuration()).truncatedTo(SECONDS);
+		return save(new Session(user.uuid(), endOfSession, uuid()));
+	}
+
+	private void createStoreTables() throws SQLException {
+		conn.prepareStatement(CREATE_SESSION_TABLE).execute();
+	}
+
+	@Override
+	public SessionService dropSession(String sessionId) {
+		try {
+			var stmt = conn.prepareStatement(DROP_SESSION);
+			stmt.setString(1, sessionId);
+			stmt.execute();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return this;
+	}
+
+	@Override
+	public Session extend(Session session, User user) {
+		var endOfSession = Instant.now().plus(user.sessionDuration());
+		return save(new Session(user.uuid(), endOfSession, session.id()));
 	}
 
 	@Override
@@ -59,33 +91,37 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 		conn.setAutoCommit(true);
 	}
 
-	private void createStoreTables() throws SQLException {
-		conn.prepareStatement(CREATE_SESSION_TABLE).execute();
-	}
-
-	@Override
-	public Session createSession(User user) {
-		var now	 = Instant.now();
-		var endOfSession = now.plus(user.sessionDuration()).truncatedTo(SECONDS);
-		return save(new Session(user.uuid(), endOfSession, uuid()));
-	}
-
-	@Override
-	public SessionService dropSession(String sessionId) {
-		return null;
-	}
-
-	@Override
-	public Session extend(Session session, User user) {
-		return null;
-	}
-
 	@Override
 	public Optional<Session> retrieve(String sessionId) {
-		return Optional.empty();
+		try {
+			var stmt = conn.prepareStatement(SELECT_SESSION);
+			stmt.setString(1, sessionId);
+			var	  rs     = stmt.executeQuery();
+			Optional<Session> result = Optional.empty();
+			if (rs.next()) {
+				var userID     = rs.getString("userId");
+				var expiration = Instant.ofEpochSecond(rs.getLong("expiration"));
+				if (expiration.isAfter(Instant.now())) result = Optional.of(new Session(userID, expiration, sessionId));
+			}
+			rs.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private Session save(Session session) {
-		return session;
+		try {
+			var stmt       = conn.prepareStatement(SAVE_SESSION);
+			var expiration = session.expiration().getEpochSecond();
+			stmt.setString(1, session.id());
+			stmt.setString(2, session.userId());
+			stmt.setLong(3, expiration);
+			stmt.setLong(4, expiration);
+			stmt.execute();
+			return session;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

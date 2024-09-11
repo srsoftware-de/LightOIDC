@@ -31,7 +31,7 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	private static final String LOAD_PERMISSIONS	         = "SELECT permission FROM user_permissions WHERE uuid = ?";
 	private static final String FIND_USER	         = "SELECT * FROM users WHERE uuid = ? OR username LIKE ? OR realname LIKE ? OR email = ? ORDER BY COALESCE(uuid, ?), username";
 	private static final String LIST_USERS	         = "SELECT * FROM users";
-	private static final String INSERT_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?) ON CONFLICT DO UPDATE SET password = ?, email = ?, session_duration = ?, username = ?, realname = ?;";
+	private static final String SAVE_USER	         = "INSERT INTO users (uuid,password,email,session_duration,username,realname) VALUES (?,?,?,?,?,?) ON CONFLICT DO UPDATE SET password = ?, email = ?, session_duration = ?, username = ?, realname = ?;";
 	private static final String INSERT_PERMISSIONS	         = "INSERT INTO user_permissions (uuid, permission) VALUES (?,?)";
 	private static final String DROP_PERMISSIONS	         = "DELETE FROM user_permissions WHERE uuid = ?";
 	private static final String DROP_USER	         = "DELETE FROM users WHERE uuid = ?";
@@ -51,6 +51,22 @@ public class SqliteUserService extends SqliteStore implements UserService {
 		var token = new AccessToken(uuid(), Objects.requireNonNull(user), Instant.now().plus(1, ChronoUnit.HOURS));
 		accessTokens.put(token.id(), token);
 		return token;
+	}
+
+	private User addPermissions(User user) {
+		try {
+			var stmt = conn.prepareStatement(LOAD_PERMISSIONS);
+			stmt.setString(1, user.uuid());
+			var rs = stmt.executeQuery();
+			while (rs.next()) try {
+					user.add(Permission.valueOf(rs.getString("permission")));
+				} catch (IllegalArgumentException ignored) {
+				}
+			rs.close();
+			return user;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -84,6 +100,25 @@ public class SqliteUserService extends SqliteStore implements UserService {
 		var stmt = conn.prepareStatement(DROP_PERMISSIONS);
 		stmt.setString(1, uuid);
 		stmt.execute();
+	}
+
+	@Override
+	public Set<User> find(String idOrEmail) {
+		try {
+			var result = new HashSet<User>();
+			var stmt   = conn.prepareStatement(FIND_USER);	// TODO: implement test for this query
+			stmt.setString(1, idOrEmail);
+			stmt.setString(2, "%" + idOrEmail + "%");
+			stmt.setString(3, "%" + idOrEmail + "%");
+			stmt.setString(4, idOrEmail);
+			stmt.setString(5, idOrEmail);
+			var rs = stmt.executeQuery();
+			while (rs.next()) result.add(userFrom(rs));
+			rs.close();
+			return result;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -158,35 +193,6 @@ public class SqliteUserService extends SqliteStore implements UserService {
 		}
 	}
 
-	private User userFrom(ResultSet rs) throws SQLException {
-		var uuid = rs.getString("uuid");
-		var pass = rs.getString("password");
-		var user = rs.getString("username");
-		var name = rs.getString("realname");
-		var mail = rs.getString("email");
-		var mins = rs.getLong("session_duration");
-		return new User(user, pass, name, mail, uuid).sessionDuration(Duration.ofMinutes(mins));
-	}
-
-	@Override
-	public Set<User> find(String idOrEmail) {
-		try {
-			var result = new HashSet<User>();
-			var stmt   = conn.prepareStatement(FIND_USER);	// TODO: implement test for this query
-			stmt.setString(1, idOrEmail);
-			stmt.setString(2, "%" + idOrEmail + "%");
-			stmt.setString(3, "%" + idOrEmail + "%");
-			stmt.setString(4, idOrEmail);
-			stmt.setString(5, idOrEmail);
-			var rs = stmt.executeQuery();
-			while (rs.next()) result.add(userFrom(rs));
-			rs.close();
-			return result;
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	@Override
 	public Optional<User> load(String id) {
 		try {
@@ -197,22 +203,6 @@ public class SqliteUserService extends SqliteStore implements UserService {
 			if (rs.next()) user = userFrom(rs);
 			rs.close();
 			return nullable(user).map(this::addPermissions);
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private User addPermissions(User user) {
-		try {
-			var stmt = conn.prepareStatement(LOAD_PERMISSIONS);
-			stmt.setString(1, user.uuid());
-			var rs = stmt.executeQuery();
-			while (rs.next()) try {
-					user.add(Permission.valueOf(rs.getString("permission")));
-				} catch (IllegalArgumentException ignored) {
-				}
-			rs.close();
-			return user;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -236,7 +226,7 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	public SqliteUserService save(User user) {
 		try {
 			conn.setAutoCommit(false);
-			var stmt = conn.prepareStatement(INSERT_USER);
+			var stmt = conn.prepareStatement(SAVE_USER);
 			stmt.setString(1, user.uuid());
 			stmt.setString(2, user.hashedPassword());
 			stmt.setString(3, user.email());
@@ -269,5 +259,15 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	@Override
 	public SqliteUserService updatePassword(User user, String plaintextPassword) {
 		return save(user.hashedPassword(hasher.hash(plaintextPassword, uuid())));
+	}
+
+	private User userFrom(ResultSet rs) throws SQLException {
+		var uuid = rs.getString("uuid");
+		var pass = rs.getString("password");
+		var user = rs.getString("username");
+		var name = rs.getString("realname");
+		var mail = rs.getString("email");
+		var mins = rs.getLong("session_duration");
+		return new User(user, pass, name, mail, uuid).sessionDuration(Duration.ofMinutes(mins));
 	}
 }

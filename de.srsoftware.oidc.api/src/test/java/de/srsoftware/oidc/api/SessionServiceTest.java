@@ -80,7 +80,7 @@ public abstract class SessionServiceTest {
 
 		sessionService().dropSession(session.id());
 		var loaded = sessionService().retrieve(session.id());
-		assertTrue(sessionService().retrieve(session.id()).isEmpty());
+		assertTrue(loaded.isEmpty());
 	}
 
 	@Test

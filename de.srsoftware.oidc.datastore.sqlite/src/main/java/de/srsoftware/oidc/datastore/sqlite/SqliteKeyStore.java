@@ -16,13 +16,17 @@ import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.lang.JoseException;
 
 public class SqliteKeyStore extends SqliteStore implements KeyStorage {
-	private static final String SELECT_KEYSTORE_VERSION = "SELECT * FROM metainfo WHERE key = 'key_store_version'";
-	private static final String SET_KEYSTORE_VERSION    = "UPDATE metainfo SET value = ? WHERE key = 'key_store_version'";
-	private static final String CREATE_KEYSTORE_TABLE   = "CREATE TABLE IF NOT EXISTS keystore(key_id VARCHAR(255) PRIMARY KEY, json TEXT NOT NULL);";
-	private static final String SAVE_KEY	    = "INSERT INTO keystore(key_id, json) values (?,?) ON CONFLICT(key_id) DO UPDATE SET json = ?";
-	private static final String SELECT_KEY_IDS	    = "SELECT key_id FROM keystore";
-	private static final String LOAD_KEY	    = "SELECT json FROM keystore WHERE key_id = ?";
-	private static final String DROP_KEY	    = "DELETE FROM keystore WHERE key_id = ?";
+	private static final String STORE_VERSION	 = "key_store_version";
+	private static final String CREATE_STORE_VERSION = "INSERT INTO metainfo (key,value) VALUES ('" + STORE_VERSION + "','0')";
+	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
+	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
+
+	private static final String SET_KEYSTORE_VERSION  = "UPDATE metainfo SET value = ? WHERE key = 'key_store_version'";
+	private static final String CREATE_KEYSTORE_TABLE = "CREATE TABLE IF NOT EXISTS keystore(key_id VARCHAR(255) PRIMARY KEY, json TEXT NOT NULL);";
+	private static final String SAVE_KEY	  = "INSERT INTO keystore(key_id, json) values (?,?) ON CONFLICT(key_id) DO UPDATE SET json = ?";
+	private static final String SELECT_KEY_IDS	  = "SELECT key_id FROM keystore";
+	private static final String LOAD_KEY	  = "SELECT json FROM keystore WHERE key_id = ?";
+	private static final String DROP_KEY	  = "DELETE FROM keystore WHERE key_id = ?";
 
 	private HashMap<String, PublicJsonWebKey> loaded = new HashMap<>();
 
@@ -30,36 +34,7 @@ public class SqliteKeyStore extends SqliteStore implements KeyStorage {
 		super(connection);
 	}
 
-	@Override
-	protected void initTables() throws SQLException {
-		var rs	     = conn.prepareStatement(SELECT_KEYSTORE_VERSION).executeQuery();
-		int availableVersion = 1;
-		int lastVersion	     = 1;
-		if (rs.next()) {
-			lastVersion = rs.getInt(1);
-		}
-		rs.close();
-		conn.setAutoCommit(false);
-		var stmt = conn.prepareStatement(SET_KEYSTORE_VERSION);
-		for (int version = lastVersion; version <= availableVersion; version++) {
-			try {
-				switch (version) {
-					case 1:
-						createKeyStoreTables();
-				}
-				stmt.setInt(1, version);
-				stmt.execute();
-				conn.commit();
-			} catch (Exception e) {
-				conn.rollback();
-				LOG.log(System.Logger.Level.ERROR, "Failed to update at keystore version = {0}", version);
-				break;
-			}
-		}
-		conn.setAutoCommit(true);
-	}
-
-	private void createKeyStoreTables() throws SQLException {
+	private void createStoreTables() throws SQLException {
 		conn.prepareStatement(CREATE_KEYSTORE_TABLE).execute();
 	}
 
@@ -73,6 +48,41 @@ public class SqliteKeyStore extends SqliteStore implements KeyStorage {
 			LOG.log(System.Logger.Level.WARNING, "Failed to drop key {0} from database:", keyId, e);
 		}
 		return this;
+	}
+
+	@Override
+	protected void initTables() throws SQLException {
+		var rs	     = conn.prepareStatement(SELECT_STORE_VERSION).executeQuery();
+		int availableVersion = 1;
+		int currentVersion;
+		if (rs.next()) {
+			currentVersion = rs.getInt(1);
+			rs.close();
+		} else {
+			rs.close();
+			conn.prepareStatement(CREATE_STORE_VERSION).execute();
+			currentVersion = 0;
+		}
+
+		conn.setAutoCommit(false);
+		var stmt = conn.prepareStatement(SET_STORE_VERSION);
+		while (currentVersion < availableVersion) {
+			try {
+				switch (currentVersion) {
+					case 0:
+						createStoreTables();
+						break;
+				}
+				stmt.setInt(1, ++currentVersion);
+				stmt.execute();
+				conn.commit();
+			} catch (Exception e) {
+				conn.rollback();
+				LOG.log(System.Logger.Level.ERROR, "Failed to update at {} = {}", STORE_VERSION, currentVersion);
+				break;
+			}
+		}
+		conn.setAutoCommit(true);
 	}
 
 	@Override
