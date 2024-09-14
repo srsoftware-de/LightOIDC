@@ -34,7 +34,7 @@ public class PlaintextKeyStore implements KeyStorage {
 	@Override
 	public List<String> listKeys() {
 		try {
-			return Files.list(dir).map(Path::toString).filter(filename -> filename.endsWith(".key")).map(filename -> filename.substring(0, filename.length() - 4)).toList();
+			return Files.list(dir).map(Path::getFileName).map(Path::toString).filter(filename -> filename.endsWith(".key")).map(filename -> filename.substring(0, filename.length() - 4)).toList();
 		} catch (IOException e) {
 			LOG.log(ERROR, "Failed to list files in {0}:", dir, e);
 			return List.of();
