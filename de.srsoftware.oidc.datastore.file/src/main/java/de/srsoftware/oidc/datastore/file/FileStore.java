@@ -35,7 +35,6 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private final Path       storageFile;
 	private final JSONObject json;
 	private final PasswordHasher<String> passwordHasher;
-	private Map<String, Client>	     clients	  = new HashMap<>();
 	private Map<String, AccessToken>     accessTokens = new HashMap<>();
 	private Map<String, Authorization>   authCodes	  = new HashMap<>();
 	private Authenticator	     auth;
@@ -268,13 +267,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Optional<Client> getClient(String clientId) {
-		var client = clients.get(clientId);
-		if (client != null) return Optional.of(client);
 		if (!json.has(CLIENTS)) return empty();
 		var clientsJson = json.getJSONObject(CLIENTS);
 		if (clientsJson.has(clientId)) {
-			client = toClient(clientId, clientsJson.getJSONObject(clientId));
-			clients.put(clientId, client);
+			var client = toClient(clientId, clientsJson.getJSONObject(clientId));
 			return Optional.of(client);
 		}
 		return empty();

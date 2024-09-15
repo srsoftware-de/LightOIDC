@@ -11,7 +11,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 
 public class FileStoreAuthServiceTest extends AuthServiceTest {
-	private File	             storage = new File("/tmp/" + UUID.randomUUID());
 	private AuthorizationService authorizationService;
 
 	@Override
@@ -21,6 +20,7 @@ public class FileStoreAuthServiceTest extends AuthServiceTest {
 
 	@BeforeEach
 	public void setup() throws IOException {
+		var storage = new File("/tmp/" + UUID.randomUUID());
 		if (storage.exists()) storage.delete();
 		authorizationService = new FileStore(storage, null);
 	}

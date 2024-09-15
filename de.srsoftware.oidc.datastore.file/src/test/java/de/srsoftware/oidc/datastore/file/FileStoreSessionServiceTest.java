@@ -10,11 +10,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 
 public class FileStoreSessionServiceTest extends SessionServiceTest {
-	private File	       storage	      = new File("/tmp/" + UUID.randomUUID());
 	private SessionService sessionService = null;
 
 	@BeforeEach
 	public void setup() throws IOException {
+		var storage = new File("/tmp/" + UUID.randomUUID());
 		if (storage.exists()) storage.delete();
 		sessionService = new FileStore(storage, hasher());
 	}

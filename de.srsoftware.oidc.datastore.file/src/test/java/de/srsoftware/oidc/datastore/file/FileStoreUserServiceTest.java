@@ -12,8 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 
 public class FileStoreUserServiceTest extends UserServiceTest {
-	private PasswordHasher<String> hasher  = null;
-	private File	               storage = new File("/tmp/" + UUID.randomUUID());
+	private PasswordHasher<String> hasher = null;
 	private UserService            userService;
 
 	@Override
@@ -29,6 +28,7 @@ public class FileStoreUserServiceTest extends UserServiceTest {
 
 	@BeforeEach
 	public void setup() throws IOException {
+		var storage = new File("/tmp/" + UUID.randomUUID());
 		if (storage.exists()) storage.delete();
 		userService = new FileStore(storage, hasher());
 	}
