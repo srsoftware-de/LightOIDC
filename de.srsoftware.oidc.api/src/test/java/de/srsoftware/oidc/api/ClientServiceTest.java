@@ -1,34 +1,20 @@
 /* © SRSoftware 2024 */
-package de.srsoftware.oidc.datastore.file;
+package de.srsoftware.oidc.api;
 
 import static de.srsoftware.utils.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.data.Client;
-import java.io.File;
-import java.io.IOException;
 import java.util.Set;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ClientServiceTest {
-	private static ClientService clientService;
-	private static final String  NAME = "client-1";
-	private static final String  URI  = "uri-1";
-	private static final String  URI2 = "uri-2";
-	@BeforeEach
-	public void setup() throws IOException {
-		var storage = new File("/tmp/" + UUID.randomUUID());
-		if (storage.exists()) storage.delete();
-		clientService = new FileStore(storage, null);
-	}
+public abstract class ClientServiceTest {
+	private static final String NAME = "client-1";
+	private static final String URI	 = "uri-1";
+	private static final String URI2 = "uri-2";
 
-	protected ClientService clientService() {
-		return clientService;
-	}
+	protected abstract ClientService clientService();
 
 	@Test
 	public void testSaveAndList() {
@@ -40,7 +26,7 @@ public class ClientServiceTest {
 		var list	 = cs.save(client).listClients();
 		assertEquals(1, list.size());
 		assertTrue(list.contains(client));
-		cs.remove(client);
+		cs.remove(clientId);
 		assertTrue(cs.listClients().isEmpty());
 	}
 

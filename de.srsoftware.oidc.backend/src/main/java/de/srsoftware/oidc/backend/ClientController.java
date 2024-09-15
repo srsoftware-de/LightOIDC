@@ -104,7 +104,7 @@ public class ClientController extends Controller {
 		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return badRequest(ex, "NOT ALLOWED");
 		var json = json(ex);
 		var id   = json.getString(CLIENT_ID);
-		clients.getClient(id).ifPresent(clients::remove);
+		clients.remove(id);
 		return sendEmptyResponse(HTTP_OK, ex);
 	}
 

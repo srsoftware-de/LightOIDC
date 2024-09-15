@@ -287,10 +287,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public FileStore remove(Client client) {
+	public FileStore remove(String clientId) {
 		if (!json.has(CLIENTS)) return this;
 		var clients = json.getJSONObject(CLIENTS);
-		if (clients.has(client.id())) clients.remove(client.id());
+		if (clients.has(clientId)) clients.remove(clientId);
 		return save();
 	}
 

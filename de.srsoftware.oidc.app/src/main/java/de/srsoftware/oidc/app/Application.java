@@ -84,7 +84,7 @@ public class Application {
 		server.start();
 	}
 
-	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) {
+	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var clientStore = new File(config.getOrDefault("client_store", defaultFile));
 		return switch (extension(clientStore)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteClientService(connectionProvider.get(clientStore));
