@@ -92,7 +92,7 @@ public class Application {
 		};
 	}
 
-	private static AuthorizationService setupAuthService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) {
+	private static AuthorizationService setupAuthService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var authServiceLocation = new File(config.getOrDefault("auth_store",defaultFile));
 		return switch (extension(authServiceLocation)){
 			case "db", "sqlite", "sqlite3" -> new SqliteAuthService(connectionProvider.get(authServiceLocation));

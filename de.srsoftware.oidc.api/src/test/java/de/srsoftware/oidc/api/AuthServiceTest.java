@@ -25,8 +25,10 @@ public abstract class AuthServiceTest {
 	public void testAuthorize() {
 		var authorizationService = authorizationService();
 		var userId1	         = uuid();
-		var expiration	         = Instant.now().plusSeconds(3600).truncatedTo(SECONDS);
+		var expiration	         = Instant.now();
 		authorizationService.authorize(userId1, CLIENT1, SCOPES1, expiration);
+		expiration = Instant.now().plusSeconds(3600).truncatedTo(SECONDS);      // test overwrite
+		authorizationService.authorize(userId1, CLIENT1, SCOPES1, expiration);  // test overwrite
 		var authorization = authorizationService.getAuthorization(userId1, CLIENT1, Set.of(OPENID));
 		assertEquals(1, authorization.authorizedScopes().scopes().size());
 		assertTrue(authorization.authorizedScopes().scopes().contains(OPENID));
