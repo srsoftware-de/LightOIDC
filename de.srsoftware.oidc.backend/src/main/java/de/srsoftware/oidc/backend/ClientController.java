@@ -79,10 +79,10 @@ public class ClientController extends Controller {
 			var days       = authorized.getInt("days");
 			var list       = new ArrayList<String>();
 			authorized.getJSONArray("scopes").forEach(scope -> list.add(scope.toString()));
-			authorizations.authorize(user, client, list, Instant.now().plus(days, ChronoUnit.DAYS));
+			authorizations.authorize(user.uuid(), client.id(), list, Instant.now().plus(days, ChronoUnit.DAYS));
 		}
 
-		var authResult = authorizations.getAuthorization(user, client, scopes);
+		var authResult = authorizations.getAuthorization(user.uuid(), client.id(), scopes);
 		if (!authResult.unauthorizedScopes().isEmpty()) {
 			return sendContent(ex, Map.of("unauthorized_scopes", authResult.unauthorizedScopes(), "rp", client.name()));
 		}

@@ -315,20 +315,20 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	/*** ClaimAuthorizationService methods ***/
-	private String authCode(User user, Client client, Authorization authorization) {
+	private String authCode(Authorization authorization) {
 		var code = uuid();
 		authCodes.put(code, authorization);
 		return code;
 	}
 
 	@Override
-	public AuthorizationService authorize(User user, Client client, Collection<String> scopes, Instant expiration) {
+	public AuthorizationService authorize(String userId, String clientId, Collection<String> scopes, Instant expiration) {
 		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
-		if (!authorizations.has(user.uuid())) authorizations.put(user.uuid(), new JSONObject());
-		var userAuthorizations = authorizations.getJSONObject(user.uuid());
-		if (!userAuthorizations.has(client.id())) userAuthorizations.put(client.id(), new JSONObject());
-		var clientScopes = userAuthorizations.getJSONObject(client.id());
+		if (!authorizations.has(userId)) authorizations.put(userId, new JSONObject());
+		var userAuthorizations = authorizations.getJSONObject(userId);
+		if (!userAuthorizations.has(clientId)) userAuthorizations.put(clientId, new JSONObject());
+		var clientScopes = userAuthorizations.getJSONObject(clientId);
 		for (var scope : scopes) clientScopes.put(scope, expiration.getEpochSecond());
 		save();
 		return this;
@@ -341,12 +341,12 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public AuthResult getAuthorization(User user, Client client, Collection<String> scopes) {
+	public AuthResult getAuthorization(String userId, String clientId, Collection<String> scopes) {
 		if (!json.has(AUTHORIZATIONS)) return unauthorized(scopes);
 		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
-		var userAuthorizations = authorizations.has(user.uuid()) ? authorizations.getJSONObject(user.uuid()) : null;
+		var userAuthorizations = authorizations.has(userId) ? authorizations.getJSONObject(userId) : null;
 		if (userAuthorizations == null) return unauthorized(scopes);
-		var clientScopes = userAuthorizations.has(client.id()) ? userAuthorizations.getJSONObject(client.id()) : null;
+		var clientScopes = userAuthorizations.has(clientId) ? userAuthorizations.getJSONObject(clientId) : null;
 		if (clientScopes == null) return unauthorized(scopes);
 		var     now	           = Instant.now();
 		var     authorizedScopes   = new HashSet<String>();
@@ -354,18 +354,19 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		Instant earliestExpiration = null;
 		for (var scope : scopes) {
 			if (clientScopes.has(scope)) {
-				var expiration = Instant.ofEpochSecond(clientScopes.getLong(scope));
+				var expiration = Instant.ofEpochSecond(clientScopes.getLong(scope)).truncatedTo(SECONDS);
 				if (expiration.isAfter(now)) {
 					authorizedScopes.add(scope);
 					if (earliestExpiration == null || expiration.isBefore(earliestExpiration)) earliestExpiration = expiration;
-				} else {
-					unauthorizedScopes.add(scope);
+					continue;
 				}
 			}
+			unauthorizedScopes.add(scope);
 		}
+		if (authorizedScopes.isEmpty()) return unauthorized(scopes);
 
-		var authorization = new Authorization(client.id(), user.uuid(), new AuthorizedScopes(authorizedScopes, earliestExpiration));
-		return new AuthResult(authorization.scopes(), unauthorizedScopes, authCode(user, client, authorization));
+		var authorization = new Authorization(clientId, userId, new AuthorizedScopes(authorizedScopes, earliestExpiration));
+		return new AuthResult(authorization.scopes(), unauthorizedScopes, authCode(authorization));
 	}
 
 	private AuthResult unauthorized(Collection<String> scopes) {
