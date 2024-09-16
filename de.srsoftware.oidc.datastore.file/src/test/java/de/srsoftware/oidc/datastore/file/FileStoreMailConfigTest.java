@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class FileStoreMailConfigTest extends MailConfigTest {
 	private MailConfig mailConfig;
+	private File	   storage;
 
 
 	@Override
@@ -20,9 +21,18 @@ public class FileStoreMailConfigTest extends MailConfigTest {
 		return mailConfig;
 	}
 
+	@Override
+	protected void reOpen() {
+		try {
+			mailConfig = new FileStore(storage, null);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	@BeforeEach
 	public void setup() throws IOException {
-		var storage = new File("/tmp/" + UUID.randomUUID());
+		storage = new File("/tmp/" + UUID.randomUUID());
 		if (storage.exists()) storage.delete();
 		mailConfig = new FileStore(storage, null);
 	}

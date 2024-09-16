@@ -108,7 +108,7 @@ public class Application {
 		};
 	}
 
-	private static MailConfig setupMailConfig(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) {
+	private static MailConfig setupMailConfig(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var mailConfigLocation = new File(config.getOrDefault("mail_config_storage",defaultFile));
 		return switch (extension(mailConfigLocation)){
 			case "db", "sqlite", "sqlite3" -> new SqliteMailConfig(connectionProvider.get(mailConfigLocation));

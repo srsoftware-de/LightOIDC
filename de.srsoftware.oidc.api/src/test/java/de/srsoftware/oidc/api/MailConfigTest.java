@@ -8,12 +8,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 public abstract class MailConfigTest {
 	protected abstract MailConfig mailConfig();
+	protected abstract void       reOpen();
 
 	@Test
 	public void testSmtpHost() {
@@ -150,5 +152,43 @@ public abstract class MailConfigTest {
 		var pwa = (PasswordAuthentication)o;
 		assertEquals(password, pwa.getPassword());
 		assertEquals(address, pwa.getUserName());
+	}
+
+	@Test
+	public void testSave() throws SQLException {
+		var host     = uuid();
+		var port     = new Random().nextInt();
+		var address  = uuid();
+		var password = uuid();
+
+		mailConfig().senderPassword(password);
+		mailConfig().senderAddress(address);
+		mailConfig().smtpHost(host);
+		mailConfig().smtpPort(port);
+		mailConfig().startTls(true);
+		mailConfig().smtpAuth(false);
+		mailConfig().save();
+		reOpen();
+
+		var map = mailConfig().map();
+		assertEquals(map, Map.of(	           //
+			      SMTP_HOST, host,     //
+			      SMTP_PORT, port,     //
+			      SMTP_AUTH, false,    //
+			      SMTP_USER, address,  //
+			      START_TLS, true));
+
+		mailConfig().startTls(false);
+		mailConfig().smtpAuth(true);
+		mailConfig().save();
+		reOpen();
+
+		map = mailConfig().map();
+		assertEquals(map, Map.of(	           //
+			      SMTP_HOST, host,     //
+			      SMTP_PORT, port,     //
+			      SMTP_AUTH, true,     //
+			      SMTP_USER, address,  //
+			      START_TLS, false));
 	}
 }
