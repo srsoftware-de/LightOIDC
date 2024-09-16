@@ -79,9 +79,10 @@ public class ClientController extends Controller {
 			var days       = authorized.getInt("days");
 			var list       = new ArrayList<String>();
 			authorized.getJSONArray("scopes").forEach(scope -> list.add(scope.toString()));
-			var nonce = json.has(NONCE) ? json.getString(NONCE) : null;
-			authorizations.authorize(user.uuid(), client.id(), list, nonce, Instant.now().plus(days, ChronoUnit.DAYS));
+			authorizations.authorize(user.uuid(), client.id(), list, Instant.now().plus(days, ChronoUnit.DAYS));
 		}
+		if (json.has(NONCE)) authorizations.nonce(user.uuid(), client.id(), json.getString(NONCE));
+
 
 		var authResult = authorizations.getAuthorization(user.uuid(), client.id(), scopes);
 		if (!authResult.unauthorizedScopes().isEmpty()) {

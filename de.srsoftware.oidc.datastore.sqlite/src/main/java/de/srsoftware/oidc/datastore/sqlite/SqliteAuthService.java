@@ -21,11 +21,12 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
 	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
 
-	private static final String	   CREATE_AUTHSTORE_TABLE = "CREATE TABLE IF NOT EXISTS authorizations(userId VARCHAR(255), clientId VARCHAR(255), scope VARCHAR(255), expiration LONG, nonce VARCHAR(255), PRIMARY KEY(userId, clientId, scope));";
-	private static final String	   SAVE_AUTHORIZATION     = "INSERT INTO authorizations(userId, clientId, scope, nonce, expiration) VALUES (?,?,?,?,?) ON CONFLICT DO UPDATE SET nonce = ?, expiration = ?";
+	private static final String	   CREATE_AUTHSTORE_TABLE = "CREATE TABLE IF NOT EXISTS authorizations(userId VARCHAR(255), clientId VARCHAR(255), scope VARCHAR(255), expiration LONG, PRIMARY KEY(userId, clientId, scope));";
+	private static final String	   SAVE_AUTHORIZATION     = "INSERT INTO authorizations(userId, clientId, scope, expiration) VALUES (?,?,?,?) ON CONFLICT DO UPDATE SET expiration = ?";
 	private static final String	   SELECT_AUTH	          = "SELECT * FROM authorizations WHERE userid = ? AND clientId = ? AND scope IN";
 	private Map<String, Authorization> authCodes	          = new HashMap<>();
 
+	private Map<String, String> nonceMap = new HashMap<>();
 
 	public SqliteAuthService(Connection connection) throws SQLException {
 		super(connection);
@@ -76,16 +77,14 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 	}
 
 	@Override
-	public AuthorizationService authorize(String userId, String clientId, Collection<String> scopes, String nonce, Instant expiration) {
+	public AuthorizationService authorize(String userId, String clientId, Collection<String> scopes, Instant expiration) {
 		try {
 			conn.setAutoCommit(false);
 			var stmt = conn.prepareStatement(SAVE_AUTHORIZATION);
 			stmt.setString(1, userId);
 			stmt.setString(2, clientId);
-			stmt.setString(4, nonce);
+			stmt.setLong(4, expiration.getEpochSecond());
 			stmt.setLong(5, expiration.getEpochSecond());
-			stmt.setString(6, nonce);
-			stmt.setLong(7, expiration.getEpochSecond());
 			for (var scope : scopes) {
 				stmt.setString(3, scope);
 				stmt.execute();
@@ -101,6 +100,12 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 	@Override
 	public Optional<Authorization> consumeAuthorization(String authCode) {
 		return nullable(authCodes.remove(authCode));
+	}
+
+	@Override
+	public Optional<String> consumeNonce(String userId, String clientId) {
+		var nonceKey = String.join("@", userId, clientId);
+		return nullable(nonceMap.get(nonceKey));
 	}
 
 	@Override
@@ -130,12 +135,20 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 			}
 			rs.close();
 			if (authorized.isEmpty()) return new AuthResult(null, unauthorized, null);
-			var    authorizedScopes = new AuthorizedScopes(authorized, earliestExp);
-			String nonce	        = null;
-			var    authorization    = new Authorization(clientId, userId, authorizedScopes, nonce);
+			var authorizedScopes = new AuthorizedScopes(authorized, earliestExp);
+			var authorization    = new Authorization(clientId, userId, authorizedScopes);
 			return new AuthResult(authorizedScopes, unauthorized, authCode(authorization));
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public void nonce(String userId, String clientId, String nonce) {
+		var nonceKey = String.join("@", userId, clientId);
+		if (nonce != null) {
+			nonceMap.put(nonceKey, nonce);
+		} else
+			nonceMap.remove(nonceKey);
 	}
 }

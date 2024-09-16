@@ -115,7 +115,7 @@ public class TokenController extends PathHandler {
 		var user = optUser.get();
 
 		var    accessToken = users.accessToken(user);
-		String jwToken	   = createJWT(client, user, accessToken, authorization.nonce());
+		String jwToken	   = createJWT(client, user, accessToken);
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
 		response.put(ACCESS_TOKEN, accessToken.id());
@@ -126,13 +126,13 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user, AccessToken accessToken, String nonce) {
+	private String createJWT(Client client, User user, AccessToken accessToken) {
 		try {
 			PublicJsonWebKey key    = keyManager.getKey();
 			var	 algo   = key.getAlgorithm();
 			var	 atHash = this.atHash(algo, accessToken);
 			key.setUse("sig");
-			JwtClaims claims = createIdTokenClaims(user, client, atHash, nonce);
+			JwtClaims claims = createIdTokenClaims(user, client, atHash);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
@@ -167,7 +167,9 @@ public class TokenController extends PathHandler {
 		}
 	}
 
-	private JwtClaims createIdTokenClaims(User user, Client client, String atHash, String nonce) {
+	private JwtClaims createIdTokenClaims(User user, Client client, String atHash) {
+		var optNonce = authorizations.consumeNonce(user.uuid(), client.id());
+		optNonce.ifPresent(nonce -> LOG.log(System.Logger.Level.ERROR, "consumed nonce: %s", nonce));
 		JwtClaims claims = new JwtClaims();
 
 		// required claims:
@@ -179,7 +181,8 @@ public class TokenController extends PathHandler {
 		claims.setClaim(AT_HASH, atHash);
 		claims.setClaim(CLIENT_ID, client.id());
 		claims.setClaim(EMAIL, user.email());  // additional claims/attributes about the subject can be added
-		if (nonce != null) claims.setClaim(NONCE, nonce);
+
+		optNonce.ifPresent(nonce -> claims.setClaim(NONCE, nonce));
 		claims.setGeneratedJwtId();  // a unique identifier for the token
 		return claims;
 	}

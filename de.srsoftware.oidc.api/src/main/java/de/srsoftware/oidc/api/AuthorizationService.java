@@ -8,7 +8,11 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface AuthorizationService {
-	AuthorizationService    authorize(String userId, String clientId, Collection<String> scopes, String nonce, Instant expiration);
+	AuthorizationService    authorize(String userId, String clientId, Collection<String> scopes, Instant expiration);
 	Optional<Authorization> consumeAuthorization(String authCode);
 	AuthResult	        getAuthorization(String userId, String clientId, Collection<String> scopes);
+
+	Optional<String> consumeNonce(String uuid, String id);
+
+	void nonce(String uuid, String id, String string);
 }
