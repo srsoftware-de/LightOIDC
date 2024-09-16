@@ -9,7 +9,7 @@ import java.io.File;
 import java.sql.SQLException;
 import org.junit.jupiter.api.BeforeEach;
 
-public class SqlteClientServiceTest extends ClientServiceTest {
+public class SqliteClientServiceTest extends ClientServiceTest {
 	private ClientService clientService;
 
 	@Override
