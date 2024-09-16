@@ -72,15 +72,16 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 				var clients   = authorizations.getJSONObject(userId);
 				var clientIds = Set.copyOf(clients.keySet());
 				for (var clientId : clientIds) {
-					var client = clients.getJSONObject(clientId);
-					var scopes = Set.copyOf(client.keySet());
+					var clientData = clients.getJSONObject(clientId);
+					var scopeMap   = clientData.getJSONObject(SCOPE);
+					var scopes     = Set.copyOf(scopeMap.keySet());
 					for (var scope : scopes) {
-						var expiration = Instant.ofEpochSecond(client.getLong(scope));
+						var expiration = Instant.ofEpochSecond(scopeMap.getLong(scope));
 						if (expiration.isBefore(now)) {
-							client.remove(scope);
+							scopeMap.remove(scope);
 						}
 					}
-					if (client.isEmpty()) clients.remove(clientId);
+					if (scopeMap.isEmpty()) clients.remove(clientId);
 				}
 				if (clients.isEmpty()) authorizations.remove(userId);
 			}
@@ -297,7 +298,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public ClientService save(Client client) {
 		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
-		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
+		json.getJSONObject(CLIENTS).put(client.id(), client.map());
 		save();
 		return this;
 	}
@@ -318,13 +319,20 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public AuthorizationService authorize(String userId, String clientId, Collection<String> scopes, Instant expiration) {
+	public AuthorizationService authorize(String userId, String clientId, Collection<String> scopes, String nonce, Instant expiration) {
 		if (!json.has(AUTHORIZATIONS)) json.put(AUTHORIZATIONS, new JSONObject());
 		var authorizations = json.getJSONObject(AUTHORIZATIONS);
 		if (!authorizations.has(userId)) authorizations.put(userId, new JSONObject());
 		var userAuthorizations = authorizations.getJSONObject(userId);
 		if (!userAuthorizations.has(clientId)) userAuthorizations.put(clientId, new JSONObject());
-		var clientScopes = userAuthorizations.getJSONObject(clientId);
+		var clientData = userAuthorizations.getJSONObject(clientId);
+		if (nonce != null) {
+			clientData.put(NONCE, nonce);
+		} else {
+			if (clientData.has(NONCE)) clientData.remove(NONCE);
+		}
+		if (!clientData.has(SCOPE)) clientData.put(SCOPE, new JSONObject());
+		var clientScopes = clientData.getJSONObject(SCOPE);
 		for (var scope : scopes) clientScopes.put(scope, expiration.getEpochSecond());
 		save();
 		return this;
@@ -342,7 +350,9 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		var authorizations     = json.getJSONObject(AUTHORIZATIONS);
 		var userAuthorizations = authorizations.has(userId) ? authorizations.getJSONObject(userId) : null;
 		if (userAuthorizations == null) return unauthorized(scopes);
-		var clientScopes = userAuthorizations.has(clientId) ? userAuthorizations.getJSONObject(clientId) : null;
+		var clientData = userAuthorizations.has(clientId) ? userAuthorizations.getJSONObject(clientId) : null;
+		if (clientData == null) return unauthorized(scopes);
+		var clientScopes = clientData.has(SCOPE) ? clientData.getJSONObject(SCOPE) : null;
 		if (clientScopes == null) return unauthorized(scopes);
 		var     now	           = Instant.now();
 		var     authorizedScopes   = new HashSet<String>();
@@ -361,7 +371,8 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		}
 		if (authorizedScopes.isEmpty()) return unauthorized(scopes);
 
-		var authorization = new Authorization(clientId, userId, new AuthorizedScopes(authorizedScopes, earliestExpiration));
+		String nonce	     = clientData.has(NONCE) ? clientData.getString(NONCE) : null;
+		var    authorization = new Authorization(clientId, userId, new AuthorizedScopes(authorizedScopes, earliestExpiration), nonce);
 		return new AuthResult(authorization.scopes(), unauthorizedScopes, authCode(authorization));
 	}
 

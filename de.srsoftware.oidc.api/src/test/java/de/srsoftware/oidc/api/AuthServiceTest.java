@@ -26,9 +26,10 @@ public abstract class AuthServiceTest {
 		var authorizationService = authorizationService();
 		var userId1	         = uuid();
 		var expiration	         = Instant.now();
-		authorizationService.authorize(userId1, CLIENT1, SCOPES1, expiration);
-		expiration = Instant.now().plusSeconds(3600).truncatedTo(SECONDS);      // test overwrite
-		authorizationService.authorize(userId1, CLIENT1, SCOPES1, expiration);  // test overwrite
+		var nonce	         = uuid();
+		authorizationService.authorize(userId1, CLIENT1, SCOPES1, nonce, expiration);
+		expiration = Instant.now().plusSeconds(3600).truncatedTo(SECONDS);             // test overwrite
+		authorizationService.authorize(userId1, CLIENT1, SCOPES1, nonce, expiration);  // test overwrite
 		var authorization = authorizationService.getAuthorization(userId1, CLIENT1, Set.of(OPENID));
 		assertEquals(1, authorization.authorizedScopes().scopes().size());
 		assertTrue(authorization.authorizedScopes().scopes().contains(OPENID));
@@ -52,9 +53,10 @@ public abstract class AuthServiceTest {
 	public void testConsume() {
 		var authorizationService = authorizationService();
 
+		var nonce      = uuid();
 		var userId1    = uuid();
 		var expiration = Instant.now().plusSeconds(3600).truncatedTo(SECONDS);
-		authorizationService.authorize(userId1, CLIENT1, SCOPES1, expiration);
+		authorizationService.authorize(userId1, CLIENT1, SCOPES1, nonce, expiration);
 		var authResult = authorizationService.getAuthorization(userId1, CLIENT1, Set.of(OPENID));
 		var authCode   = authResult.authCode();
 		assertNotNull(authCode);
@@ -72,4 +74,6 @@ public abstract class AuthServiceTest {
 		optAuth = authorizationService.consumeAuthorization(authCode);
 		assertTrue(optAuth.isEmpty());
 	}
+
+	// TODO: test nonce passing
 }

@@ -73,13 +73,14 @@ public class ClientController extends Controller {
 		var redirect = json.getString(REDIRECT_URI);
 		if (!client.redirectUris().contains(redirect)) authorizationError(ex, INVALID_REDIRECT_URI, "unknown redirect uri: %s".formatted(redirect), state);
 
-		client.nonce(json.has(NONCE) ? json.getString(NONCE) : null);
+
 		if (json.has(AUTHORZED)) {  // user did consent
 			var authorized = json.getJSONObject(AUTHORZED);
 			var days       = authorized.getInt("days");
 			var list       = new ArrayList<String>();
 			authorized.getJSONArray("scopes").forEach(scope -> list.add(scope.toString()));
-			authorizations.authorize(user.uuid(), client.id(), list, Instant.now().plus(days, ChronoUnit.DAYS));
+			var nonce = json.has(NONCE) ? json.getString(NONCE) : null;
+			authorizations.authorize(user.uuid(), client.id(), list, nonce, Instant.now().plus(days, ChronoUnit.DAYS));
 		}
 
 		var authResult = authorizations.getAuthorization(user.uuid(), client.id(), scopes);

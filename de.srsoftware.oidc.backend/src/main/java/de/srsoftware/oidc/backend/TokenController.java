@@ -115,7 +115,7 @@ public class TokenController extends PathHandler {
 		var user = optUser.get();
 
 		var    accessToken = users.accessToken(user);
-		String jwToken	   = createJWT(client, user, accessToken);
+		String jwToken	   = createJWT(client, user, accessToken, authorization.nonce());
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
 		response.put(ACCESS_TOKEN, accessToken.id());
@@ -126,13 +126,13 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user, AccessToken accessToken) {
+	private String createJWT(Client client, User user, AccessToken accessToken, String nonce) {
 		try {
 			PublicJsonWebKey key    = keyManager.getKey();
 			var	 algo   = key.getAlgorithm();
 			var	 atHash = this.atHash(algo, accessToken);
 			key.setUse("sig");
-			JwtClaims claims = createIdTokenClaims(user, client, atHash);
+			JwtClaims claims = createIdTokenClaims(user, client, atHash, nonce);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
@@ -167,7 +167,7 @@ public class TokenController extends PathHandler {
 		}
 	}
 
-	private JwtClaims createIdTokenClaims(User user, Client client, String atHash) {
+	private JwtClaims createIdTokenClaims(User user, Client client, String atHash, String nonce) {
 		JwtClaims claims = new JwtClaims();
 
 		// required claims:
@@ -179,7 +179,7 @@ public class TokenController extends PathHandler {
 		claims.setClaim(AT_HASH, atHash);
 		claims.setClaim(CLIENT_ID, client.id());
 		claims.setClaim(EMAIL, user.email());  // additional claims/attributes about the subject can be added
-		client.nonce().ifPresent(nonce -> claims.setClaim(NONCE, nonce));
+		if (nonce != null) claims.setClaim(NONCE, nonce);
 		claims.setGeneratedJwtId();  // a unique identifier for the token
 		return claims;
 	}

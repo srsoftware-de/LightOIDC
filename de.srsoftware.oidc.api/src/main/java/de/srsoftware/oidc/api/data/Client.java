@@ -3,14 +3,12 @@ package de.srsoftware.oidc.api.data;
 
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.utils.Optionals.nullable;
 
 import java.util.*;
 
 public final class Client {
 	private static System.Logger LOG = System.getLogger(Client.class.getSimpleName());
 	private final String         id, name, secret;
-	private String	             nonce = null;
 	private final Set<String> redirectUris;
 
 	public Client(String id, String name, String secret, Set<String> redirectUris) {
@@ -31,16 +29,6 @@ public final class Client {
 
 	public String name() {
 		return name;
-	}
-
-	public Client nonce(String newVal) {
-		nonce = newVal;
-		;
-		return this;
-	}
-
-	public Optional nonce() {
-		return nullable(nonce);
 	}
 
 	public String secret() {
