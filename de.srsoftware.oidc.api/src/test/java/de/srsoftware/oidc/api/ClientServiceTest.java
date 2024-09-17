@@ -22,7 +22,8 @@ public abstract class ClientServiceTest {
 		assertTrue(cs.listClients().isEmpty());
 		var clientId	 = uuid();
 		var clientSecret = uuid();
-		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI));
+		var landingPage	 = uuid();
+		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage);
 		var list	 = cs.save(client).listClients();
 		assertEquals(1, list.size());
 		assertTrue(list.contains(client));
@@ -35,7 +36,8 @@ public abstract class ClientServiceTest {
 		var cs	 = clientService();
 		var clientId	 = uuid();
 		var clientSecret = uuid();
-		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI));
+		var landingPage	 = uuid();
+		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage);
 		var optClient	 = cs.save(client).getClient(clientId);
 		assertTrue(optClient.isPresent());
 		assertEquals(client, optClient.get());
@@ -49,8 +51,10 @@ public abstract class ClientServiceTest {
 		var clientId	  = uuid();
 		var clientSecret  = uuid();
 		var clientSecret2 = uuid();
-		var client1	  = new Client(clientId, NAME, clientSecret, Set.of(URI));
-		var client2	  = new Client(clientId, "test", clientSecret2, Set.of(URI2));
+		var landingPage1  = uuid();
+
+		var client1 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage1);
+		var client2 = new Client(clientId, "test", clientSecret2, Set.of(URI2));
 
 		var optClient = cs.save(client1).getClient(clientId);
 		assertTrue(optClient.isPresent());

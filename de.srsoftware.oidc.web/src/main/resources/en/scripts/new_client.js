@@ -4,7 +4,8 @@ function addClient(){
         client_id : getValue('client-id'),
         name : getValue('client-name'),
         secret : getValue('client-secret'),
-        redirect_uris : getValue('redirect-urls').split("\n")
+        redirect_uris : getValue('redirect-urls').split("\n"),
+        landing_page : getValue('landing-page')
     };
     fetch(client_controller+'/add',{
         method : 'POST',

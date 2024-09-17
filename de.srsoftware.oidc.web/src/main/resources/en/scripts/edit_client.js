@@ -9,6 +9,7 @@ function handleLoadResponse(response){
             get('client-name').value = json.name;
             get('client-secret').value = json.secret;
             get('redirect-urls').value = json.redirect_uris.join("\n");
+            get('landing-page').value = json.landing_page?json.landing_page:'';
         });
     }
 }
@@ -17,6 +18,7 @@ function handleUpdateResponse(response){
     if (response.ok) {
         enable('button');
         setText('button','saved.');
+        redirect('clients.html');
     }
 }
 
@@ -32,7 +34,8 @@ function updateClient(){
         client_id : getValue('client-id'),
         name : getValue('client-name'),
         secret : getValue('client-secret'),
-        redirect_uris : getValue('redirect-urls').split("\n")
+        redirect_uris : getValue('redirect-urls').split("\n"),
+        landing_page : getValue('landing-page')
     };
     fetch(client_controller+'/update',{
         method : 'POST',

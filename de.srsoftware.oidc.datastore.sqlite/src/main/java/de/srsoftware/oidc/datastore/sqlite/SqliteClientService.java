@@ -1,8 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.sqlite;
 
-import static de.srsoftware.oidc.api.Constants.NAME;
-import static de.srsoftware.oidc.api.Constants.SECRET;
+import static de.srsoftware.oidc.api.Constants.*;
 
 import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.data.Client;
@@ -17,9 +16,9 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
 	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
 
-	private static final String CREATE_CLIENT_TABLE	    = "CREATE TABLE IF NOT EXISTS clients(id VARCHAR(255) NOT NULL PRIMARY KEY, name VARCHAR(255), secret VARCHAR(255));";
+	private static final String CREATE_CLIENT_TABLE	    = "CREATE TABLE IF NOT EXISTS clients(id VARCHAR(255) NOT NULL PRIMARY KEY, name VARCHAR(255), secret VARCHAR(255), landing_page VARCHAR(255));";
 	private static final String CREATE_REDIRECT_TABLE   = "CREATE TABLE IF NOT EXISTS client_redirects(clientId VARCHAR(255), uri VARCHAR(255), PRIMARY KEY(clientId, uri));";
-	private static final String SAVE_CLIENT	    = "INSERT INTO clients (id, name, secret) VALUES (?,?,?) ON CONFLICT DO UPDATE SET name = ?, secret = ?;";
+	private static final String SAVE_CLIENT	    = "INSERT INTO clients (id, name, secret, landing_page) VALUES (?,?,?,?) ON CONFLICT DO UPDATE SET name = ?, secret = ?, landing_page = ?;";
 	private static final String SAVE_REDIRECT	    = "INSERT OR IGNORE INTO client_redirects(clientId, uri) VALUES (?, ?)";
 	private static final String DROP_OTHER_REDIRECTS    = "DELETE FROM client_redirects WHERE clientId = ? AND uri NOT IN";
 	private static final String SELECT_CLIENT	    = "SELECT * FROM clients WHERE id = ?";
@@ -87,9 +86,10 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 			stmt.setString(1, clientId);
 			rs = stmt.executeQuery();
 			if (rs.next()) {
-				var name   = rs.getString(NAME);
-				var secret = rs.getString(SECRET);
-				result     = Optional.of(new Client(clientId, name, secret, uris));
+				var name    = rs.getString(NAME);
+				var secret  = rs.getString(SECRET);
+				var landing = rs.getString(LANDING_PAGE);
+				result      = Optional.of(new Client(clientId, name, secret, uris).landingPage(landing));
 			}
 			rs.close();
 			return result;
@@ -115,10 +115,11 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 			rs         = stmt.executeQuery();
 			var result = new ArrayList<Client>();
 			while (rs.next()) {
-				var id     = rs.getString("id");
-				var name   = rs.getString(NAME);
-				var secret = rs.getString(SECRET);
-				result.add(new Client(id, name, secret, redirects.get(id)));
+				var id      = rs.getString("id");
+				var name    = rs.getString(NAME);
+				var secret  = rs.getString(SECRET);
+				var landing = rs.getString(LANDING_PAGE);
+				result.add(new Client(id, name, secret, redirects.get(id)).landingPage(landing));
 			}
 			rs.close();
 			return result;
@@ -149,8 +150,10 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 			stmt.setString(1, client.id());
 			stmt.setString(2, client.name());
 			stmt.setString(3, client.secret());
-			stmt.setString(4, client.name());
-			stmt.setString(5, client.secret());
+			stmt.setString(4, client.landingPage());
+			stmt.setString(5, client.name());
+			stmt.setString(6, client.secret());
+			stmt.setString(7, client.landingPage());
 			stmt.execute();
 			stmt = conn.prepareStatement(SAVE_REDIRECT);
 			stmt.setString(1, client.id());

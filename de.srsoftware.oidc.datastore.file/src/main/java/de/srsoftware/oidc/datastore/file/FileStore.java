@@ -298,17 +298,20 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public ClientService save(Client client) {
 		if (!json.has(CLIENTS)) json.put(CLIENTS, new JSONObject());
-		json.getJSONObject(CLIENTS).put(client.id(), Map.of(NAME, client.name(), SECRET, client.secret(), REDIRECT_URIS, client.redirectUris()));
+		json.getJSONObject(CLIENTS).put(client.id(), client.map());
 		save();
 		return this;
 	}
 
 	private Client toClient(String clientId, JSONObject clientData) {
 		var redirectUris = new HashSet<String>();
-		for (var o : clientData.getJSONArray(REDIRECT_URIS)) {
-			if (o instanceof String s) redirectUris.add(s);
-		}
-		return new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
+		if (clientData.has(REDIRECT_URIS))
+			for (var o : clientData.getJSONArray(REDIRECT_URIS)) {
+				if (o instanceof String s) redirectUris.add(s);
+			}
+		var client = new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
+		if (clientData.has(LANDING_PAGE)) client.landingPage(clientData.getString(LANDING_PAGE));
+		return client;
 	}
 
 	/*** AuthorizationService methods ***/

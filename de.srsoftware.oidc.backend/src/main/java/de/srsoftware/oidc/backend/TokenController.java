@@ -168,8 +168,8 @@ public class TokenController extends PathHandler {
 	}
 
 	private JwtClaims createIdTokenClaims(User user, Client client, String atHash) {
-		var optNonce = authorizations.consumeNonce(user.uuid(), client.id());
-		JwtClaims claims = new JwtClaims();
+		var       optNonce = authorizations.consumeNonce(user.uuid(), client.id());
+		JwtClaims claims   = new JwtClaims();
 
 		// required claims:
 		claims.setIssuer(config.issuer);  // who creates the token and signs it

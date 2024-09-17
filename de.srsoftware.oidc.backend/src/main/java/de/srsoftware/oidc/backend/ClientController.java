@@ -161,7 +161,7 @@ public class ClientController extends Controller {
 		if (optUser.isEmpty()) return invalidSessionUser(ex);
 		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
-		clients.listClients().forEach(client -> json.put(client.id(), Map.of("name", client.name(), "redirect_uris", client.redirectUris())));
+		clients.listClients().forEach(client -> json.put(client.id(), client.map()));
 		return sendContent(ex, json);
 	}
 
@@ -188,7 +188,8 @@ public class ClientController extends Controller {
 		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
 			if (o instanceof String s) redirects.add(s);
 		}
-		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects);
+		var landingPage = json.has(LANDING_PAGE) ? json.getString(LANDING_PAGE) : null;
+		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage);
 		clients.save(client);
 		return sendContent(ex, client);
 	}

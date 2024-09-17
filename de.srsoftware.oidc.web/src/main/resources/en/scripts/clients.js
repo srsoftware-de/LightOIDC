@@ -15,6 +15,7 @@ function handleClients(response){
             row.innerHTML = `<td>${client.name}</td>
             <td>${id}</td>
             <td>${client.redirect_uris.join("<br/>")}</td>
+            <td>${link(client.landing_page)}</td>
             <td>
                 <button type="button" onclick="edit('${id}')">Edit</button>
                 <button class="danger" onclick="remove('${id}')" type="button">Remove</button>
@@ -22,6 +23,10 @@ function handleClients(response){
             bottom.parentNode.insertBefore(row,bottom);
         }
     });
+}
+
+function link(url){
+    return url ? '<a href="'+url+'">'+url.split('?')[0]+'</a>': "";
 }
 
 function handleRemove(response){

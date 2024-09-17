@@ -29,6 +29,7 @@ public class Constants {
 	public static final String INVALID_REQUEST	  = "invalid_request";
 	public static final String INVALID_REQUEST_OBJECT = "invalid_request_object";
 	public static final String INVALID_SCOPE	  = "invalid_scope";
+	public static final String LANDING_PAGE	  = "landing_page";
 	public static final String MAILCONFIG	  = "mail_config";
 	public static final String NAME		  = "name";
 	public static final String NONCE	  = "nonce";
