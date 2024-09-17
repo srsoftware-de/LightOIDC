@@ -334,6 +334,15 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return this;
 	}
 
+	@Override
+	public List<String> authorizedClients(String userId) {
+		if (!json.has(AUTHORIZATIONS)) return List.of();
+		var authorizations = json.getJSONObject(AUTHORIZATIONS);
+		if (!authorizations.has(userId)) return List.of();
+		var clients = authorizations.getJSONObject(userId);
+		return new ArrayList<>(clients.keySet());
+	}
+
 
 	@Override
 	public Optional<Authorization> consumeAuthorization(String authCode) {

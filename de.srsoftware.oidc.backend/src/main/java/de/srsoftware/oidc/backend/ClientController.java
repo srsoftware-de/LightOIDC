@@ -11,6 +11,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AuthorizedScopes;
 import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.Session;
+import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.utils.Optionals;
 import java.io.IOException;
 import java.time.Instant;
@@ -130,6 +131,39 @@ public class ClientController extends Controller {
 		return notFound(ex);
 	}
 
+	@Override
+	public boolean doGet(String path, HttpExchange ex) throws IOException {
+		var optSession = getSession(ex);
+		if (optSession.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "No authorized!");
+
+		// post-login paths
+		var session = optSession.get();
+		var optUser = users.load(session.userId());
+		if (optUser.isEmpty()) return invalidSessionUser(ex);
+		var user = optUser.get();
+		sessions.extend(session, user);
+
+		switch (path) {
+			case "/dash":
+				return dashboard(ex, user);
+			case "/list":
+				return list(ex, session);
+		}
+		return notFound(ex);
+	}
+
+	private boolean dashboard(HttpExchange ex, User user) throws IOException {
+		var authorizedClients = authorizations  //
+			            .authorizedClients(user.uuid())
+			            .stream()
+			            .map(clients::getClient)
+			            .flatMap(Optional::stream)
+			            .sorted(Comparator.comparing(Client::name))
+			            .map(Client::safeMap)
+			            .toList();
+		return sendContent(ex, Map.of(AUTHORZED, authorizedClients, NAME, user.realName()));
+	}
+
 
 	@Override
 	public boolean doPost(String path, HttpExchange ex) throws IOException {
@@ -150,8 +184,6 @@ public class ClientController extends Controller {
 				return save(ex, session);
 			case "/authorize":
 				return authorize(ex, session);
-			case "/list":
-				return list(ex, session);
 		}
 		return notFound(ex);
 	}
@@ -189,7 +221,7 @@ public class ClientController extends Controller {
 			if (o instanceof String s) redirects.add(s);
 		}
 		var landingPage = json.has(LANDING_PAGE) ? json.getString(LANDING_PAGE) : null;
-		var client = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage);
+		var client	= new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage);
 		clients.save(client);
 		return sendContent(ex, client);
 	}

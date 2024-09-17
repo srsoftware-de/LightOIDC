@@ -74,4 +74,5 @@ public abstract class AuthServiceTest {
 	}
 
 	// TODO: test nonce methods
+	// TODO: test authorizedClients method
 }

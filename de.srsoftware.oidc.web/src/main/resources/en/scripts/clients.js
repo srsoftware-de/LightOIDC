@@ -44,4 +44,4 @@ function remove(clientId){
     }
 }
 
-fetch(client_controller+"/list",{method:'POST',credentials:'include'}).then(handleClients);
+fetch(client_controller+"/list").then(handleClients);

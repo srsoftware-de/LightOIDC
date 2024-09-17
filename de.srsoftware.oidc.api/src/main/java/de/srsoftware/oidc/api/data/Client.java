@@ -37,18 +37,23 @@ public final class Client {
 	}
 
 	public Map<String, Object> map() {
-		var map = new HashMap<String, Object>();
-		map.put(CLIENT_ID, id);
-		map.put(NAME, name);
+		var map = safeMap();
 		map.put(SECRET, secret);
-		nullable(redirectUris).ifPresent(uris -> map.put(REDIRECT_URIS, uris));
-		nullable(landingPage).ifPresent(lp -> map.put(LANDING_PAGE, lp));
 		return map;
 	}
 
 
 	public String name() {
 		return name;
+	}
+
+	public Map<String, Object> safeMap() {
+		var map = new HashMap<String, Object>();
+		map.put(CLIENT_ID, id);
+		map.put(NAME, name);
+		nullable(redirectUris).ifPresent(uris -> map.put(REDIRECT_URIS, uris));
+		nullable(landingPage).ifPresent(lp -> map.put(LANDING_PAGE, lp));
+		return map;
 	}
 
 	public String secret() {

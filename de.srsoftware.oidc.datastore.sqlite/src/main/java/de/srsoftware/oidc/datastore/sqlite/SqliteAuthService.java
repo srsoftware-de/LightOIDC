@@ -23,7 +23,8 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 
 	private static final String	   CREATE_AUTHSTORE_TABLE = "CREATE TABLE IF NOT EXISTS authorizations(userId VARCHAR(255), clientId VARCHAR(255), scope VARCHAR(255), expiration LONG, PRIMARY KEY(userId, clientId, scope));";
 	private static final String	   SAVE_AUTHORIZATION     = "INSERT INTO authorizations(userId, clientId, scope, expiration) VALUES (?,?,?,?) ON CONFLICT DO UPDATE SET expiration = ?";
-	private static final String	   SELECT_AUTH	          = "SELECT * FROM authorizations WHERE userid = ? AND clientId = ? AND scope IN";
+	private static final String	   SELECT_AUTH	          = "SELECT * FROM authorizations WHERE userId = ? AND clientId = ? AND scope IN";
+	private static final String	   SELECT_USER_CLIENTS    = "SELECT DISTINCT clientId FROM authorizations WHERE userId = ?";
 	private Map<String, Authorization> authCodes	          = new HashMap<>();
 
 	private Map<String, String> nonceMap = new HashMap<>();
@@ -92,6 +93,21 @@ public class SqliteAuthService extends SqliteStore implements AuthorizationServi
 			conn.commit();
 			conn.setAutoCommit(true);
 			return this;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<String> authorizedClients(String userId) {
+		try {
+			var stmt = conn.prepareStatement(SELECT_USER_CLIENTS);
+			stmt.setString(1, userId);
+			var rs     = stmt.executeQuery();
+			var result = new ArrayList<String>();
+			while (rs.next()) result.add(rs.getString(1));
+			rs.close();
+			return result;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

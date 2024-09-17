@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public abstract class PathHandler implements HttpHandler {
@@ -173,7 +174,8 @@ public abstract class PathHandler implements HttpHandler {
 		}
 
 		public static boolean sendContent(HttpExchange ex, int status, Object o) throws IOException {
-			if (o instanceof Map map) o = new JSONObject(map);
+			if (o instanceof List<?> list) o = new JSONArray(list);
+			if (o instanceof Map<?, ?> map) o = new JSONObject(map);
 			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
 			return sendContent(ex, status, o.toString().getBytes(UTF_8));
 		}
