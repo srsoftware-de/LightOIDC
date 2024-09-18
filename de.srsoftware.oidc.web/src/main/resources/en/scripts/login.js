@@ -7,8 +7,13 @@ function doRedirect(){
 function handleLogin(response){
     if (response.ok){ 
         response.headers.forEach(function(val, key) {
+            console.log('header: '+key+' → '+val);
             // in newer browsers, the cookie is set from fetch response. In older browsers this does not seem to work
-            if (key == 'session') document.cookie = 'sessionToken='+val+"; path=/api"
+            if (key == 'session') {
+                val = 'sessionToken='+val;
+                console.log('setting cookie: '+val);
+                document.cookie = val;
+            }
         });
        response.json().then(body => {
           hide('error');

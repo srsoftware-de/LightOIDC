@@ -225,7 +225,7 @@ public class UserController extends Controller {
 		var user = optUser.get();
 		users.updatePassword(user, newPass);
 		var session = sessions.createSession(user);
-		new SessionToken(session.id()).addTo(ex);
+		new SessionToken(session.id(),session.expiration()).addTo(ex);
 		return sendRedirect(ex, "/");
 	}
 
@@ -266,7 +266,7 @@ public class UserController extends Controller {
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session, User user) throws IOException {
-		new SessionToken(session.id()).addTo(ex);
+		new SessionToken(session.id(),session.expiration()).addTo(ex);
 		return sendContent(ex, user.map(false));
 	}
 
