@@ -6,6 +6,7 @@
         <script src="scripts/user.js"></script>
         <script src="scripts/settings.js"></script>
         <link rel="stylesheet" href="style.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <nav></nav>
@@ -14,7 +15,7 @@
             <form>
                 <fieldset>
                     <legend>
-                        Benutzer
+                        Benutzer-Einstellungen
                     </legend>
                     <table>
                         <tr>
@@ -30,12 +31,12 @@
                             <td><input id="email" type="email"></td>
                         </tr>
                         <tr>
-                            <th>ID</th>
-                            <td><input id="uuid" type="text" disabled="true"></td>
-                        </tr>
-                        <tr id="update_error" style="display: none">
-                            <th>Fehler</th>
-                            <td class="warning">Aktualisieren der Einstellungen fehlgeschlagen!</td>
+                            <th>Sitzungs-Länge</th>
+                            <td>
+                                <input id="session_duration" type="range" value="50" min="1" max="103" oninput="durationUpdate()"/>
+                                <br/>
+                                <span id="days"></span> Tage, <span id="hours"></span> Stunden, <span id="minutes"></span> Minuten
+                            </td>
                         </tr>
                         <tr>
                             <td></td>
@@ -53,8 +54,12 @@
                             <td><input id="oldpass" type="password"></td>
                         </tr>
                         <tr>
-                            <th></th>
-                            <td><input type="text" style="visibility: hidden"></td>
+                            <th>ID</th>
+                            <td><input id="uuid" type="text" disabled="true"></td>
+                        </tr>
+                        <tr id="update_error" style="display: none">
+                            <th>Fehler</th>
+                            <td class="warning">Aktualisierung der Einstellungen fehlgeschlagen!</td>
                         </tr>
                         <tr>
                             <th>Neues Passwort</th>
@@ -65,8 +70,8 @@
                             <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
                         </tr>
                         <tr id="wrong_password" style="display: none">
-                            <th>Error</th>
-                            <td class="warning">Wrong password!</td>
+                            <th>Fehler</th>
+                            <td class="warning">falsches Passwort!</td>
                         </tr>
                         <tr id="password_mismatch" style="display: none">
                             <th>Fehler</th>
@@ -75,6 +80,45 @@
                         <tr>
                             <td></td>
                             <td><button id="passBtn" type="button" onClick="updatePass()">Aktualisieren</button></td>
+                        </tr>
+                    </table>
+                </fieldset>
+                <br/>
+                <fieldset id="mail_settings" style="display: none">
+                    <legend>
+                        Mail-Einstellungen
+                    </legend>
+                    <table>
+                        <tr>
+                            <th>Smtp-Host</th>
+                            <td><input type="text" id="smtp_host" placeholder="Smtp-Host"></td>
+                        </tr>
+                        <tr>
+                            <th>Smtp-Port</th>
+                            <td><input type="number" id="smtp_port"></td>
+                        </tr>
+                        <tr>
+                            <th>Smtp-Nutzer</th>
+                            <td><input type="text" id="smtp_user" placeholder="Smtp-Nutzer"></td>
+                        </tr>
+                        <tr>
+                            <th>Smtp-Passwort</th>
+                            <td><input type="password" id="smtp_pass" placeholder="Passwort"></td>
+                        </tr>
+                        <tr>
+                            <th>Sicherheit</th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" id="smtp_auth"> Auth
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="start_tls"> StartTLS
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><button id="smtpBtn" type="button" onClick="updateSmtp()">Aktualisieren</button></td>
                         </tr>
                     </table>
                 </fieldset>

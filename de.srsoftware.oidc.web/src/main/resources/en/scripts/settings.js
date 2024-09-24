@@ -65,7 +65,7 @@ function handleResponse(response){
     },10000);
 }
 
-function handleSettings(response){
+function handleMailSettings(response){
     console.log('handleSettings(…)',response);
     if (response.ok){
         response.json().then(json => {
@@ -180,5 +180,5 @@ function durationUpdate(){
 
 document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
     fillForm();
-    fetch("/api/email/settings",{credentials:'include'}).then(handleSettings);
+    fetch("/api/email/settings",{credentials:'include'}).then(handleMailSettings);
 });

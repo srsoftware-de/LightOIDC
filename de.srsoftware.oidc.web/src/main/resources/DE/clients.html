@@ -6,30 +6,34 @@
         <script src="scripts/user.js"></script>
         <script src="scripts/clients.js"></script>
         <link rel="stylesheet" href="style.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <nav></nav>
         <div id="content">
             <h1>Clients</h1>
             <fieldset>
-                <legend>bei LightOIDC registrierte Clients:</legend>
+                <legend>Diese Clients sind bei LightOIDC registriert:</legend>
                 <table>
                     <tr class="centered">
                         <th>Client</th>
                         <th>ID</th>
                         <th>Weiterleitungs-URLs</th>
+                        <th>Ziel-Seite</th>
                         <th>Aktionen</th>
                     </tr>
                     <tr id="bottom">
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td>
                             <button onclick="window.location.href='new_client.html';">Neuen Client hinzufügen…</button>
                         </td>
                         <td></td>
+
                     </tr>
                 </table>
-                <span class="hidden" id="message">Client "{}" wirklich löschen?</span>
+                <span class="hidden" id="message">Client „{}“ wirklich löschen?</span>
             </fieldset>
         </div>
     </body>

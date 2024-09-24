@@ -1,0 +1,54 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/reset.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<nav></nav>
+<div id="content">
+    <h1>Reset password</h1>
+    <div>Willkommen! Du kannst jetzt dein Passwort zurücksetzen!</div>
+    <form>
+        <fieldset>
+            <legend>
+                Passwort
+            </legend>
+            <table>
+                <tr>
+                    <th>Neues Passwort</th>
+                    <td><input id="newpass1" type="password"></td>
+                </tr>
+                <tr>
+                    <th>Passwort wiederholen</th>
+                    <td><input id="newpass2" type="password" onkeydown="passKeyDown()"></td>
+                </tr>
+                <tr id="password_mismatch" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">neues Passwort und dessen Wiederholung stimmen nicht überein!</td>
+                </tr>
+                <tr id="weak_password" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Dein Passwort ist zu einfach!</td>
+                </tr>
+                <tr id="missing_token" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Zugriffs-Token fehlt!</td>
+                </tr>
+                <tr id="invalid_token" style="display: none">
+                    <th>Error</th>
+                    <td class="warning">Zugriffs-Token gefunden, ist aber ungültig!</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button id="passBtn" type="button" onClick="updatePass()">Aktualisieren</button></td>
+                </tr>
+            </table>
+        </fieldset>
+    </form>
+</div>
+</body>
+</html>

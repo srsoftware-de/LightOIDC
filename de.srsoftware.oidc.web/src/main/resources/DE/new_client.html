@@ -6,6 +6,7 @@
     <script src="scripts/user.js"></script>
     <script src="scripts/new_client.js"></script>
     <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
     <body>
         <nav></nav>
@@ -16,20 +17,24 @@
                 <legend>Einstellungen</legend>
                 <table>
                     <tr>
-                        <th>Client-Id</th>
-                        <td><input type="text" size="50" id="client-id"></td>
-                    </tr>
-                    <tr>
-                        <th>Client-Name</th>
+                        <th>Name des Clients</th>
                         <td><input type="text" size="50" id="client-name"></td>
                     </tr>
                     <tr>
-                        <th>Client-Geheimnus</th>
+                        <th>Client-ID</th>
+                        <td><input type="text" size="50" id="client-id"></td>
+                    </tr>
+                    <tr>
+                        <th>Client-Geheimnis</th>
                         <td><input type="text" size="50" id="client-secret"></td>
                     </tr>
                     <tr>
                         <th>Weiterleitungs-URLs</th>
                         <td><textarea cols="50" rows="5" id="redirect-urls"></textarea></td>
+                    </tr>
+                    <tr>
+                        <th>Zielseite</th>
+                        <td><input type="text" size="50" id="landing-page" /></td>
                     </tr>
                     <tr>
                         <td></td>

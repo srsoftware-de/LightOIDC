@@ -5,16 +5,20 @@
         <script src="scripts/common.js"></script>
         <script src="scripts/login.js"></script>
         <link rel="stylesheet" href="style.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <div id="content">
             <h1>SRSoftware Light OIDC</h1>
             <fieldset id="login">
-                <legend>Anmeldung</legend>
+                <legend>Benutzer-Anmeldung</legend>
                 <table>
                     <tr>
                         <th>Benutzername</th>
-                        <td><input type="text" id="username" placeholder="Benutzername *"/></td>
+                        <td style="position: relative">
+                            <input type="text" id="username" placeholder="Benutzername *"/>
+                            <span id="bubble" style="display: none">Geben Sie einen Benutzernamen ein, um ihr Passwort zurückzusetzen!</span>
+                        </td>
                     </tr>
                     <tr>
                         <th>Passwort</th>
@@ -22,17 +26,32 @@
                     </tr>
                     <tr id="error" style="display: none">
                         <th>Fehler</th>
-                        <td class="warning">Anmeldung nicht erfolgreich!</td>
+                        <td class="warning">Anmeldung fehlgeschlagen!</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <label>
+                                <input type="checkbox" id="trust" name="trust" checked="checked"/>
+                                Sitzung beenden, wenn Browser geschlossen wird.
+                            </label>
+                        </td>
                     </tr>
                     <tr>
                         <td></td>
                         <td><button type="button" onClick="tryLogin()">Anmelden</button></td>
                     </tr>
+                    <tr>
+                        <td></td>
+                        <td><button type="button" id="resetBtn" class="light" onClick="resetPw()">Passwort zurücksetzen?</button></td>
+                    </tr>
                 </table>
             </fieldset>
+            <div id="sent" class="warning" style="display: none">
+                Ein Link zum Zurücksetzen ihres Passworts wurde ihnen per Mail gesendet.
+            </div>
         </div>
         <div id="ad">
-            Dieser schlanke Login-Dienst wurde entwickelt von <b>SRSoftware</b>. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Mehr erfahren…</a>
+            Dieser minimale Login-Service wird durch <b>SRSoftware</b> zur Verfügung gestellt. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Mehr erfahren…</a>
         </div>
     </body>
 </html>

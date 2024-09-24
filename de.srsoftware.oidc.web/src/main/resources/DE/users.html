@@ -1,0 +1,55 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Light OIDC</title>
+    <script src="scripts/common.js"></script>
+    <script src="scripts/user.js"></script>
+    <script src="scripts/users.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<nav></nav>
+<div id="content">
+    <h1>Users</h1>
+    <fieldset>
+        <legend>Dies sind die bei LightOIDC registrierten Benutzer:</legend>
+        <table class="centered">
+            <tr>
+                <th>Benutzername</th>
+                <th>Anzeigename</th>
+                <th>E-Mail</th>
+                <th>ID</th>
+                <th style="display: none" class="permissions">Berechtigungen</th>
+                <th>Aktionen</th>
+            </tr>
+            <tr id="bottom">
+                <td>
+                    <input value="" type="text" id="username" placeholder="Benutzername" />
+                </td>
+                <td>
+                    <input value="" type="text" id="realname" placeholder="Anzeigename" />
+                </td>
+                <td>
+                    <input value="" type="text" id="email" placeholder="E-Mail-Adresse" autocomplete="off" />
+                </td>
+                <td>
+                    <input value="" type="password" id="pw" placeholder="Passwort" autocomplete="new-password" />
+                </td>
+                <td>
+                    <input value="" type="password" id="pw2" placeholder="Passwort wiederholen" autocomplete="repeat-password" />
+                </td>
+                <td>
+                    <button onclick="addUser()">Neuen Nutzer anlegen…</button>
+                </td>
+            </tr>
+
+        </table>
+        <span class="hidden" id="message">Really remove client "{}"?</span>
+        <span class="error" style="display: none" id="missing_user_id">Server did not receive a valid user_id for removal!</span>
+        <span class="error" style="display: none" id="missing_confirmation">Server did not receive confirmation for this request!</span>
+        <span class="error" style="display: none" id="unknown_user">The backend does not know this user!</span>
+    </fieldset>
+</div>
+</body>
+</html>
