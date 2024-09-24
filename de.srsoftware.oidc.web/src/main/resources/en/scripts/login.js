@@ -46,6 +46,7 @@ function resetPw(){
 function tryLogin(){
     var username = getValue('username');
     var password = getValue('password');
+    var trust = !get('trust').checked;
     fetch(user_controller+"/login",{
         method: 'POST',
         headers: {
@@ -54,7 +55,8 @@ function tryLogin(){
         },
         body: JSON.stringify({
             username : username,
-            password : password
+            password : password,
+            trust: trust
         })
     }).then(handleLogin);
     return false;

@@ -18,8 +18,8 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
 	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
 
-	private static final String CREATE_SESSION_TABLE = "CREATE TABLE sessions (id VARCHAR(64) PRIMARY KEY, userId VARCHAR(64) NOT NULL, expiration LONG NOT NULL)";
-	private static final String SAVE_SESSION	 = "INSERT INTO sessions (id, userId, expiration) VALUES (?,?,?) ON CONFLICT DO UPDATE SET expiration = ?;";
+	private static final String CREATE_SESSION_TABLE = "CREATE TABLE sessions (id VARCHAR(64) PRIMARY KEY, userId VARCHAR(64) NOT NULL, expiration LONG NOT NULL, trust_browser BOOLEAN DEFAULT false)";
+	private static final String SAVE_SESSION	 = "INSERT INTO sessions (id, userId, expiration, trust_browser) VALUES (?,?,?, ?) ON CONFLICT DO UPDATE SET expiration = ?, trust_browser = ?;";
 	private static final String DROP_SESSION	 = "DELETE FROM sessions WHERE id = ?";
 	private static final String SELECT_SESSION	 = "SELECT * FROM sessions WHERE id = ?";
 
@@ -28,10 +28,10 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 	}
 
 	@Override
-	public Session createSession(User user) {
+	public Session createSession(User user, boolean trustBrowser) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(user.sessionDuration()).truncatedTo(SECONDS);
-		return save(new Session(user.uuid(), endOfSession, uuid()));
+		return save(new Session(user.uuid(), endOfSession, uuid(), trustBrowser));
 	}
 
 	private void createStoreTables() throws SQLException {
@@ -53,7 +53,7 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 	@Override
 	public Session extend(Session session, User user) {
 		var endOfSession = Instant.now().plus(user.sessionDuration());
-		return save(new Session(user.uuid(), endOfSession, session.id()));
+		return save(new Session(user.uuid(), endOfSession, session.id(), session.trustBrowser()));
 	}
 
 	@Override
@@ -99,9 +99,10 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 			var	  rs     = stmt.executeQuery();
 			Optional<Session> result = Optional.empty();
 			if (rs.next()) {
-				var userID     = rs.getString("userId");
-				var expiration = Instant.ofEpochSecond(rs.getLong("expiration"));
-				if (expiration.isAfter(Instant.now())) result = Optional.of(new Session(userID, expiration, sessionId));
+				var userID	 = rs.getString("userId");
+				var expiration	 = Instant.ofEpochSecond(rs.getLong("expiration"));
+				var trustBrowser = rs.getBoolean("trust_browser");
+				if (expiration.isAfter(Instant.now())) result = Optional.of(new Session(userID, expiration, sessionId, trustBrowser));
 			}
 			rs.close();
 			return result;
@@ -117,7 +118,9 @@ public class SqliteSessionService extends SqliteStore implements SessionService 
 			stmt.setString(1, session.id());
 			stmt.setString(2, session.userId());
 			stmt.setLong(3, expiration);
-			stmt.setLong(4, expiration);
+			stmt.setBoolean(4, session.trustBrowser());
+			stmt.setLong(5, expiration);
+			stmt.setBoolean(6, session.trustBrowser());
 			stmt.execute();
 			return session;
 		} catch (SQLException e) {

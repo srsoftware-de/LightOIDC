@@ -41,7 +41,7 @@ public abstract class SessionServiceTest {
 		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
 
 		Instant now	   = Instant.now();
-		var     session	   = sessionService().createSession(user);
+		var     session	   = sessionService().createSession(user, false);
 		var     expiration = session.expiration();
 		assertTrue(expiration.isAfter(now.plus(5, ChronoUnit.MINUTES).minusSeconds(1)));
 		assertTrue(expiration.isBefore(now.plus(5, ChronoUnit.MINUTES).plusSeconds(1)));
@@ -57,7 +57,7 @@ public abstract class SessionServiceTest {
 		var pass = hasher().hash(PASSWORD, uuid);
 		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
 
-		var session = sessionService().createSession(user);
+		var session = sessionService().createSession(user, false);
 
 		Instant now = Instant.now();
 		sessionService().extend(session, user.sessionDuration(Duration.ofMinutes(10)));
@@ -75,7 +75,7 @@ public abstract class SessionServiceTest {
 		var pass = hasher().hash(PASSWORD, uuid);
 		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofMinutes(5));
 
-		var session = sessionService().createSession(user);
+		var session = sessionService().createSession(user, false);
 		assertTrue(sessionService().retrieve(session.id()).isPresent());
 
 		sessionService().dropSession(session.id());
@@ -89,7 +89,7 @@ public abstract class SessionServiceTest {
 		var pass = hasher().hash(PASSWORD, uuid);
 		var user = new User(USERNAME, pass, REALNAME, EMAIL, uuid).sessionDuration(Duration.ofSeconds(2));
 
-		var session = sessionService().createSession(user);
+		var session = sessionService().createSession(user, false);
 		assertTrue(sessionService().retrieve(session.id()).isPresent());
 
 		Thread.sleep(2500);

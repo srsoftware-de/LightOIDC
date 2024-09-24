@@ -221,10 +221,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	// TODO: drop expired sessions
 
 	@Override
-	public Session createSession(User user) {
+	public Session createSession(User user, boolean trustBrowser) {
 		var now	 = Instant.now();
 		var endOfSession = now.plus(user.sessionDuration()).truncatedTo(SECONDS);
-		return save(new Session(user.uuid(), endOfSession, uuid()));
+		return save(new Session(user.uuid(), endOfSession, uuid(), trustBrowser));
 	}
 
 	@Override
@@ -237,7 +237,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public Session extend(Session session, User user) {
 		var endOfSession = Instant.now().plus(user.sessionDuration());
-		return save(new Session(user.uuid(), endOfSession, session.id()));
+		return save(new Session(user.uuid(), endOfSession, session.id(), session.trustBrowser()));
 	}
 
 	private JSONObject sessions() {
@@ -248,10 +248,11 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public Optional<Session> retrieve(String sessionId) {
 		try {
-			var session    = sessions().getJSONObject(sessionId);
-			var userId     = session.getString(USER);
-			var expiration = Instant.ofEpochSecond(session.getLong(EXPIRATION)).truncatedTo(SECONDS);
-			if (expiration.isAfter(Instant.now())) return Optional.of(new Session(userId, expiration, sessionId));
+			var session	 = sessions().getJSONObject(sessionId);
+			var userId	 = session.getString(USER);
+			var expiration	 = Instant.ofEpochSecond(session.getLong(EXPIRATION)).truncatedTo(SECONDS);
+			var trustBrowser = session.getBoolean(TRUST);
+			if (expiration.isAfter(Instant.now())) return Optional.of(new Session(userId, expiration, sessionId, trustBrowser));
 			dropSession(sessionId);
 		} catch (Exception ignored) {
 		}
@@ -259,7 +260,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	private Session save(Session session) {
-		sessions().put(session.id(), Map.of(USER, session.userId(), EXPIRATION, session.expiration().getEpochSecond()));
+		sessions().put(session.id(), Map.of(USER, session.userId(), EXPIRATION, session.expiration().getEpochSecond(), TRUST, session.trustBrowser()));
 		save();
 		return session;
 	}

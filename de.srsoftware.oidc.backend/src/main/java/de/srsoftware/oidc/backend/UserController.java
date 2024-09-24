@@ -193,9 +193,10 @@ public class UserController extends Controller {
 
 		var username = body.has(USERNAME) ? body.getString(USERNAME) : null;
 		var password = body.has(PASSWORD) ? body.getString(PASSWORD) : null;
+		var trust    = body.has(TRUST) ? body.getBoolean(TRUST) : false;
 
 		Optional<User> user = users.load(username, password);
-		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get()), user.get());
+		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
 		return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 	}
 
@@ -224,8 +225,8 @@ public class UserController extends Controller {
 		if (optUser.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "invalid token");
 		var user = optUser.get();
 		users.updatePassword(user, newPass);
-		var session = sessions.createSession(user);
-		new SessionToken(session.id(),session.expiration()).addTo(ex);
+		var session = sessions.createSession(user, false);
+		new SessionToken(session.id(), session.expiration(), session.trustBrowser()).addTo(ex);
 		return sendRedirect(ex, "/");
 	}
 
@@ -266,7 +267,7 @@ public class UserController extends Controller {
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session, User user) throws IOException {
-		new SessionToken(session.id(),session.expiration()).addTo(ex);
+		new SessionToken(session.id(), session.expiration(), session.trustBrowser()).addTo(ex);
 		return sendContent(ex, user.map(false));
 	}
 

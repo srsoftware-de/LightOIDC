@@ -51,6 +51,7 @@ public class Constants {
 	public static final String START_TLS	  = "start_tls";
 	public static final String TOKEN	  = "token";
 	public static final String TOKEN_TYPE	  = "token_type";
+	public static final String TRUST	  = "trust";
 	public static final String UNAUTHORIZED_CLIENT	  = "unauthorized_client";
 	public static final String USER		  = "user";
 	public static final String USER_ID	  = "user_id";

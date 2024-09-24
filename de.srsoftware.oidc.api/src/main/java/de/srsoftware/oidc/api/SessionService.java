@@ -6,7 +6,7 @@ import de.srsoftware.oidc.api.data.User;
 import java.util.Optional;
 
 public interface SessionService {
-	Session	  createSession(User user);
+	Session	  createSession(User user, boolean trustBrowser);
 	SessionService	  dropSession(String sessionId);
 	Session	  extend(Session session, User user);
 	Optional<Session> retrieve(String sessionId);
