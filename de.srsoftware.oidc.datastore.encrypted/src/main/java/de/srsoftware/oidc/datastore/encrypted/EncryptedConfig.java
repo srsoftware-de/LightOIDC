@@ -33,6 +33,7 @@ public class EncryptedConfig {
 	}
 
 	public String encrypt(String plain) {
+		if (plain == null) return null;
 		SecureRandom secureRandom = new SecureRandom();
 		byte[]       iv	          = new byte[16];
 		secureRandom.nextBytes(iv);
@@ -52,6 +53,8 @@ public class EncryptedConfig {
 	}
 
 	public String decrypt(String secret) {
+		if (secret == null) return null;
+		if (secret.isBlank()) return "";
 		byte[] encryptedData = Base64.getDecoder().decode(secret);
 		byte[] iv	     = new byte[16];
 		System.arraycopy(encryptedData, 0, iv, 0, iv.length);

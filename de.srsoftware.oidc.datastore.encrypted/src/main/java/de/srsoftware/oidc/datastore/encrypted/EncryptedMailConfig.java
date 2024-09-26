@@ -14,8 +14,8 @@ public class EncryptedMailConfig extends EncryptedConfig implements MailConfig {
 	private final MailConfig storage;
 	private Authenticator    auth;
 
-	public EncryptedMailConfig(MailConfig storage, String encryotionKey, String salt) {
-		super(encryotionKey, salt);
+	public EncryptedMailConfig(MailConfig storage, String encryptionKey, String salt) {
+		super(encryptionKey, salt);
 		this.storage = storage;
 	}
 

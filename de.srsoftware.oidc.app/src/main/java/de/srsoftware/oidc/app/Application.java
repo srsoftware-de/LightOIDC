@@ -117,10 +117,10 @@ public class Application {
 		};
 
 		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
-		var salt = config.getOrDefault(SALT,uuid());
 
 
 		if (encryptionKey.isPresent()){
+			var salt = config.getOrDefault(SALT,uuid());
 			mailConfig = new EncryptedMailConfig(mailConfig,encryptionKey.get(),salt);
 		}
 		return mailConfig;
