@@ -18,6 +18,7 @@ public class Constants {
 	public static final String CONFIG_PATH	  = "LIGHTOIDC_CONFIG_PATH";
 	public static final String CONFIRMED	  = "confirmed";
 	public static final String DAYS		  = "days";
+	public static final String ENCRYPTION_KEY	  = "encryption_key";
 	public static final String ERROR_DESCRIPTION	  = "error_description";
 	public static final String EXPIRATION	  = "expiration";
 	public static final String EXPIRES_IN	  = "expires_in";
@@ -39,6 +40,7 @@ public class Constants {
 	public static final String REDIRECT_URIS	  = "redirect_uris";
 	public static final String REQUEST_NOT_SUPPORTED  = "request_not_supported";
 	public static final String RESPONSE_TYPE	  = "response_type";
+	public static final String SALT		  = "salt";
 	public static final String SCOPE	  = "scope";
 	public static final String SECRET	  = "secret";
 	public static final String SESSION_DURATION	  = "session_duration";

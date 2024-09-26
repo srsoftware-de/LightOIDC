@@ -18,6 +18,7 @@ import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
+import de.srsoftware.oidc.datastore.encrypted.EncryptedMailConfig;
 import de.srsoftware.oidc.datastore.file.FileStoreProvider;
 import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.datastore.sqlite.*;
@@ -110,10 +111,19 @@ public class Application {
 
 	private static MailConfig setupMailConfig(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var mailConfigLocation = new File(config.getOrDefault("mail_config_storage",defaultFile));
-		return switch (extension(mailConfigLocation)){
+		var mailConfig = switch (extension(mailConfigLocation)){
 			case "db", "sqlite", "sqlite3" -> new SqliteMailConfig(connectionProvider.get(mailConfigLocation));
 			default -> fileStoreProvider.get(mailConfigLocation);
 		};
+
+		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+		var salt = config.getOrDefault(SALT,uuid());
+
+
+		if (encryptionKey.isPresent()){
+			mailConfig = new EncryptedMailConfig(mailConfig,encryptionKey.get(),salt);
+		}
+		return mailConfig;
 	}
 
 	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
