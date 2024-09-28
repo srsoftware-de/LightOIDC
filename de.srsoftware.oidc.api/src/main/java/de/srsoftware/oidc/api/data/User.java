@@ -96,6 +96,10 @@ public final class User {
 		return Optional.of(user);
 	}
 
+	public Set<Permission> permissions() {
+		return Set.copyOf(permissions);
+	}
+
 	public String realName() {
 		return realName;
 	}

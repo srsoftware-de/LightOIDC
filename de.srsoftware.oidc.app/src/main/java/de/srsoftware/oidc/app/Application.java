@@ -19,6 +19,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedMailConfig;
+import de.srsoftware.oidc.datastore.encrypted.EncryptedUserService;
 import de.srsoftware.oidc.datastore.file.FileStoreProvider;
 import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.datastore.sqlite.*;
@@ -128,10 +129,18 @@ public class Application {
 
 	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
 		var userStorageLocation = new File(config.getOrDefault("user_storage",defaultFile));
-		return switch (extension(userStorageLocation).toLowerCase()){
+		var userService =  switch (extension(userStorageLocation).toLowerCase()){
 			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation),passHasher);
 			default -> fileStoreProvider.get(userStorageLocation);
 		};
+
+		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+
+		if (encryptionKey.isPresent()){
+			var salt = config.getOrDefault(SALT,uuid());
+			userService = new EncryptedUserService(userService,encryptionKey.get(),salt,passHasher);
+		}
+		return userService;
 	}
 
 	private static KeyStorage setupKeyStore(Configuration config, Path defaultConfigDir) throws SQLException {

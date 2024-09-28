@@ -15,7 +15,7 @@ dependencies {
     implementation project(':de.srsoftware.oidc.api')
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
     implementation project(':de.srsoftware.utils')
-
+    testImplementation project(path: ':de.srsoftware.oidc.api', configuration: "testBundle")
 }
 
 test {

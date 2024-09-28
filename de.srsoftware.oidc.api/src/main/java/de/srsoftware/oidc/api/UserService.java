@@ -22,13 +22,13 @@ public interface UserService {
 	 * @param accessToken
 	 * @return
 	 */
-	public Optional<User>	 forToken(String accessToken);
-	public UserService	 init(User defaultUser);
-	public List<User>	 list();
-	public Set<User>	 find(String idOrEmail);
-	public Optional<User>	 load(String id);
-	public Optional<User>	 load(String username, String password);
-	public boolean		 passwordMatches(String plaintextPassword, User user);
-	public <T extends UserService> T save(User user);
-	public <T extends UserService> T updatePassword(User user, String plaintextPassword);
+	public Optional<User> forToken(String accessToken);
+	public UserService    init(User defaultUser);
+	public List<User>     list();
+	public Set<User>      find(String idOrEmail);
+	public Optional<User> load(String id);
+	public Optional<User> load(String username, String password);
+	public boolean	      passwordMatches(String plaintextPassword, User user);
+	public UserService    save(User user);
+	public UserService    updatePassword(User user, String plaintextPassword);
 }

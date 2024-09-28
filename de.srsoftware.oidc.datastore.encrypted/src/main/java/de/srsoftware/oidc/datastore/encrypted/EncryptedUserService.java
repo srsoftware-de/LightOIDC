@@ -1,21 +1,25 @@
+/* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.encrypted;
+
+import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.utils.Optionals;
-
+import de.srsoftware.utils.PasswordHasher;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {
-	private final UserService backend;
+	private final UserService    backend;
+	private final PasswordHasher hasher;
 
-	EncryptedUserService(UserService backend, String key, String salt){
-		super(key,salt);
+	public EncryptedUserService(UserService backend, String key, String salt, PasswordHasher passHasher) {
+		super(key, salt);
 		this.backend = backend;
+		hasher       = passHasher;
 	}
 
 	@Override
@@ -28,18 +32,28 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 		return backend.consumeToken(accessToken).map(this::decrypt);
 	}
 
-	public User decrypt(User secret){
-return secret;
+	public User decrypt(User secret) {
+		var decrypted = new User(decrypt(secret.username()), decrypt(secret.hashedPassword()), decrypt(secret.realName()), decrypt(secret.email()), decrypt(secret.uuid())).sessionDuration(secret.sessionDuration());
+		secret.permissions().forEach(decrypted::add);
+		return decrypted;
 	}
 
 	@Override
 	public UserService delete(User user) {
-		backend.delete(encrypt(user));
+		for (var encryptedUser : backend.list()) {
+			var decryptedUser = decrypt(encryptedUser);
+			if (decryptedUser.uuid().equals(user.uuid())) {
+				backend.delete(encryptedUser);
+				break;
+			}
+		}
 		return this;
 	}
 
-	public User encrypt(User plain){
-		return plain;
+	public User encrypt(User plain) {
+		var encrypted = new User(encrypt(plain.username()), encrypt(plain.hashedPassword()), encrypt(plain.realName()), encrypt(plain.email()), encrypt(plain.uuid())).sessionDuration(plain.sessionDuration());
+		plain.permissions().forEach(encrypted::add);
+		return encrypted;
 	}
 
 	@Override
@@ -60,33 +74,50 @@ return secret;
 
 	@Override
 	public Set<User> find(String idOrEmail) {
-		return backend.find(idOrEmail).stream().map(this::decrypt).collect(Collectors.toSet());
+		if (idOrEmail == null || idOrEmail.isBlank()) return Set.of();
+		var matching = new HashMap<String, User>();
+		for (var encryptedUser : backend.list()) {
+			var decryptedUser = decrypt(encryptedUser);
+			if (idOrEmail.equals(decryptedUser.uuid()) || idOrEmail.equals(decryptedUser.email()) || idOrEmail.equals(decryptedUser.username()) || decryptedUser.realName().contains(idOrEmail)) matching.put(decryptedUser.uuid(), decryptedUser);
+		}
+		return Set.copyOf(matching.values());
 	}
 
 	@Override
 	public Optional<User> load(String id) {
-		return backend.load(id).map(this::decrypt);
+		if (id == null || id.isBlank()) return empty();
+		for (var encryptedUser : backend.list()) {
+			var decryptedUser = decrypt(encryptedUser);
+			if (id.equals(decryptedUser.uuid())) return Optional.of(decryptedUser);
+		}
+		return empty();
 	}
 
 	@Override
 	public Optional<User> load(String username, String password) {
-		return backend.load(encrypt(username),encrypt(password));
+		if (username == null || username.isBlank()) return empty();
+		for (var encryptedUser : backend.list()) {
+			var decryptedUser = decrypt(encryptedUser);
+			if (username.equals(decryptedUser.username()) && hasher.matches(password, decryptedUser.hashedPassword())) return Optional.of(decryptedUser);
+		}
+		return empty();
 	}
 
 	@Override
 	public boolean passwordMatches(String plaintextPassword, User user) {
-		return backend.passwordMatches(encrypt(plaintextPassword),encrypt(user));
+		return hasher.matches(plaintextPassword, user.hashedPassword());
 	}
 
 	@Override
-	public EncryptedUserService save(User user) {
+	public UserService save(User user) {
+		delete(user);
 		backend.save(encrypt(user));
 		return this;
 	}
 
 	@Override
-	public EncryptedUserService updatePassword(User user, String plaintextPassword) {
-		backend.updatePassword(encrypt(user),encrypt(plaintextPassword));
-		return this;
+	public UserService updatePassword(User user, String plaintextPassword) {
+		var pass = hasher.hash(plaintextPassword, user.uuid());
+		return save(user.hashedPassword(pass));
 	}
 }
