@@ -18,6 +18,7 @@ import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
+import de.srsoftware.oidc.datastore.encrypted.EncryptedClientService;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedMailConfig;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedUserService;
 import de.srsoftware.oidc.datastore.file.FileStoreProvider;
@@ -87,11 +88,19 @@ public class Application {
 	}
 
 	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var clientStore = new File(config.getOrDefault("client_store", defaultFile));
-		return switch (extension(clientStore)) {
+		var clientStore	  = new File(config.getOrDefault("client_store", defaultFile));
+		var clientService = switch (extension(clientStore)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteClientService(connectionProvider.get(clientStore));
 			default -> fileStoreProvider.get(clientStore);
 		};
+
+		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+
+		if (encryptionKey.isPresent()){
+			var salt = config.getOrDefault(SALT,uuid());
+			clientService = new EncryptedClientService(encryptionKey.get(),salt,clientService);
+		}
+		return clientService;
 	}
 
 	private static AuthorizationService setupAuthService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
@@ -118,7 +127,6 @@ public class Application {
 		};
 
 		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
-
 
 		if (encryptionKey.isPresent()){
 			var salt = config.getOrDefault(SALT,uuid());
