@@ -19,6 +19,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedClientService;
+import de.srsoftware.oidc.datastore.encrypted.EncryptedKeyStore;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedMailConfig;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedUserService;
 import de.srsoftware.oidc.datastore.file.FileStoreProvider;
@@ -153,12 +154,21 @@ public class Application {
 
 	private static KeyStorage setupKeyStore(Configuration config, Path defaultConfigDir) throws SQLException {
 		var        keyStorageLocation = new File(config.getOrDefault("key_storage", defaultConfigDir.resolve("keys")));
+		KeyStorage keyStore = null;
 		if ((keyStorageLocation.exists() && keyStorageLocation.isDirectory()) || !keyStorageLocation.getName().contains(".")) {
-			return new PlaintextKeyStore(keyStorageLocation.toPath());
+			keyStore = new PlaintextKeyStore(keyStorageLocation.toPath());
 		} else {  // SQLite
 			var conn = connectionProvider.get(keyStorageLocation);
-			return new SqliteKeyStore(conn);
+			keyStore = new SqliteKeyStore(conn);
 		}
+
+		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+
+		if (encryptionKey.isPresent()){
+			var salt = config.getOrDefault(SALT,uuid());
+			keyStore = new EncryptedKeyStore(encryptionKey.get(),salt,keyStore);
+		}
+		return keyStore;
 	}
 
 	private static Map<String, Object> map(String[] args) {

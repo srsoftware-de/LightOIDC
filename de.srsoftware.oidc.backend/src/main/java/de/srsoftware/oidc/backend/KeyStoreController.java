@@ -3,7 +3,6 @@ package de.srsoftware.oidc.backend;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.http.PathHandler;
-import de.srsoftware.oidc.api.KeyManager;
 import de.srsoftware.oidc.api.KeyStorage;
 import java.io.IOException;
 import org.jose4j.jwk.JsonWebKey;
@@ -33,9 +32,7 @@ public class KeyStoreController extends PathHandler {
 				PublicJsonWebKey key     = keyStore.load(keyId);
 				String	 keyJson = key.toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
 				arr.put(new JSONObject(keyJson));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} catch (KeyManager.KeyCreationException e) {
+			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		JSONObject result = new JSONObject();

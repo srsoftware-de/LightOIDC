@@ -24,4 +24,6 @@ function handleDash(response){
     });
 }
 
-fetch(client_controller+"/dash").then(handleDash)
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+    fetch(client_controller+"/dash").then(handleDash)
+});

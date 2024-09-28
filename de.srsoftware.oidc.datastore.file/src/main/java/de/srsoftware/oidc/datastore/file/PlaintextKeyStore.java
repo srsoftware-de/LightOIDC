@@ -3,23 +3,19 @@ package de.srsoftware.oidc.datastore.file;
 
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
-import static org.jose4j.jwk.JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE;
 
-import de.srsoftware.oidc.api.KeyManager;
 import de.srsoftware.oidc.api.KeyStorage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
-import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.lang.JoseException;
 
 public class PlaintextKeyStore implements KeyStorage {
 	public static System.Logger LOG = System.getLogger(PlaintextKeyStore.class.getSimpleName());
 
-	private final Path	          dir;
-	private HashMap<String, PublicJsonWebKey> loaded = new HashMap<>();
+	private final Path	dir;
+	private HashMap<String, String> loaded = new HashMap<>();
 
 	public PlaintextKeyStore(Path storageDir) {
 		this.dir = storageDir;
@@ -42,22 +38,17 @@ public class PlaintextKeyStore implements KeyStorage {
 	}
 
 	@Override
-	public PublicJsonWebKey load(String keyId) throws IOException, KeyManager.KeyCreationException {
+	public String loadJson(String keyId) throws IOException {
 		var key = loaded.get(keyId);
 		if (key != null) return key;
-		var json = Files.readString(filename(keyId));
-		try {
-			key = PublicJsonWebKey.Factory.newPublicJwk(json);
-			loaded.put(keyId, key);
-			return key;
-		} catch (JoseException e) {
-			throw new KeyManager.KeyCreationException(e);
-		}
+		key = Files.readString(filename(keyId));
+		loaded.put(keyId, key);
+		return key;
 	}
 
 	@Override
-	public KeyStorage store(PublicJsonWebKey jsonWebKey) throws IOException {
-		Files.writeString(filename(jsonWebKey.getKeyId()), jsonWebKey.toJson(INCLUDE_PRIVATE));
+	public KeyStorage store(String keyId, String jsonWebKey) throws IOException {
+		Files.writeString(filename(keyId), jsonWebKey);
 		return this;
 	}
 

@@ -2,9 +2,6 @@
 package de.srsoftware.oidc.datastore.sqlite;
 
 
-import static org.jose4j.jwk.JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE;
-
-import de.srsoftware.oidc.api.KeyManager;
 import de.srsoftware.oidc.api.KeyStorage;
 import java.io.IOException;
 import java.sql.Connection;
@@ -13,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.lang.JoseException;
 
 public class SqliteKeyStore extends SqliteStore implements KeyStorage {
 	private static final String STORE_VERSION	 = "key_store_version";
@@ -99,30 +95,24 @@ public class SqliteKeyStore extends SqliteStore implements KeyStorage {
 	}
 
 	@Override
-	public PublicJsonWebKey load(String keyId) throws IOException, KeyManager.KeyCreationException {
+	public String loadJson(String keyId) throws IOException {
 		try {
 			var stmt = conn.prepareStatement(LOAD_KEY);
 			stmt.setString(1, keyId);
 			var    rs   = stmt.executeQuery();
 			String json = null;
-			if (rs.next()) {
-				json = rs.getString(1);
-			}
+			if (rs.next()) json = rs.getString(1);
 			rs.close();
-			return PublicJsonWebKey.Factory.newPublicJwk(json);
-		} catch (JoseException e) {
-			throw new KeyManager.KeyCreationException(e);
+			return json;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public KeyStorage store(PublicJsonWebKey jsonWebKey) throws IOException {
+	public KeyStorage store(String keyId, String json) throws IOException {
 		try {
-			var keyId = jsonWebKey.getKeyId();
-			var json  = jsonWebKey.toJson(INCLUDE_PRIVATE);
-			var stmt  = conn.prepareStatement(SAVE_KEY);
+			var stmt = conn.prepareStatement(SAVE_KEY);
 			stmt.setString(1, keyId);
 			stmt.setString(2, json);
 			stmt.setString(3, json);
