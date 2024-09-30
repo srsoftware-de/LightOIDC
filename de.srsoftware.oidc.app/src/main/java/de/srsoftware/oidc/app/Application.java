@@ -47,11 +47,11 @@ public class Application {
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
 
-	private static final String	  BASE_PATH	     = "basePath";
-	private static final String	  FAVICON	     = "/favicon.ico";
-	private static final String	  INDEX	     = STATIC_PATH + "/index.html";
-	private static final String	  WELL_KNOWN	     = "/.well-known";
-	private static System.Logger	  LOG	     = new ColorLogger("Application").setLogLevel(DEBUG);
+	private static final String  BASE_PATH  = "basePath";
+	private static final String  FAVICON    = "/favicon.ico";
+	private static final String  INDEX      = STATIC_PATH + "/index.html";
+	private static final String  WELL_KNOWN = "/.well-known";
+	private static System.Logger LOG        = new ColorLogger("Application").setLogLevel(DEBUG);
 	private static ConnectionProvider connectionProvider = new ConnectionProvider();
 
 	public static void main(String[] args) throws Exception {
@@ -89,23 +89,23 @@ public class Application {
 	}
 
 	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var clientStore	  = new File(config.getOrDefault("client_store", defaultFile));
+		var           clientStore   = new File(config.getOrDefault("client_store", defaultFile));
 		var clientService = switch (extension(clientStore)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteClientService(connectionProvider.get(clientStore));
 			default -> fileStoreProvider.get(clientStore);
 		};
 
-		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
-		if (encryptionKey.isPresent()){
-			var salt = config.getOrDefault(SALT,uuid());
-			clientService = new EncryptedClientService(encryptionKey.get(),salt,clientService);
+		if (encryptionKey.isPresent()) {
+			var salt      = config.getOrDefault(SALT, uuid());
+			clientService = new EncryptedClientService(encryptionKey.get(), salt, clientService);
 		}
 		return clientService;
 	}
 
 	private static AuthorizationService setupAuthService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var authServiceLocation = new File(config.getOrDefault("auth_store",defaultFile));
+		var authServiceLocation = new File(config.getOrDefault("auth_store", defaultFile));
 		return switch (extension(authServiceLocation)){
 			case "db", "sqlite", "sqlite3" -> new SqliteAuthService(connectionProvider.get(authServiceLocation));
 			default -> fileStoreProvider.get(authServiceLocation);
@@ -113,7 +113,7 @@ public class Application {
 	}
 
 	private static SessionService setupSessionService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var sessionStore = new File(config.getOrDefault("session_storage",defaultFile));
+		var sessionStore = new File(config.getOrDefault("session_storage", defaultFile));
 		return switch (extension(sessionStore)){
 			case "db", "sqlite", "sqlite3" -> new SqliteSessionService(connectionProvider.get(sessionStore));
 			default -> fileStoreProvider.get(sessionStore);
@@ -121,33 +121,33 @@ public class Application {
 	}
 
 	private static MailConfig setupMailConfig(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var mailConfigLocation = new File(config.getOrDefault("mail_config_storage",defaultFile));
+		var        mailConfigLocation = new File(config.getOrDefault("mail_config_storage", defaultFile));
 		var mailConfig = switch (extension(mailConfigLocation)){
 			case "db", "sqlite", "sqlite3" -> new SqliteMailConfig(connectionProvider.get(mailConfigLocation));
 			default -> fileStoreProvider.get(mailConfigLocation);
 		};
 
-		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
-		if (encryptionKey.isPresent()){
-			var salt = config.getOrDefault(SALT,uuid());
-			mailConfig = new EncryptedMailConfig(mailConfig,encryptionKey.get(),salt);
+		if (encryptionKey.isPresent()) {
+			var salt   = config.getOrDefault(SALT, uuid());
+			mailConfig = new EncryptedMailConfig(mailConfig, encryptionKey.get(), salt);
 		}
 		return mailConfig;
 	}
 
 	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
-		var userStorageLocation = new File(config.getOrDefault("user_storage",defaultFile));
+		var         userStorageLocation = new File(config.getOrDefault("user_storage", defaultFile));
 		var userService =  switch (extension(userStorageLocation).toLowerCase()){
 			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation),passHasher);
 			default -> fileStoreProvider.get(userStorageLocation);
 		};
 
-		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
-		if (encryptionKey.isPresent()){
-			var salt = config.getOrDefault(SALT,uuid());
-			userService = new EncryptedUserService(userService,encryptionKey.get(),salt,passHasher);
+		if (encryptionKey.isPresent()) {
+			var salt    = config.getOrDefault(SALT, uuid());
+			userService = new EncryptedUserService(userService, encryptionKey.get(), salt, passHasher);
 		}
 		return userService;
 	}
@@ -162,11 +162,11 @@ public class Application {
 			keyStore = new SqliteKeyStore(conn);
 		}
 
-		Optional<String>            encryptionKey = config.get(ENCRYPTION_KEY);
+		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
-		if (encryptionKey.isPresent()){
-			var salt = config.getOrDefault(SALT,uuid());
-			keyStore = new EncryptedKeyStore(encryptionKey.get(),salt,keyStore);
+		if (encryptionKey.isPresent()) {
+			var salt = config.getOrDefault(SALT, uuid());
+			keyStore = new EncryptedKeyStore(encryptionKey.get(), salt, keyStore);
 		}
 		return keyStore;
 	}
@@ -183,18 +183,18 @@ public class Application {
 			var token = tokens.remove(0);
 			switch (token) {
 				case "--base":
-				if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
-				map.put(BASE_PATH, Path.of(tokens.remove(0)));
-				break;
-			case "--config":
-				if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
-				map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
-				break;
-			default:
-				LOG.log(ERROR, "Unknown option: {0}", token);
+					if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
+					map.put(BASE_PATH, Path.of(tokens.remove(0)));
+					break;
+				case "--config":
+					if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
+					map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
+					break;
+				default:
+					LOG.log(ERROR, "Unknown option: {0}", token);
+			}
 		}
-	}
 
-	return map;
-}
+		return map;
+	}
 }
