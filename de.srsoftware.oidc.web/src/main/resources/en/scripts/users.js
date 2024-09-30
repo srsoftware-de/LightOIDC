@@ -75,7 +75,6 @@ function handleRemove(response){
         redirect("users.html");
     } else {
         response.text().then(info => {
-            console.log(info);
             show(info);
         });
     }
@@ -102,7 +101,7 @@ function reset_password(userid){
     fetch(user_controller+"/reset?user="+userid,{credentials:'include'}).then(() => { disable('reset-'+userid); });
 }
 
-document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+document.addEventListener("logged_in", function(event) { // wait until page loaded
        fetch(user_controller+"/list",{method:'POST',credentials:'include'}).then(handleUsers);
 });
 

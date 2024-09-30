@@ -9,6 +9,7 @@ function handleUser(response){
         response.json().then(u => {
             user = u;
             fetch(web+"/navigation.html",{credentials:'include'}).then(handleNavigation);
+            document.dispatchEvent(new Event('logged_in'));
         });
     }
 }

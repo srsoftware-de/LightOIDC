@@ -43,5 +43,6 @@ function remove(clientId){
         }).then(handleRemove);
     }
 }
-
-fetch(client_controller+"/list").then(handleClients);
+document.addEventListener("logged_in", function(event) { // wait until page loaded
+    fetch(client_controller+"/list").then(handleClients);
+});

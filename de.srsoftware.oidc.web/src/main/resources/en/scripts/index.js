@@ -24,6 +24,6 @@ function handleDash(response){
     });
 }
 
-document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+document.addEventListener("logged_in", function(event) { // wait until page loaded
     fetch(client_controller+"/dash").then(handleDash)
 });

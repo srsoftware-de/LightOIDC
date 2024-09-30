@@ -4,7 +4,6 @@ function fillForm(){
     if (user == null){
         setTimeout(fillForm,100);
     } else {
-        console.log(user);
         setValue('username',user.username);
         setValue('email',user.email);
         setValue('uuid', user.uuid);
@@ -158,7 +157,6 @@ function displayDuration(){
 
 function durationUpdate(){
     var raw = getValue('session_duration');
-    console.log(raw);
     var mins = 0;
     var hrs = 0;
     var days = 0;
@@ -178,7 +176,7 @@ function durationUpdate(){
 }
 
 
-document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+document.addEventListener("logged_in", function(event) { // wait until page loaded
     fillForm();
     fetch("/api/email/settings",{credentials:'include'}).then(handleMailSettings);
 });
