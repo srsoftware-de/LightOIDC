@@ -20,7 +20,7 @@ Im Moment baut das Projekt nur auf die folgenden Laufzeit-Bibliotheken auf:
 Im Moment haben diese Bibliotheken keine weiteren (transitiven) Anhängigkeiten, so dass das Projekt nicht durch eine Kaskade von Libraries aufgeblasen wird.  
 Das Ermöglicht es, dass die compilierte JAR-Datei weniger als 1,5 MB groß ist!
 
-## build
+## bauen
 
 Dies ist ein Gradle-Project. Um es zu compilieren brauchen Sie ein aktuelles Java-Development-Kit.  
 Das Projekt kann durch Aufruf von `./gradlew build` in einem Terminal innerhalb des Wurzelverzeichnisses gebaut werden.
