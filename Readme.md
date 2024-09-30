@@ -47,6 +47,29 @@ As a result, the compiled jar has a size of less than 1.5 MB!
 
 ## build
 
+<table>
+    <tr>
+        <th>Deutsch</th>
+        <th>English</th>
+    </tr>
+    <tr>
+        <td>
+
+Dies ist ein Gradle-Project. Um es zu compilieren brauchen Sie ein aktuelles Java-Development-Kit. 
+
+Das Projekt kann durch Aufruf von `./gradlew build` in einem Terminal innerhalb des Wurzelverzeichnisses gebaut werden.
+
+</td>
+<td>
+
+This is a gradle project. To compile it, you should have a recent version of a Java Development Kit installed.
+
+Build the project by launching `./gradlew build` in a terminal while being in the root folder of the project.
+
+</td>
+</tr>
+</table>
+
 This is a gradle project. To compile it, you should have a recent version of a Java Development Kit installed.
 
 Build the project by launching `./gradlew build` in a terminal while being in the root folder of the project.
