@@ -27,6 +27,10 @@ Leider werden durch die SQLite-Bibliothek weitere Transitive Abhängigkeiten ein
 Dies ist ein Gradle-Project. Um es zu compilieren brauchen Sie ein aktuelles Java-Development-Kit.  
 Das Projekt kann durch Aufruf von `./gradlew build` in einem Terminal innerhalb des Wurzelverzeichnisses gebaut werden.
 
+## Datenbank-Unterstützung
+
+Um das Projekt klein zu halten ist im _main_-Branch kein Datenbank-Support eingebaut.
+Es gibt aber einen separaten Branch, der die Benutzung von SQLite-Datenbanken untersützt: [sqlite]
 </td><td>
 
 This aims to be a [specification] compliant OpenID connect provider with minimal footprint.  
@@ -46,7 +50,12 @@ Unfortunately the SQLite library also draws in some additional dependencies,
 ## build
 
 This is a gradle project. To compile it, you should have a recent version of a Java Development Kit installed.  
-Build the project by launching `./gradlew build` in a terminal while being in the root folder of the project.
+Build the roject by launching `./gradlew build` in a terminal while being in the root folder of the project.
+
+## database support
+
+In order to achieve a minimal footprint, no database support is incorporated in the main branch.
+However, there is SQLite support in a separate branch: [sqlite]
 
 </td>
 </tr>
