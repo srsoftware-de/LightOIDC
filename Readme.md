@@ -15,10 +15,12 @@ Im Moment baut das Projekt nur auf die folgenden Laufzeit-Bibliotheken auf:
 * [org.json:json](https://github.com/douglascrockford/JSON-java)
 * [org.bitbucket.b_c:jose4j](https://bitbucket.org/b_c/jose4j)
 * [com.sun.mail:jakarta.mail](https://projects.eclipse.org/projects/ee4j.mail)
-* [com.sun.activation:jakarta.activation](https://projects.eclipse.org/projects/ee4j.jaf)
+* [org.xerial:sqlite-jdbc](https://github.com/xerial/sqlite-jdbc)
 
-Im Moment haben diese Bibliotheken keine weiteren (transitiven) Anhängigkeiten, so dass das Projekt nicht durch eine Kaskade von Libraries aufgeblasen wird.  
-Das Ermöglicht es, dass die compilierte JAR-Datei weniger als 1,5 MB groß ist!
+Im Gegensatz zum [Main-Branch][main], der keine DB-Abhängigkeiten enthält, 
+ bietet dieser Branch Support für einen SQLite-Datenspeicher.
+Leider werden durch die SQLite-Bibliothek weitere Transitive Abhängigkeiten eingebunden, 
+ die das JAR ein wenig aufblähen.
 
 ## bauen
 
@@ -34,10 +36,12 @@ Currently, this project only depends on the following runtime libraries:
 * [org.json:json](https://github.com/douglascrockford/JSON-java)
 * [org.bitbucket.b_c:jose4j](https://bitbucket.org/b_c/jose4j)
 * [com.sun.mail:jakarta.mail](https://projects.eclipse.org/projects/ee4j.mail)
-* [com.sun.activation:jakarta.activation](https://projects.eclipse.org/projects/ee4j.jaf)
+* [org.xerial:sqlite-jdbc](https://github.com/xerial/sqlite-jdbc)
 
-At the time of writing, these libraries have no further transitive dependencies, thus mitigating any bloat from the project.  
-As a result, the compiled jar has a size of less than 1.5 MB!
+While the [main] branch does not contain any dependencies for database support,
+ this branch _does_ allow storing data in an SQLite database.
+Unfortunately the SQLite library also draws in some additional dependencies,
+ which – to a certain extend – increases the size of the compiled JAR archive.
 
 ## build
 
@@ -48,4 +52,5 @@ Build the project by launching `./gradlew build` in a terminal while being in th
 </tr>
 </table>
 
+[main]: ../main
 [specification]: https://openid.net/specs/openid-connect-core-1_0.html

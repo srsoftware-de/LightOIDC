@@ -47,11 +47,11 @@ public class Application {
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
 
-	private static final String  BASE_PATH  = "basePath";
-	private static final String  FAVICON    = "/favicon.ico";
-	private static final String  INDEX      = STATIC_PATH + "/index.html";
-	private static final String  WELL_KNOWN = "/.well-known";
-	private static System.Logger LOG        = new ColorLogger("Application").setLogLevel(DEBUG);
+	private static final String	  BASE_PATH	     = "basePath";
+	private static final String	  FAVICON	     = "/favicon.ico";
+	private static final String	  INDEX	     = STATIC_PATH + "/index.html";
+	private static final String	  WELL_KNOWN	     = "/.well-known";
+	private static System.Logger	  LOG	     = new ColorLogger("Application").setLogLevel(DEBUG);
 	private static ConnectionProvider connectionProvider = new ConnectionProvider();
 
 	public static void main(String[] args) throws Exception {
@@ -89,7 +89,7 @@ public class Application {
 	}
 
 	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var           clientStore   = new File(config.getOrDefault("client_store", defaultFile));
+		var clientStore	  = new File(config.getOrDefault("client_store", defaultFile));
 		var clientService = switch (extension(clientStore)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteClientService(connectionProvider.get(clientStore));
 			default -> fileStoreProvider.get(clientStore);
@@ -183,18 +183,18 @@ public class Application {
 			var token = tokens.remove(0);
 			switch (token) {
 				case "--base":
-					if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
-					map.put(BASE_PATH, Path.of(tokens.remove(0)));
-					break;
-				case "--config":
-					if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
-					map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
-					break;
-				default:
-					LOG.log(ERROR, "Unknown option: {0}", token);
-			}
+				if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
+				map.put(BASE_PATH, Path.of(tokens.remove(0)));
+				break;
+			case "--config":
+				if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
+				map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
+				break;
+			default:
+				LOG.log(ERROR, "Unknown option: {0}", token);
 		}
-
-		return map;
 	}
+
+	return map;
+}
 }
