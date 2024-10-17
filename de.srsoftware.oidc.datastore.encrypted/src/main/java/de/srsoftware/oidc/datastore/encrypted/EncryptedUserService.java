@@ -1,20 +1,19 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.encrypted;
 
+import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.utils.PasswordHasher;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {
-	private final UserService    backend;
-	private final PasswordHasher hasher;
+	private static final System.Logger LOG = System.getLogger(EncryptedUserService.class.getSimpleName());
+	private final UserService	   backend;
+	private final PasswordHasher	   hasher;
 
 	public EncryptedUserService(UserService backend, String key, String salt, PasswordHasher passHasher) {
 		super(key, salt);
@@ -94,12 +93,23 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 	}
 
 	@Override
-	public Optional<User> load(String username, String password) {
+	public Optional<User> login(String username, String password) {
 		if (username == null || username.isBlank()) return empty();
+		var optLock = getLock(username);
+		if (optLock.isPresent()) {
+			var lock = optLock.get();
+			LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
+			return empty();
+		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
-			if (username.equals(decryptedUser.username()) && hasher.matches(password, decryptedUser.hashedPassword())) return Optional.of(decryptedUser);
+			if (!username.equals(decryptedUser.username())) continue;
+			if (hasher.matches(password, decryptedUser.hashedPassword())) {
+				this.unlock(username);
+				return Optional.of(decryptedUser);
+			}
 		}
+		lock(username);
 		return empty();
 	}
 

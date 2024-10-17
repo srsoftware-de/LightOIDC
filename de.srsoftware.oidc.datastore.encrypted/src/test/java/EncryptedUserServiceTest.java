@@ -1,6 +1,7 @@
 /* © SRSoftware 2024 */
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
+import static java.lang.System.Logger.Level.WARNING;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.UserServiceTest;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 public class EncryptedUserServiceTest extends UserServiceTest {
+	private static final System.Logger           LOG = System.getLogger(EncryptedUserServiceTest.class.getSimpleName());
 	private class InMemoryUserService implements UserService {
 		private final PasswordHasher<String> hasher;
 		private HashMap<String, User>	     users = new HashMap<>();
@@ -66,8 +68,23 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 		}
 
 		@Override
-		public Optional<User> load(String username, String password) {
-			return users.values().stream().filter(user -> user.username().equals(username) && passwordMatches(password, user)).findAny();
+		public Optional<User> login(String username, String password) {
+			var optLock = getLock(username);
+			if (optLock.isPresent()) {
+				var lock = optLock.get();
+				LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
+				return Optional.empty();
+			}
+
+			for (var entry : users.entrySet()) {
+				var user = entry.getValue();
+				if (user.username().equals(username) && passwordMatches(password, user)) {
+					unlock(username);
+					return Optional.of(user);
+				}
+			}
+			lock(username);
+			return Optional.empty();
 		}
 
 		@Override

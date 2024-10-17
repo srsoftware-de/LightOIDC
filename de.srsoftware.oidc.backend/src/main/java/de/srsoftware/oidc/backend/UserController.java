@@ -195,7 +195,7 @@ public class UserController extends Controller {
 		var password = body.has(PASSWORD) ? body.getString(PASSWORD) : null;
 		var trust    = body.has(TRUST) ? body.getBoolean(TRUST) : false;
 
-		Optional<User> user = users.load(username, password);
+		Optional<User> user = users.login(username, password);
 		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
 		return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 	}

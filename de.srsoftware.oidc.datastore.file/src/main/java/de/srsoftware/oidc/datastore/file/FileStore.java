@@ -140,6 +140,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return this;
 	}
 
+
 	@Override
 	public Set<User> find(String key) {
 		if (!json.has(USERS)) return Set.of();
@@ -175,8 +176,14 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Optional<User> load(String user, String password) {
+	public Optional<User> login(String user, String password) {
 		if (!json.has(USERS)) return empty();
+		var optLock = getLock(user);
+		if (optLock.isPresent()) {
+			var lock = optLock.get();
+			LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", user, lock.attempts(), lock.releaseTime());
+			return empty();
+		}
 		try {
 			var users = json.getJSONObject(USERS);
 			for (String userId : users.keySet()) {
@@ -184,8 +191,13 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(user))) continue;
 				var loadedUser = User.of(userData, userId).filter(u -> passwordMatches(password, u));
-				if (loadedUser.isPresent()) return loadedUser;
+				if (loadedUser.isPresent()) {
+					unlock(user);
+					return loadedUser;
+				}
+				lock(userId);
 			}
+			lock(user);
 			return empty();
 		} catch (Exception e) {
 			return empty();
@@ -209,6 +221,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		users.put(user.uuid(), user.map(true));
 		return save();
 	}
+
 
 	@Override
 	public FileStore updatePassword(User user, String plaintextPassword) {
