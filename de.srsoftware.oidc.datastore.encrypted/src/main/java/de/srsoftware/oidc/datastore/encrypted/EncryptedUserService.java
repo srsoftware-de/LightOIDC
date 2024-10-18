@@ -98,7 +98,7 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 		var optLock = getLock(username);
 		if (optLock.isPresent()) {
 			var lock = optLock.get();
-			LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
+			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
 			return empty();
 		}
 		for (var encryptedUser : backend.list()) {
@@ -109,7 +109,9 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 				return Optional.of(decryptedUser);
 			}
 		}
-		lock(username);
+
+		var lock = lock(username);
+		LOG.log(WARNING,"Login failed for {0} → locking account until {1}",username,lock.releaseTime());
 		return empty();
 	}
 

@@ -4,13 +4,13 @@ package de.srsoftware.oidc.api;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.data.AccessToken;
-import de.srsoftware.oidc.api.data.FailedLogin;
+import de.srsoftware.oidc.api.data.Lock;
 import de.srsoftware.oidc.api.data.User;
 import java.time.Instant;
 import java.util.*;
 
 public interface UserService {
-	Map<String, FailedLogin> failedLogins = new HashMap<>();
+	Map<String, Lock> failedLogins = new HashMap<>();
 
 	/**
 	 * create a new access token for a given user
@@ -30,25 +30,20 @@ public interface UserService {
 	public UserService	     init(User defaultUser);
 	public List<User>	     list();
 	public Set<User>	     find(String idOrEmail);
-	public default Optional<FailedLogin> getLock(String id) {
-		var failedLogin = failedLogins.get(id);
+	public default Optional<Lock> getLock(String key) {
+		var failedLogin = failedLogins.get(key);
 		if (failedLogin == null || failedLogin.releaseTime().isBefore(Instant.now())) return empty();
 		return Optional.of(failedLogin);
 	}
 	public Optional<User>      load(String id);
 	public Optional<User>      login(String username, String password);
-	public default UserService lock(String id) {
-		var failedLogin = failedLogins.get(id);
-		if (failedLogin == null) {
-			failedLogins.put(id, failedLogin = new FailedLogin(id));
-		}
-
-		return this;
+	public default Lock lock(String key) {
+		return failedLogins.computeIfAbsent(key,k -> new Lock()).count();
 	}
 	public boolean	           passwordMatches(String plaintextPassword, User user);
 	public UserService         save(User user);
-	public default UserService unlock(String id) {
-		failedLogins.remove(id);
+	public default UserService unlock(String key) {
+		failedLogins.remove(key);
 		return this;
 	}
 	public UserService updatePassword(User user, String plaintextPassword);
