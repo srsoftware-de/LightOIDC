@@ -26,19 +26,19 @@ public interface UserService {
 	 * @param accessToken
 	 * @return
 	 */
-	public Optional<User>	     forToken(String accessToken);
-	public UserService	     init(User defaultUser);
-	public List<User>	     list();
-	public Set<User>	     find(String idOrEmail);
+	public Optional<User>         forToken(String accessToken);
+	public UserService            init(User defaultUser);
+	public List<User>             list();
+	public Set<User>              find(String idOrEmail);
 	public default Optional<Lock> getLock(String key) {
 		var failedLogin = failedLogins.get(key);
 		if (failedLogin == null || failedLogin.releaseTime().isBefore(Instant.now())) return empty();
 		return Optional.of(failedLogin);
 	}
-	public Optional<User>      load(String id);
-	public Optional<User>      login(String username, String password);
-	public default Lock lock(String key) {
-		return failedLogins.computeIfAbsent(key,k -> new Lock()).count();
+	public Optional<User> load(String id);
+	public Result<User>   login(String username, String password);
+	public default Lock   lock(String key) {
+		  return failedLogins.computeIfAbsent(key, k -> new Lock()).count();
 	}
 	public boolean	           passwordMatches(String plaintextPassword, User user);
 	public UserService         save(User user);

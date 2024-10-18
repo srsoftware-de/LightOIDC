@@ -4,8 +4,8 @@ package de.srsoftware.oidc.api.data;
 import java.time.Instant;
 
 public class Lock {
-	private int	     attempts;
-	private Instant	     releaseTime;
+	private int	attempts;
+	private Instant releaseTime;
 
 	public Lock() {
 		this.attempts = 0;

@@ -3,6 +3,7 @@ import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.WARNING;
 
+import de.srsoftware.oidc.api.Result;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.UserServiceTest;
 import de.srsoftware.oidc.api.data.AccessToken;
@@ -68,7 +69,7 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 		}
 
 		@Override
-		public Optional<User> login(String username, String password) {
+		public Result<User> login(String username, String password) {
 			var optLock = getLock(username);
 			if (optLock.isPresent()) {
 				var lock = optLock.get();

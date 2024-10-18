@@ -1,9 +1,13 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.encrypted;
 
+import static de.srsoftware.oidc.api.Constants.*;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
+import de.srsoftware.oidc.api.Error;
+import de.srsoftware.oidc.api.Payload;
+import de.srsoftware.oidc.api.Result;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
@@ -93,26 +97,28 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 	}
 
 	@Override
-	public Optional<User> login(String username, String password) {
-		if (username == null || username.isBlank()) return empty();
+	public Result<User> login(String username, String password) {
+		if (username == null || username.isBlank()) return Error.message(ERROR_NO_USERNAME);
 		var optLock = getLock(username);
 		if (optLock.isPresent()) {
 			var lock = optLock.get();
 			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
-			return empty();
+			Error<User> err = Error.message(ERROR_LOCKED);
+			return err.metadata("attempts", lock.attempts(), "release", lock.releaseTime());
 		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
 			if (!username.equals(decryptedUser.username())) continue;
 			if (hasher.matches(password, decryptedUser.hashedPassword())) {
 				this.unlock(username);
-				return Optional.of(decryptedUser);
+				return Payload.of(decryptedUser);
 			}
 		}
 
 		var lock = lock(username);
-		LOG.log(WARNING,"Login failed for {0} → locking account until {1}",username,lock.releaseTime());
-		return empty();
+		LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
+		Error<User> err = Error.message(ERROR_LOGIN_FAILED);
+		return err.metadata("release", lock.releaseTime());
 	}
 
 	@Override
