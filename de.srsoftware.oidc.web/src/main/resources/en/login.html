@@ -24,9 +24,15 @@
                         <th>Password</th>
                         <td><input type="password" id="password" onkeydown="keyDown()" placeholder="Password *"/></td>
                     </tr>
-                    <tr id="error" style="display: none">
+                    <tr id="error_login_failed" class="warn" style="display: none">
                         <th>Error</th>
                         <td class="warning">Failed to log in!</td>
+                    </tr>
+                    <tr id="error_locked" class="warn" style="display: none">
+                        <th>Error</th>
+                        <td class="warning">
+                            Your account is locked until <span id="release"></span>
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="2">

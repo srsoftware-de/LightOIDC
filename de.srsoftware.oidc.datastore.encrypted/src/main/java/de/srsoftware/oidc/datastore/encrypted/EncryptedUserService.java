@@ -5,13 +5,13 @@ import static de.srsoftware.oidc.api.Constants.*;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
-import de.srsoftware.oidc.api.Error;
-import de.srsoftware.oidc.api.Payload;
-import de.srsoftware.oidc.api.Result;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.PasswordHasher;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
 import java.util.*;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {
@@ -103,8 +103,7 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 		if (optLock.isPresent()) {
 			var lock = optLock.get();
 			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
-			Error<User> err = Error.message(ERROR_LOCKED);
-			return err.metadata("attempts", lock.attempts(), "release", lock.releaseTime());
+			return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
@@ -117,8 +116,7 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 
 		var lock = lock(username);
 		LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
-		Error<User> err = Error.message(ERROR_LOGIN_FAILED);
-		return err.metadata("release", lock.releaseTime());
+		return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
 	}
 
 	@Override

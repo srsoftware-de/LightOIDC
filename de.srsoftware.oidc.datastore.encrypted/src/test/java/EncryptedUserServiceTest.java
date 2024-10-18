@@ -1,15 +1,17 @@
 /* © SRSoftware 2024 */
+import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.WARNING;
 
-import de.srsoftware.oidc.api.Result;
-import de.srsoftware.oidc.api.UserService;
-import de.srsoftware.oidc.api.UserServiceTest;
+import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.datastore.encrypted.EncryptedUserService;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.PasswordHasher;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,18 +76,19 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 			if (optLock.isPresent()) {
 				var lock = optLock.get();
 				LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
-				return Optional.empty();
+				return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 			}
 
 			for (var entry : users.entrySet()) {
 				var user = entry.getValue();
 				if (user.username().equals(username) && passwordMatches(password, user)) {
 					unlock(username);
-					return Optional.of(user);
+					return Payload.of(user);
 				}
 			}
-			lock(username);
-			return Optional.empty();
+			var lock = lock(username);
+			LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
+			return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
 		}
 
 		@Override

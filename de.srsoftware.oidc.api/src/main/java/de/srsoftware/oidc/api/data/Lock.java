@@ -2,6 +2,7 @@
 package de.srsoftware.oidc.api.data;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class Lock {
 	private int	attempts;
@@ -16,7 +17,7 @@ public class Lock {
 		if (attempts > 13) attempts = 13;
 		var seconds = 5;
 		for (long i = 0; i < attempts; i++) seconds *= 2;
-		releaseTime = Instant.now().plusSeconds(seconds);
+		releaseTime = Instant.now().plusSeconds(seconds).truncatedTo(ChronoUnit.SECONDS);
 		return this;
 	}
 

@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsExchange;
+import de.srsoftware.utils.Error;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -176,7 +177,7 @@ public abstract class PathHandler implements HttpHandler {
 		public static boolean sendContent(HttpExchange ex, int status, Object o) throws IOException {
 			if (o instanceof List<?> list) o = new JSONArray(list);
 			if (o instanceof Map<?, ?> map) o = new JSONObject(map);
-			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
+			if (o instanceof Error<?> error) o = error.json();
 			return sendContent(ex, status, o.toString().getBytes(UTF_8));
 		}
 
