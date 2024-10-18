@@ -1,13 +1,18 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
+import static java.util.Optional.empty;
+
 import de.srsoftware.oidc.api.data.AccessToken;
+import de.srsoftware.oidc.api.data.Lock;
 import de.srsoftware.oidc.api.data.User;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import de.srsoftware.utils.Result;
+import java.time.Instant;
+import java.util.*;
 
 public interface UserService {
+	Map<String, Lock> failedLogins = new HashMap<>();
+
 	/**
 	 * create a new access token for a given user
 	 * @param user
@@ -22,13 +27,25 @@ public interface UserService {
 	 * @param accessToken
 	 * @return
 	 */
-	public Optional<User> forToken(String accessToken);
-	public UserService    init(User defaultUser);
-	public List<User>     list();
-	public Set<User>      find(String idOrEmail);
+	public Optional<User>         forToken(String accessToken);
+	public UserService            init(User defaultUser);
+	public List<User>             list();
+	public Set<User>              find(String idOrEmail);
+	public default Optional<Lock> getLock(String key) {
+		var failedLogin = failedLogins.get(key);
+		if (failedLogin == null || failedLogin.releaseTime().isBefore(Instant.now())) return empty();
+		return Optional.of(failedLogin);
+	}
 	public Optional<User> load(String id);
-	public Optional<User> load(String username, String password);
-	public boolean	      passwordMatches(String plaintextPassword, User user);
-	public UserService    save(User user);
-	public UserService    updatePassword(User user, String plaintextPassword);
+	public Result<User>   login(String username, String password);
+	public default Lock   lock(String key) {
+		  return failedLogins.computeIfAbsent(key, k -> new Lock()).count();
+	}
+	public boolean	           passwordMatches(String plaintextPassword, User user);
+	public UserService         save(User user);
+	public default UserService unlock(String key) {
+		failedLogins.remove(key);
+		return this;
+	}
+	public UserService updatePassword(User user, String plaintextPassword);
 }

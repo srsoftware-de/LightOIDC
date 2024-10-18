@@ -15,6 +15,8 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.io.IOException;
@@ -193,11 +195,11 @@ public class UserController extends Controller {
 
 		var username = body.has(USERNAME) ? body.getString(USERNAME) : null;
 		var password = body.has(PASSWORD) ? body.getString(PASSWORD) : null;
-		var trust    = body.has(TRUST) ? body.getBoolean(TRUST) : false;
+		var trust    = body.has(TRUST) && body.getBoolean(TRUST);
 
-		Optional<User> user = users.load(username, password);
-		if (user.isPresent()) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
-		return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
+		Result<User> result = users.login(username, password);
+		if (result instanceof Payload<User> user) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
+		return sendContent(ex, HTTP_UNAUTHORIZED, result);
 	}
 
 	private boolean logout(HttpExchange ex, Session session) throws IOException {

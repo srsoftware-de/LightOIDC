@@ -10,7 +10,10 @@ import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.PasswordHasher;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import java.io.File;
@@ -140,6 +143,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		return this;
 	}
 
+
 	@Override
 	public Set<User> find(String key) {
 		if (!json.has(USERS)) return Set.of();
@@ -175,20 +179,32 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	}
 
 	@Override
-	public Optional<User> load(String user, String password) {
-		if (!json.has(USERS)) return empty();
+	public Result<User> login(String username, String password) {
+		if (!json.has(USERS)) return Error.message(ERROR_LOGIN_FAILED);
+		if (username == null || username.isBlank()) return Error.message(ERROR_NO_USERNAME);
+		var optLock = getLock(username);
+		if (optLock.isPresent()) {
+			var lock = optLock.get();
+			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
+			return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+		}
 		try {
 			var users = json.getJSONObject(USERS);
 			for (String userId : users.keySet()) {
 				var userData = users.getJSONObject(userId);
 
-				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(user))) continue;
+				if (KEYS.stream().map(userData::getString).noneMatch(val -> val.equals(username))) continue;
 				var loadedUser = User.of(userData, userId).filter(u -> passwordMatches(password, u));
-				if (loadedUser.isPresent()) return loadedUser;
+				if (loadedUser.isPresent()) {
+					unlock(username);
+					return Payload.of(loadedUser.get());
+				}
 			}
-			return empty();
+			var lock = lock(username);
+			LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
+			return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
 		} catch (Exception e) {
-			return empty();
+			return Error.message(ERROR_LOGIN_FAILED);
 		}
 	}
 
@@ -209,6 +225,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 		users.put(user.uuid(), user.map(true));
 		return save();
 	}
+
 
 	@Override
 	public FileStore updatePassword(User user, String plaintextPassword) {

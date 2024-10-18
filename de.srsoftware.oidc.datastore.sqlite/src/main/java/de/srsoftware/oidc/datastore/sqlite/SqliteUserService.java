@@ -1,15 +1,20 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.sqlite;
 
+import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Strings.uuid;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.PasswordHasher;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -209,12 +214,23 @@ public class SqliteUserService extends SqliteStore implements UserService {
 	}
 
 	@Override
-	public Optional<User> load(String username, String password) {
-		var candidates = find(username);
-		for (var user : candidates) {
-			if (passwordMatches(password, user)) return Optional.of(user);
+	public Result<User> login(String username, String password) {
+		if (username == null || username.isBlank()) return Error.message(ERROR_NO_USERNAME);
+		var optLock = getLock(username);
+		if (optLock.isPresent()) {
+			var lock = optLock.get();
+			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
+			return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 		}
-		return empty();
+		for (var user : find(username)) {
+			if (passwordMatches(password, user)) {
+				this.unlock(username);
+				return Payload.of(user);
+			}
+		}
+		var lock = lock(username);
+		LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
+		return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
 	}
 
 	@Override

@@ -77,7 +77,7 @@ public class Application {
 		HttpServer	  server	    = HttpServer.create(new InetSocketAddress(8080), 0);
 		var	  staticPages	    = (StaticPages) new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
-		new WellKnownController().bindPath(WELL_KNOWN).on(server);
+		new WellKnownController().bindPath(WELL_KNOWN, "/realms/oidc" + WELL_KNOWN).on(server);
 		new UserController(mailConfig, sessionService, userService, staticPages).bindPath(API_USER).on(server);
 		var tokenControllerConfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
 		new TokenController(authService, clientService, keyManager, userService, tokenControllerConfig).bindPath(API_TOKEN).on(server);

@@ -5,6 +5,7 @@ function doRedirect(){
 }
 
 function handleLogin(response){
+    hideAll('warn');
     if (response.ok){ 
         response.headers.forEach(function(val, key) {
             console.log('header: '+key+' → '+val);
@@ -15,12 +16,12 @@ function handleLogin(response){
                 document.cookie = val;
             }
         });
-       response.json().then(body => {
-          hide('error');
-          setTimeout(doRedirect,100);
-       });
+       response.json().then(body => setTimeout(doRedirect,100));
     } else {
-        show('error');
+        response.json().then(json => {
+            if (json.metadata.release) get('release').innerHTML = new Date(json.metadata.release).toLocaleString();
+            show(json.error);
+        });
     }
 }
 

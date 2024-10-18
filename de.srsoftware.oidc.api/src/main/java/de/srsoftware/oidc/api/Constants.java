@@ -6,6 +6,7 @@ public class Constants {
 	public static final String ACCESS_TOKEN	  = "access_token";
 	public static final String APP_NAME	  = "LightOIDC";
 	public static final String AT_HASH	  = "at_hash";
+	public static final String ATTEMPTS	  = "attempts";
 	public static final String AUTH_CODE	  = "authorization_code";
 	public static final String AUTHORZED	  = "authorized";
 	public static final String BEARER	  = "Bearer";
@@ -20,6 +21,9 @@ public class Constants {
 	public static final String DAYS		  = "days";
 	public static final String ENCRYPTION_KEY	  = "encryption_key";
 	public static final String ERROR_DESCRIPTION	  = "error_description";
+	public static final String ERROR_LOCKED	  = "error_locked";
+	public static final String ERROR_LOGIN_FAILED	  = "error_login_failed";
+	public static final String ERROR_NO_USERNAME	  = "error_no_username";
 	public static final String EXPIRATION	  = "expiration";
 	public static final String EXPIRES_IN	  = "expires_in";
 	public static final String GRANT_TYPE	  = "grant_type";
@@ -38,6 +42,7 @@ public class Constants {
 	public static final String OPENID	  = "openid";
 	public static final String REDIRECT_URI	  = "redirect_uri";
 	public static final String REDIRECT_URIS	  = "redirect_uris";
+	public static final String RELEASE	  = "release";
 	public static final String REQUEST_NOT_SUPPORTED  = "request_not_supported";
 	public static final String RESPONSE_TYPE	  = "response_type";
 	public static final String SALT		  = "salt";

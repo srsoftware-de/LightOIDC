@@ -1,20 +1,23 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.encrypted;
 
+import static de.srsoftware.oidc.api.Constants.*;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.PasswordHasher;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import de.srsoftware.utils.Payload;
+import de.srsoftware.utils.Result;
+import java.util.*;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {
-	private final UserService    backend;
-	private final PasswordHasher hasher;
+	private static final System.Logger LOG = System.getLogger(EncryptedUserService.class.getSimpleName());
+	private final UserService	   backend;
+	private final PasswordHasher	   hasher;
 
 	public EncryptedUserService(UserService backend, String key, String salt, PasswordHasher passHasher) {
 		super(key, salt);
@@ -94,13 +97,26 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 	}
 
 	@Override
-	public Optional<User> load(String username, String password) {
-		if (username == null || username.isBlank()) return empty();
+	public Result<User> login(String username, String password) {
+		if (username == null || username.isBlank()) return Error.message(ERROR_NO_USERNAME);
+		var optLock = getLock(username);
+		if (optLock.isPresent()) {
+			var lock = optLock.get();
+			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
+			return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
-			if (username.equals(decryptedUser.username()) && hasher.matches(password, decryptedUser.hashedPassword())) return Optional.of(decryptedUser);
+			if (!username.equals(decryptedUser.username())) continue;
+			if (hasher.matches(password, decryptedUser.hashedPassword())) {
+				this.unlock(username);
+				return Payload.of(decryptedUser);
+			}
 		}
-		return empty();
+
+		var lock = lock(username);
+		LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
+		return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
 	}
 
 	@Override

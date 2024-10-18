@@ -24,9 +24,15 @@
                         <th>Passwort</th>
                         <td><input type="password" id="password" onkeydown="keyDown()" placeholder="Passwort *"/></td>
                     </tr>
-                    <tr id="error" style="display: none">
+                    <tr id="error_login_failed" class="warn" style="display: none">
                         <th>Fehler</th>
                         <td class="warning">Anmeldung fehlgeschlagen!</td>
+                    </tr>
+                    <tr id="error_locked" class="warn" style="display: none">
+                        <th>Fehler</th>
+                        <td class="warning">
+                            Account gesperrt bis <span id="release"></span>
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="2">
@@ -47,11 +53,11 @@
                 </table>
             </fieldset>
             <div id="sent" class="warning" style="display: none">
-                Ein Link zum Zurücksetzen ihres Passworts wurde ihnen per Mail gesendet.
+                Ein Link zum Zurücksetzen Ihres Passworts wurde ihnen per Mail gesendet.
             </div>
         </div>
         <div id="ad">
-            Dieser minimale Login-Service wird durch <b>SRSoftware</b> zur Verfügung gestellt. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Mehr erfahren…</a>
+            Dieser leichtgewichtige Login-Service wird durch <b>SRSoftware</b> zur Verfügung gestellt. <a href="https://git.srsoftware.de/StephanRichter/LightOidc">Mehr erfahren…</a>
         </div>
     </body>
 </html>
