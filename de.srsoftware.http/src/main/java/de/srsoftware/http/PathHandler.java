@@ -81,7 +81,7 @@ public abstract class PathHandler implements HttpHandler {
 			case POST -> doPost(path,ex);
 			default -> false;
 		};
-		ex.getResponseBody().close();
+ 		ex.getResponseBody().close();
 	}
 
 	public String relativePath(HttpExchange ex) {
