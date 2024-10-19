@@ -5,6 +5,7 @@ package de.srsoftware.oidc.app;
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.*;
 import static de.srsoftware.utils.Optionals.emptyIfBlank;
+import static de.srsoftware.utils.Optionals.nullable;
 import static de.srsoftware.utils.Paths.configDir;
 import static de.srsoftware.utils.Strings.uuid;
 import static java.lang.System.Logger.Level.DEBUG;
@@ -58,19 +59,20 @@ public class Application {
 		var            defaultFile = configDir.resolve("data.json");
 		var            configFile  = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir.resolve("config.json")).toFile();
 		var            config      = new Configuration(configFile);
+		var encryptionKey = nullable(System.getenv(ENCRYPTION_KEY)).or(() -> config.get(ENCRYPTION_KEY));
 		var            passHasher  = new UuidHasher();
 		var            firstHash   = passHasher.hash(FIRST_USER_PASS, FIRST_UUID);
 		var            firstUser   = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_PERMISSIONS, MANAGE_SMTP, MANAGE_USERS);
 
 
 		FileStoreProvider fileStoreProvider = new FileStoreProvider(passHasher);
-		var	  userService	    = setupUserService(config, defaultFile, fileStoreProvider, passHasher).init(firstUser);
+		var	  userService	    = setupUserService(config, encryptionKey, defaultFile, fileStoreProvider, passHasher).init(firstUser);
 		var	  sessionService    = setupSessionService(config, defaultFile, fileStoreProvider);
-		var	  mailConfig	    = setupMailConfig(config, defaultFile, fileStoreProvider);
-		var	  keyStore	    = setupKeyStore(config, configDir);
+		var	  mailConfig	    = setupMailConfig(config, encryptionKey, defaultFile, fileStoreProvider);
+		var	  keyStore	    = setupKeyStore(config, encryptionKey, configDir);
 		KeyManager	  keyManager	    = new RotatingKeyManager(keyStore);
 		var	  authService	    = setupAuthService(config, defaultFile, fileStoreProvider);
-		var	  clientService	    = setupClientService(config, defaultFile, fileStoreProvider);
+		var	  clientService	    = setupClientService(config, encryptionKey, defaultFile, fileStoreProvider);
 		HttpServer	  server	    = HttpServer.create(new InetSocketAddress(8080), 0);
 		var	  staticPages	    = (StaticPages) new StaticPages(basePath).bindPath(STATIC_PATH, FAVICON).on(server);
 		new Forward(INDEX).bindPath(ROOT).on(server);
@@ -85,11 +87,9 @@ public class Application {
 		server.start();
 	}
 
-	private static ClientService setupClientService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
+	private static ClientService setupClientService(Configuration config, Optional<String> encryptionKey, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var           clientStore   = new File(config.getOrDefault("client_store", defaultFile));
 		ClientService clientService = fileStoreProvider.get(clientStore);
-
-		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
 		if (encryptionKey.isPresent()) {
 			var salt      = config.getOrDefault(SALT, uuid());
@@ -108,11 +108,9 @@ public class Application {
 		return fileStoreProvider.get(sessionStore);
 	}
 
-	private static MailConfig setupMailConfig(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
+	private static MailConfig setupMailConfig(Configuration config, Optional<String> encryptionKey, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var        mailConfigLocation = new File(config.getOrDefault("mail_config_storage", defaultFile));
 		MailConfig mailConfig         = fileStoreProvider.get(mailConfigLocation);
-
-		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
 		if (encryptionKey.isPresent()) {
 			var salt   = config.getOrDefault(SALT, uuid());
@@ -121,11 +119,9 @@ public class Application {
 		return mailConfig;
 	}
 
-	private static UserService setupUserService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
+	private static UserService setupUserService(Configuration config, Optional<String> encryptionKey, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
 		var         userStorageLocation = new File(config.getOrDefault("user_storage", defaultFile));
 		UserService userService	= fileStoreProvider.get(userStorageLocation);
-
-		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
 		if (encryptionKey.isPresent()) {
 			var salt    = config.getOrDefault(SALT, uuid());
@@ -134,11 +130,9 @@ public class Application {
 		return userService;
 	}
 
-	private static KeyStorage setupKeyStore(Configuration config, Path defaultConfigDir) throws SQLException {
+	private static KeyStorage setupKeyStore(Configuration config, Optional<String> encryptionKey, Path defaultConfigDir) throws SQLException {
 		var        keyStorageLocation = new File(config.getOrDefault("key_storage", defaultConfigDir.resolve("keys")));
 		KeyStorage keyStore           = new PlaintextKeyStore(keyStorageLocation.toPath());
-
-		Optional<String> encryptionKey = config.get(ENCRYPTION_KEY);
 
 		if (encryptionKey.isPresent()) {
 			var salt = config.getOrDefault(SALT, uuid());
