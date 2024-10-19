@@ -18,6 +18,7 @@ function showScope(response,scope){
 }
 
 function handleResponse(response){
+    hideAll('error');
     if (response.ok){
         response.json().then(json => {
             if (json.rp) {
@@ -43,19 +44,23 @@ function handleResponse(response){
         });
     } else {
         console.log("handleResponse(…) ← ",response);
-        if (response.status == 401){
+        if (response.status == 401){ // unauthorized
             login();
             return;
         }
         response.json().then(json => {
-            setText('error',"Error: <br/>"+json.error_description);
-            show('error');
+            console.log("handleResponse → error",json);
+            if (json.error) show(json.error);
+            if (json.metadata.client_id) setText('client_id',json.metadata.client_id);
+            if (json.metadata.parameter) setText('parameter',json.metadata.parameter);
+             if (json.metadata.redirect_uri) setText('redirect_uri',json.metadata.redirect_uri);
+            if (json.metadata.response_type)setText('response_type',json.metadata.response_type)
         });
-        if (json.error != "invalid_request_uri"){
+        /*if (json.error != "invalid_request_uri"){
             var url = params.get('redirect_uri') + '?' + new URLSearchParams(json).toString();
             console.log('redirecting to '+url);
             redirect(url);
-        }
+        }*/
     }
 }
 

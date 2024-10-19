@@ -3,7 +3,6 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.MANAGE_CLIENTS;
-import static de.srsoftware.utils.Optionals.emptyIfBlank;
 import static java.net.HttpURLConnection.*;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -12,6 +11,7 @@ import de.srsoftware.oidc.api.data.AuthorizedScopes;
 import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.utils.Error;
 import de.srsoftware.utils.Optionals;
 import java.io.IOException;
 import java.time.Instant;
@@ -32,13 +32,6 @@ public class ClientController extends Controller {
 		users          = userService;
 	}
 
-	private boolean authorizationError(HttpExchange ex, String errorCode, String description, String state) throws IOException {
-		var map = new HashMap<String, String>();
-		map.put(ERROR, errorCode);
-		emptyIfBlank(description).ifPresent(d -> map.put(ERROR_DESCRIPTION, d));
-		emptyIfBlank(state).ifPresent(s -> map.put(STATE, s));
-		return badRequest(ex, map);
-	}
 
 	private boolean authorize(HttpExchange ex, Session session) throws IOException {
 		var optUser = users.load(session.userId());
@@ -46,34 +39,30 @@ public class ClientController extends Controller {
 		var user  = optUser.get();
 		var json  = json(ex);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
-		if (!json.has(CLIENT_ID)) return authorizationError(ex, INVALID_REQUEST, "Missing required parameter \"%s\"!".formatted(CLIENT_ID), state);
+		if (!json.has(CLIENT_ID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, CLIENT_ID, STATE, state));
 		var clientId  = json.getString(CLIENT_ID);
 		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return authorizationError(ex, INVALID_REQUEST_OBJECT, "unknown client: %s".formatted(clientId), state);
-
+		if (optClient.isEmpty()) return badRequest(ex, Error.message(ERROR_UNKNOWN_CLIENT, CLIENT_ID, clientId, STATE, state));
 		for (String param : List.of(SCOPE, RESPONSE_TYPE, REDIRECT_URI)) {
-			if (!json.has(param)) return authorizationError(ex, INVALID_REQUEST, "Missing required parameter \"%s\"!".formatted(param), state);
+			if (!json.has(param)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, param, STATE, state));
 		}
 		var scopes = toList(json, SCOPE);
-		if (!scopes.contains(OPENID)) return authorizationError(ex, INVALID_SCOPE, "This is an OpenID Provider. You should request \"openid\" scope!", state);
+		if (!scopes.contains(OPENID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, "Scope: openid", STATE, state));
 		var responseTypes = toList(json, RESPONSE_TYPE);
 		for (var responseType : responseTypes) {
 			switch (responseType) {
-				case ID_TOKEN:
-				case TOKEN:
-					return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Response type \"%s\" currently not supported".formatted(responseType), state);
 				case CODE:
 					break;
 				default:
-					return authorizationError(ex, INVALID_REQUEST_OBJECT, "Unknown response type \"%s\"".formatted(responseType), state);
+					return badRequest(ex, Error.message(ERROR_UNSUPPORTED_RESPONSE_TYPE, RESPONSE_TYPE, responseType, STATE, state));
 			}
 		}
-		if (!responseTypes.contains(CODE)) return authorizationError(ex, REQUEST_NOT_SUPPORTED, "Sorry, at the moment I can only handle \"%s\" response type".formatted(CODE), state);
+		if (!responseTypes.contains(CODE)) return badRequest(ex, Error.message(ERROR_MISSONG_CODE_RESPONSE_TYPE, STATE, state));
 
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
-		if (!client.redirectUris().contains(redirect)) authorizationError(ex, INVALID_REDIRECT_URI, "unknown redirect uri: %s".formatted(redirect), state);
 
+		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Error.message(ERROR_INVALID_REDIRECT, REDIRECT_URI, redirect, STATE, state));
 
 		if (json.has(AUTHORZED)) {  // user did consent
 			var authorized = json.getJSONObject(AUTHORZED);
