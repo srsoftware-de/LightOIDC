@@ -187,7 +187,7 @@ public class UserController extends Controller {
 	private boolean list(HttpExchange ex, User user) throws IOException {
 		if (!user.hasPermission(MANAGE_USERS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
-		users.list().stream().sorted(Comparator.comparing(User::username)).forEach(u -> json.put(u.uuid(), u.map(false)));
+		users.list().forEach(u -> json.put(u.uuid(), u.map(false)));
 		return sendContent(ex, json);
 	}
 

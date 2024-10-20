@@ -39,10 +39,13 @@ function handleUsers(response){
         return;
     }
     response.json().then(users => {
+        var arr = [];
+        for (let id in users) arr.push(users[id]);
+        arr.sort((a,b) => a.username < b.username ? -1 : 1);
         var bottom = document.getElementById('bottom');
-        for (let id in users){
+        for (var u of arr){
             var row = document.createElement("tr");
-            var u = users[id];
+            //var u = users[id];
             var manage = {
                 clients : u.permissions.includes('MANAGE_CLIENTS'),
                 perms : u.permissions.includes('MANAGE_PERMISSIONS'),
@@ -52,16 +55,16 @@ function handleUsers(response){
             row.innerHTML = `<td>${u.username}</td>
             <td>${u.realname}</td>
             <td>${u.email}</td>
-            <td>${id}</td>
+            <td>${u.uuid}</td>
             <td style="display: none" class="permissions">
-                <button onclick="editPermission('${id}','MANAGE_CLIENTS',${manage.clients})">${manage.clients ?'-':'+'} <span>Manage</span> Clients</button>
-                <button onclick="editPermission('${id}','MANAGE_PERMISSIONS',${manage.perms})">${manage.perms ?'-':'+'} <span>Manage</span> Permissions</button>
-                <button onclick="editPermission('${id}','MANAGE_SMTP',${manage.smtp})">${manage.smtp ?'-':'+'} <span>Manage</span> SMTP</button>
-                <button onclick="editPermission('${id}','MANAGE_USERS',${manage.users})">${manage.users ?'-':'+'} <span>Manage</span> Users</button>
+                <button onclick="editPermission('${u.uuid}','MANAGE_CLIENTS',${manage.clients})">${manage.clients ?'-':'+'} <span>Manage</span> Clients</button>
+                <button onclick="editPermission('${u.uuid}','MANAGE_PERMISSIONS',${manage.perms})">${manage.perms ?'-':'+'} <span>Manage</span> Permissions</button>
+                <button onclick="editPermission('${u.uuid}','MANAGE_SMTP',${manage.smtp})">${manage.smtp ?'-':'+'} <span>Manage</span> SMTP</button>
+                <button onclick="editPermission('${u.uuid}','MANAGE_USERS',${manage.users})">${manage.users ?'-':'+'} <span>Manage</span> Users</button>
             </td>
             <td>
-                <button type="button" onclick="reset_password('${id}')" id="reset-${id}">Reset password</button>
-                <button id="remove-${u.uuid}" class="danger" onclick="remove('${id}','${u.realname}')" type="button">Remove</button>
+                <button type="button" onclick="reset_password('${u.uuid}')" id="reset-${u.uuid}">Reset password</button>
+                <button id="remove-${u.uuid}" class="danger" onclick="remove('${u.uuid}','${u.realname}')" type="button">Remove</button>
             </td>`;
             bottom.parentNode.insertBefore(row,bottom);
             if (user.permissions.includes('MANAGE_PERMISSIONS')) showAll('permissions');

@@ -182,7 +182,7 @@ public class ClientController extends Controller {
 		if (optUser.isEmpty()) return invalidSessionUser(ex);
 		if (!optUser.get().hasPermission(MANAGE_CLIENTS)) return sendEmptyResponse(HTTP_FORBIDDEN, ex);
 		var json = new JSONObject();
-		clients.listClients().stream().sorted(Comparator.comparing(Client::name)).forEach(client -> json.put(client.id(), client.map()));
+		clients.listClients().forEach(client -> json.put(client.id(), client.map()));
 		return sendContent(ex, json);
 	}
 
