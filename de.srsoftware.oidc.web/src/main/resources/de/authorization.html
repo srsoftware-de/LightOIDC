@@ -11,16 +11,16 @@
 <body>
     <nav></nav>
     <div id="content" style="display: none">
-        Eine vertrauende Seite, <span id="rp">unknown</span>, hat Zugriff auf die folgenden Informationen erfragt:
+        <p>Eine vertrauende Seite, <span id="rp">unknown</span>, hat Zugriff auf die folgenden Informationen erfragt:</p>
         <ul id="scopes">
 
         </ul>
-        Stimmen Sie zu, diese Informationen mit <span id="rp2">unknown</span> zu teilen?
+        <p>Stimmen Sie zu, diese Informationen mit <span id="rp2">unknown</span> zu teilen?</p>
         <button type="button" onclick="grantAutorization(1)">Ja - für einen Tag</button>
         <button type="button" onclick="grantAutorization(7)">Ja - für eine Woche</button>
         <button type="button" onclick="grantAutorization(30)">Ja - für einen Monat</button>
         <button type="button" onclick="grantAutorization(365)">Ja - für ein Jahr</button>
-        <button type="button" onclick="denyAutorization()">No</button>
+        <button type="button" onclick="denyAutorization()">Nein</button>
     </div>
     <div id="error_missing_parameter" class="error" style="display: none">
         Request enthält den benötigten Parameter "<span id="parameter"></span>" nicht!
