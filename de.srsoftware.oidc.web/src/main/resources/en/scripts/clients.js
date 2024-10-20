@@ -15,12 +15,12 @@ function handleClients(response){
         for (let client of arr){
             var row = document.createElement("tr");
             row.innerHTML = `<td>${client.name}</td>
-            <td>${client.id}</td>
+            <td>${client.client_id}</td>
             <td>${client.redirect_uris.join("<br/>")}</td>
             <td>${link(client.landing_page)}</td>
             <td>
-                <button type="button" onclick="edit('${client.id}')">Edit</button>
-                <button class="danger" onclick="remove('${client.id}')" type="button">Remove</button>
+                <button type="button" onclick="edit('${client.client_id}')">Edit</button>
+                <button class="danger" onclick="remove('${client.client_id}')" type="button">Remove</button>
             </td>`;
             bottom.parentNode.insertBefore(row,bottom);
         }
