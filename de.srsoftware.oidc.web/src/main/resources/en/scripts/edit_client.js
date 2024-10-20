@@ -1,7 +1,16 @@
 var params = new URLSearchParams(window.location.search);
 var id = params.get('id');
 
-
+function handleAutoDiscover(response){
+    if (response.ok){
+        response.json().then(json => {
+            console.log(json);
+            setText('authorization',json.authorization_endpoint);
+            setText('token',json.token_endpoint);
+            setText('userinfo',json.userinfo_endpoint);
+        });
+    }
+}
 function handleLoadResponse(response){
     if (response.ok){
         response.json().then(json => {
@@ -48,11 +57,17 @@ function updateClient(){
     setTimeout(resetButton,4000);
 }
 
-fetch(api+'/client',
-    {
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
+    fetch(api+'/client', {
         method: 'POST',
         body: JSON.stringify({
             client_id : id
         }),
         credentials:'include'
     }).then(handleLoadResponse);
+    var autodiscover = window.location.origin+'/.well-known/openid-configuration';
+    setText('autodiscover',autodiscover);
+    fetch(autodiscover).then(handleAutoDiscover);
+});
+
+
