@@ -24,7 +24,7 @@ public class WellKnownController extends PathHandler {
 			              "authorization_endpoint", host + "/web/authorization.html",  //
 			              "userinfo_endpoint", host + "/api/user/info",	           //
 			              "jwks_uri", host + "/api/jwks.json",	           //
-			              "issuer", "https://lightoidc.srsoftware.de",	           //
+			              "issuer", host,			           //
 			              "id_token_signing_alg_values_supported", List.of("RS256"),   //
 			              "subject_types_supported", List.of("public", "pairwise")));
 	}
