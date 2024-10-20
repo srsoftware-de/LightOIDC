@@ -25,7 +25,7 @@ public class Constants {
 	public static final String ERROR_LOCKED	            = "error_locked";
 	public static final String ERROR_LOGIN_FAILED	            = "error_login_failed";
 	public static final String ERROR_MISSING_PARAMETER          = "error_missing_parameter";
-	public static final String ERROR_MISSONG_CODE_RESPONSE_TYPE = "error_missing_code";
+	public static final String ERROR_MISSING_CODE_RESPONSE_TYPE = "error_missing_code";
 	public static final String ERROR_NO_USERNAME	            = "error_no_username";
 	public static final String ERROR_UNKNOWN_CLIENT	            = "error_unknown_client";
 	public static final String ERROR_UNSUPPORTED_RESPONSE_TYPE  = "error_unsupported_response_type";
