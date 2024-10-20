@@ -178,6 +178,7 @@ public abstract class PathHandler implements HttpHandler {
 			if (o instanceof List<?> list) o = new JSONArray(list);
 			if (o instanceof Map<?, ?> map) o = new JSONObject(map);
 			if (o instanceof Error<?> error) o = error.json();
+			if (o instanceof JSONObject) ex.getResponseHeaders().add(CONTENT_TYPE, JSON);
 			return sendContent(ex, status, o.toString().getBytes(UTF_8));
 		}
 
