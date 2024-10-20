@@ -115,7 +115,7 @@ public class TokenController extends PathHandler {
 		var user = optUser.get();
 
 		var    accessToken = users.accessToken(user);
-		var issuer = "https://"+hostname(ex);
+		var    issuer	   = hostname(ex);
 		String jwToken	   = createJWT(client, user, accessToken, issuer);
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
@@ -173,8 +173,8 @@ public class TokenController extends PathHandler {
 		JwtClaims claims   = new JwtClaims();
 
 		// required claims:
-		claims.setIssuer(issuer);  // who creates the token and signs it
-		claims.setSubject(user.uuid());	  // the subject/principal is whom the token is about
+		claims.setIssuer(issuer);	 // who creates the token and signs it
+		claims.setSubject(user.uuid());	 // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
 		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
 		claims.setIssuedAtToNow();
