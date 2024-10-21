@@ -84,7 +84,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 							client.remove(scope);
 						}
 					}
-					if (client.isEmpty()) clients.remove(clientId);
+					// if (client.isEmpty()) clients.remove(clientId); // keep client as mark for ClientController.dash
 				}
 				if (clients.isEmpty()) authorizations.remove(userId);
 			}
