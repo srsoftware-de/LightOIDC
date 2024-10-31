@@ -1,5 +1,22 @@
 var params = new URLSearchParams(window.location.search);
 var id = params.get('id');
+var token_validity = 10;
+
+function displayDuration(){
+    var mins = token_validity;
+    hrs = Math.floor(mins/60);
+    mins-=60*hrs;
+    days = Math.floor(hrs/24);
+    hrs-=24*days;
+    setText('days',days);
+    setText('hours',hrs);
+    setText('minutes',mins);
+}
+
+function durationUpdate(){
+    token_validity = getValue('token_validity');
+    displayDuration();
+}
 
 function handleAutoDiscover(response){
     if (response.ok){
@@ -19,6 +36,8 @@ function handleLoadResponse(response){
             get('client-secret').value = json.secret;
             get('redirect-urls').value = json.redirect_uris.join("\n");
             get('landing-page').value = json.landing_page?json.landing_page:'';
+            token_validity = json.token_validity?json.token_validity:10;
+            displayDuration();
         });
     }
 }
@@ -44,7 +63,8 @@ function updateClient(){
         name : getValue('client-name'),
         secret : getValue('client-secret'),
         redirect_uris : getValue('redirect-urls').split("\n"),
-        landing_page : getValue('landing-page')
+        landing_page : getValue('landing-page'),
+        token_validity : getValue('token_validity')
     };
     fetch(client_controller+'/update',{
         method : 'POST',

@@ -176,7 +176,7 @@ public class TokenController extends PathHandler {
 		claims.setIssuer(issuer);	 // who creates the token and signs it
 		claims.setSubject(user.uuid());	 // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
-		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
+		claims.setExpirationTimeMinutesInTheFuture(client.tokenValidity().toMinutes());	 // time when the token will expire (10 minutes from now)
 		claims.setIssuedAtToNow();
 		claims.setClaim(AT_HASH, atHash);
 		claims.setClaim(CLIENT_ID, client.id());

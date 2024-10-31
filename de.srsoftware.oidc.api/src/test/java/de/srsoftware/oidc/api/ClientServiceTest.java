@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.srsoftware.oidc.api.data.Client;
+import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ public abstract class ClientServiceTest {
 		var clientId	 = uuid();
 		var clientSecret = uuid();
 		var landingPage	 = uuid();
-		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage);
+		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI));
 		var list	 = cs.save(client).listClients();
 		assertEquals(1, list.size());
 		assertTrue(list.contains(client));
@@ -37,7 +38,7 @@ public abstract class ClientServiceTest {
 		var clientId	 = uuid();
 		var clientSecret = uuid();
 		var landingPage	 = uuid();
-		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage);
+		var client	 = new Client(clientId, NAME, clientSecret, Set.of(URI)).landingPage(landingPage).tokenValidity(Duration.ofMinutes(23));
 		var optClient	 = cs.save(client).getClient(clientId);
 		assertTrue(optClient.isPresent());
 		assertEquals(client, optClient.get());

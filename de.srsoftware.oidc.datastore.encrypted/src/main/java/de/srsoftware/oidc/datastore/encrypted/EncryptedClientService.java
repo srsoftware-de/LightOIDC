@@ -19,12 +19,12 @@ public class EncryptedClientService extends EncryptedConfig implements ClientSer
 
 	public Client decrypt(Client client) {
 		var decryptedUrls = client.redirectUris().stream().map(this::decrypt).collect(Collectors.toSet());
-		return new Client(decrypt(client.id()), decrypt(client.name()), decrypt(client.secret()), decryptedUrls).landingPage(decrypt(client.landingPage()));
+		return new Client(decrypt(client.id()), decrypt(client.name()), decrypt(client.secret()), decryptedUrls).landingPage(decrypt(client.landingPage())).tokenValidity(client.tokenValidity());
 	}
 
 	public Client encrypt(Client client) {
 		var encryptedUrls = client.redirectUris().stream().map(this::encrypt).collect(Collectors.toSet());
-		return new Client(encrypt(client.id()), encrypt(client.name()), encrypt(client.secret()), encryptedUrls).landingPage(encrypt(client.landingPage()));
+		return new Client(encrypt(client.id()), encrypt(client.name()), encrypt(client.secret()), encryptedUrls).landingPage(encrypt(client.landingPage())).tokenValidity(client.tokenValidity());
 	}
 
 	@Override

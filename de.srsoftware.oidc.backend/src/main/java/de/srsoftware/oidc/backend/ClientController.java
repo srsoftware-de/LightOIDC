@@ -14,6 +14,7 @@ import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.utils.Error;
 import de.srsoftware.utils.Optionals;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -210,7 +211,8 @@ public class ClientController extends Controller {
 			if (o instanceof String s) redirects.add(s);
 		}
 		var landingPage = json.has(LANDING_PAGE) ? json.getString(LANDING_PAGE) : null;
-		var client	= new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage);
+		var token_duration = Duration.ofMinutes(json.has(TOKEN_VALIDITY) ? json.getLong(TOKEN_VALIDITY) : 10);
+		var client	= new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage).tokenValidity(token_duration);
 		clients.save(client);
 		return sendContent(ex, client);
 	}

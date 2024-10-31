@@ -5,6 +5,7 @@ package de.srsoftware.oidc.api.data;
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.utils.Optionals.nullable;
 
+import java.time.Duration;
 import java.util.*;
 
 public final class Client {
@@ -14,14 +15,35 @@ public final class Client {
 	private final String         name;
 	private final String         secret;
 	private final Set<String> redirectUris;
+	private Duration          tokenValidity;
 
 	public Client(String id, String name, String secret, Set<String> redirectUris) {
-		this.id	  = id;
-		landingPage	  = null;
-		this.name	  = name;
-		this.secret	  = secret;
-		this.redirectUris = redirectUris;
+		this.id	   = id;
+		landingPage	   = null;
+		this.name	   = name;
+		this.secret	   = secret;
+		this.redirectUris  = redirectUris;
+		this.tokenValidity = Duration.ofMinutes(10);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) return true;
+		if (obj == null || obj.getClass() != this.getClass()) return false;
+		var that = (Client)obj;
+		return Objects.equals(this.id, that.id)	             //
+		    && Objects.equals(this.name, that.name)	             //
+		    && Objects.equals(this.secret, that.secret)	             //
+		    && Objects.equals(this.redirectUris, that.redirectUris)  //
+		    && Objects.equals(landingPage, that.landingPage)         //
+		    && Objects.equals(tokenValidity, that.tokenValidity);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, name, secret, redirectUris);
+	}
+
 
 	public String id() {
 		return id;
@@ -53,6 +75,7 @@ public final class Client {
 		map.put(NAME, name);
 		nullable(redirectUris).ifPresent(uris -> map.put(REDIRECT_URIS, uris));
 		nullable(landingPage).ifPresent(lp -> map.put(LANDING_PAGE, lp));
+		nullable(tokenValidity).ifPresent(tv -> map.put(TOKEN_VALIDITY, tv.toMinutes()));
 		return map;
 	}
 
@@ -65,17 +88,14 @@ public final class Client {
 		return redirectUris;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this) return true;
-		if (obj == null || obj.getClass() != this.getClass()) return false;
-		var that = (Client)obj;
-		return Objects.equals(this.id, that.id) && Objects.equals(this.name, that.name) && Objects.equals(this.secret, that.secret) && Objects.equals(this.redirectUris, that.redirectUris);
+
+	public Duration tokenValidity() {
+		return tokenValidity;
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, name, secret, redirectUris);
+	public Client tokenValidity(Duration newValue) {
+		this.tokenValidity = newValue;
+		return this;
 	}
 
 	@Override
