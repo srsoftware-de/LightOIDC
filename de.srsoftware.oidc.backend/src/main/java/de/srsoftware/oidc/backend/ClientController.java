@@ -210,9 +210,9 @@ public class ClientController extends Controller {
 		for (Object o : json.getJSONArray(REDIRECT_URIS)) {
 			if (o instanceof String s) redirects.add(s);
 		}
-		var landingPage = json.has(LANDING_PAGE) ? json.getString(LANDING_PAGE) : null;
+		var landingPage	   = json.has(LANDING_PAGE) ? json.getString(LANDING_PAGE) : null;
 		var token_duration = Duration.ofMinutes(json.has(TOKEN_VALIDITY) ? json.getLong(TOKEN_VALIDITY) : 10);
-		var client	= new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage).tokenValidity(token_duration);
+		var client	   = new Client(json.getString(CLIENT_ID), json.getString(NAME), json.getString(SECRET), redirects).landingPage(landingPage).tokenValidity(token_duration);
 		clients.save(client);
 		return sendContent(ex, client);
 	}

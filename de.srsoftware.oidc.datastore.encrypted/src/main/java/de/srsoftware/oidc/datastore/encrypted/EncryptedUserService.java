@@ -107,8 +107,8 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
-			if (!username.equals(decryptedUser.username())) continue;
-			if (hasher.matches(password, decryptedUser.hashedPassword())) {
+			var match	  = List.of(decryptedUser.username(), decryptedUser.realName(), decryptedUser.email()).contains(username);
+			if (match && hasher.matches(password, decryptedUser.hashedPassword())) {
 				this.unlock(username);
 				return Payload.of(decryptedUser);
 			}
