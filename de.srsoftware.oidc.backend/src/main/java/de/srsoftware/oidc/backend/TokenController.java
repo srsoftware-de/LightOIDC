@@ -127,7 +127,7 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user, AccessToken accessToken, String issuer) {
+	String createJWT(Client client, User user, AccessToken accessToken, String issuer) {
 		try {
 			PublicJsonWebKey key    = keyManager.getKey();
 			var	 algo   = key.getAlgorithm();
@@ -181,6 +181,7 @@ public class TokenController extends PathHandler {
 		claims.setClaim(AT_HASH, atHash);
 		claims.setClaim(CLIENT_ID, client.id());
 		claims.setClaim(EMAIL, user.email());  // additional claims/attributes about the subject can be added
+		claims.setClaim(USER, user.username());
 
 		optNonce.ifPresent(nonce -> claims.setClaim(NONCE, nonce));
 		claims.setGeneratedJwtId();  // a unique identifier for the token

@@ -25,12 +25,14 @@ public class ClientController extends Controller {
 	private final AuthorizationService authorizations;
 	private final ClientService	   clients;
 	private final UserService	   users;
+	private final TokenController	   tokens;
 
-	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService, UserService userService) {
+	public ClientController(AuthorizationService authorizationService, ClientService clientService, SessionService sessionService, UserService userService, TokenController tokenController) {
 		super(sessionService);
 		authorizations = authorizationService;
 		clients        = clientService;
 		users          = userService;
+		tokens         = tokenController;
 	}
 
 
@@ -50,15 +52,18 @@ public class ClientController extends Controller {
 		var scopes = toList(json, SCOPE);
 		if (!scopes.contains(OPENID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, "Scope: openid", STATE, state));
 		var responseTypes = toList(json, RESPONSE_TYPE);
+		var types	  = 0;
 		for (var responseType : responseTypes) {
 			switch (responseType) {
 				case CODE:
+				case ID_TOKEN:
+					types++;
 					break;
 				default:
 					return badRequest(ex, Error.message(ERROR_UNSUPPORTED_RESPONSE_TYPE, RESPONSE_TYPE, responseType, STATE, state));
 			}
 		}
-		if (!responseTypes.contains(CODE)) return badRequest(ex, Error.message(ERROR_MISSING_CODE_RESPONSE_TYPE, STATE, state));
+		if (types < 1) return badRequest(ex, Error.message(ERROR_MISSING_CODE_RESPONSE_TYPE, STATE, state));
 
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
@@ -74,16 +79,32 @@ public class ClientController extends Controller {
 		}
 		if (json.has(NONCE)) authorizations.nonce(user.uuid(), client.id(), json.getString(NONCE));
 
-
 		var authResult = authorizations.getAuthorization(user.uuid(), client.id(), scopes);
 		if (!authResult.unauthorizedScopes().isEmpty()) {
 			return sendContent(ex, Map.of("unauthorized_scopes", authResult.unauthorizedScopes(), "rp", client.name()));
 		}
+
 		var joinedAuthorizedScopes = Optionals.nullable(authResult.authorizedScopes()).map(AuthorizedScopes::scopes).map(list -> String.join(" ", list));
-		var result	           = new HashMap<String, String>();
+
+		var result = new HashMap<String, Object>();
+
 		joinedAuthorizedScopes.ifPresent(authorizedScopes -> result.put(SCOPE, authorizedScopes));
-		result.put(CODE, authResult.authCode());
-		if (state != null) result.put(STATE, state);
+
+		if (responseTypes.contains(ID_TOKEN)) {
+			var    accessToken = users.accessToken(user);
+			var    issuer	   = hostname(ex);
+			String jwToken	   = tokens.createJWT(client, user, accessToken, issuer);
+			ex.getResponseHeaders().add("Cache-Control", "no-store");
+			result.put(ACCESS_TOKEN, accessToken.id());
+			result.put(TOKEN_TYPE, BEARER);
+			result.put(EXPIRES_IN, 3600);
+			result.put(ID_TOKEN, jwToken);
+		} else if (responseTypes.contains(CODE)) {
+			result.put(CODE, authResult.authCode());
+			if (state != null) result.put(STATE, state);
+		}
+
+
 		return sendContent(ex, result);
 	}
 
