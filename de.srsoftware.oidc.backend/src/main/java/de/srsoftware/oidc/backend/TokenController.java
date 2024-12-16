@@ -3,16 +3,16 @@ package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.Constants.ERROR;
-import static de.srsoftware.utils.Optionals.emptyIfBlank;
+import static de.srsoftware.tools.Optionals.absentIfBlank;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.http.PathHandler;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.tools.PathHandler;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -68,7 +68,7 @@ public class TokenController extends PathHandler {
 	private HashMap<String, String> tokenResponse(String errorCode, String description) throws IOException {
 		var map = new HashMap<String, String>();
 		map.put(ERROR, errorCode);
-		emptyIfBlank(description).ifPresent(d -> map.put(ERROR_DESCRIPTION, d));
+		absentIfBlank(description).ifPresent(d -> map.put(ERROR_DESCRIPTION, d));
 		return map;
 	}
 

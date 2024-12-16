@@ -2,18 +2,18 @@
 package de.srsoftware.oidc.datastore.file; /* © SRSoftware 2024 */
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.User.*;
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Strings.uuid;
 import static java.lang.System.Logger.Level.*;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
-import de.srsoftware.utils.Error;
-import de.srsoftware.utils.PasswordHasher;
-import de.srsoftware.utils.Payload;
-import de.srsoftware.utils.Result;
+import de.srsoftware.tools.Error;
+import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.Payload;
+import de.srsoftware.tools.Result;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
 import java.io.File;

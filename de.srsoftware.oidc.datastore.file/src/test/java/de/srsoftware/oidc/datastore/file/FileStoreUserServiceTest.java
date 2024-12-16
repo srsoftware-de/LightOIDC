@@ -3,8 +3,8 @@ package de.srsoftware.oidc.datastore.file;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.UserServiceTest;
-import de.srsoftware.utils.PasswordHasher;
-import de.srsoftware.utils.UuidHasher;
+import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.UuidHasher;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

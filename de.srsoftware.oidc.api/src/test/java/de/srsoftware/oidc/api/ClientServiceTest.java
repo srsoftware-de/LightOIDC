@@ -1,7 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

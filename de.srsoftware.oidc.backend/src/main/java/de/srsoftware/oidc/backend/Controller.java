@@ -2,10 +2,10 @@
 package de.srsoftware.oidc.backend;
 
 import com.sun.net.httpserver.HttpExchange;
-import de.srsoftware.http.PathHandler;
-import de.srsoftware.http.SessionToken;
 import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.data.Session;
+import de.srsoftware.tools.PathHandler;
+import de.srsoftware.tools.SessionToken;
 import java.io.IOException;
 import java.util.Optional;
 

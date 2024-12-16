@@ -4,17 +4,16 @@ package de.srsoftware.oidc.app;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.*;
-import static de.srsoftware.utils.Optionals.emptyIfBlank;
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Paths.configDir;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Optionals.absentIfBlank;
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Paths.configDir;
+import static de.srsoftware.tools.Strings.uuid;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.getenv;
 import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpServer;
-import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
@@ -26,7 +25,8 @@ import de.srsoftware.oidc.datastore.file.FileStoreProvider;
 import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.web.Forward;
 import de.srsoftware.oidc.web.StaticPages;
-import de.srsoftware.utils.UuidHasher;
+import de.srsoftware.tools.ColorLogger;
+import de.srsoftware.tools.UuidHasher;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -146,8 +146,8 @@ public class Application {
 		var tokens = new ArrayList<>(List.of(args));
 		var map    = new HashMap<String, Object>();
 
-		emptyIfBlank(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
-		emptyIfBlank(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
+		absentIfBlank(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
+		absentIfBlank(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
 
 		// Command line arguments override environment
 		while (!tokens.isEmpty()) {

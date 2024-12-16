@@ -2,7 +2,7 @@
 package de.srsoftware.oidc.api;
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.*;
 
 import jakarta.mail.Authenticator;
