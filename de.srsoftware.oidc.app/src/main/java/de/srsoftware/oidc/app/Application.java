@@ -8,7 +8,6 @@ import static de.srsoftware.tools.Optionals.absentIfBlank;
 import static de.srsoftware.tools.Optionals.nullable;
 import static de.srsoftware.tools.Paths.configDir;
 import static de.srsoftware.tools.Strings.uuid;
-import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.getenv;
 import static java.util.Optional.empty;
@@ -25,7 +24,6 @@ import de.srsoftware.oidc.datastore.file.FileStoreProvider;
 import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.web.Forward;
 import de.srsoftware.oidc.web.StaticPages;
-import de.srsoftware.tools.ColorLogger;
 import de.srsoftware.tools.UuidHasher;
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -50,7 +48,7 @@ public class Application {
 	private static final String FAVICON    = "/favicon.ico";
 	private static final String INDEX      = STATIC_PATH + "/index.html";
 	private static final String WELL_KNOWN = "/.well-known";
-	private static final System.Logger LOG = new ColorLogger("Application").setLogLevel(DEBUG);
+	private static final System.Logger LOG = System.getLogger("Application");  // new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
 		var            argMap        = map(args);

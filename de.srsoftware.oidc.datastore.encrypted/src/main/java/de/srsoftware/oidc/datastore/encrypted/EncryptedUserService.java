@@ -8,9 +8,9 @@ import static java.util.Optional.empty;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Content;
 import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import java.util.*;
 
@@ -110,7 +110,7 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 			var match	  = List.of(decryptedUser.username(), decryptedUser.realName(), decryptedUser.email()).contains(username);
 			if (match && hasher.matches(password, decryptedUser.hashedPassword())) {
 				this.unlock(username);
-				return Content.of(decryptedUser);
+				return Payload.of(decryptedUser);
 			}
 		}
 
