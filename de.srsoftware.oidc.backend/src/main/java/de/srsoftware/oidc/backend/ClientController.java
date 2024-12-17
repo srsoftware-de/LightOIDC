@@ -42,15 +42,15 @@ public class ClientController extends Controller {
 		var user  = optUser.get();
 		var json  = json(ex);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
-		if (!json.has(CLIENT_ID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, CLIENT_ID, STATE, state));
+		if (!json.has(CLIENT_ID)) return badRequest(ex, Error.of(ERROR_MISSING_PARAMETER).addData(PARAM, CLIENT_ID, STATE, state));
 		var clientId  = json.getString(CLIENT_ID);
 		var optClient = clients.getClient(clientId);
-		if (optClient.isEmpty()) return badRequest(ex, Error.message(ERROR_UNKNOWN_CLIENT, CLIENT_ID, clientId, STATE, state));
+		if (optClient.isEmpty()) return badRequest(ex, Error.of(ERROR_UNKNOWN_CLIENT).addData(CLIENT_ID, clientId, STATE, state));
 		for (String param : List.of(SCOPE, RESPONSE_TYPE, REDIRECT_URI)) {
-			if (!json.has(param)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, param, STATE, state));
+			if (!json.has(param)) return badRequest(ex, Error.of(ERROR_MISSING_PARAMETER).addData(PARAM, param, STATE, state));
 		}
 		var scopes = toList(json, SCOPE);
-		if (!scopes.contains(OPENID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, "Scope: openid", STATE, state));
+		if (!scopes.contains(OPENID)) return badRequest(ex, Error.of(ERROR_MISSING_PARAMETER).addData(PARAM, "Scope: openid", STATE, state));
 		var responseTypes = toList(json, RESPONSE_TYPE);
 		var types	  = 0;
 		for (var responseType : responseTypes) {
@@ -60,15 +60,15 @@ public class ClientController extends Controller {
 					types++;
 					break;
 				default:
-					return badRequest(ex, Error.message(ERROR_UNSUPPORTED_RESPONSE_TYPE, RESPONSE_TYPE, responseType, STATE, state));
+					return badRequest(ex, Error.of(ERROR_UNSUPPORTED_RESPONSE_TYPE).addData(RESPONSE_TYPE, responseType, STATE, state));
 			}
 		}
-		if (types < 1) return badRequest(ex, Error.message(ERROR_MISSING_CODE_RESPONSE_TYPE, STATE, state));
+		if (types < 1) return badRequest(ex, Error.of(ERROR_MISSING_CODE_RESPONSE_TYPE).addData(STATE, state));
 
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);
 
-		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Error.message(ERROR_INVALID_REDIRECT, REDIRECT_URI, redirect, STATE, state));
+		if (!client.redirectUris().contains(redirect)) return badRequest(ex, Error.of(ERROR_INVALID_REDIRECT).addData(REDIRECT_URI, redirect, STATE, state));
 
 		if (json.has(AUTHORZED)) {  // user did consent
 			var authorized = json.getJSONObject(AUTHORZED);

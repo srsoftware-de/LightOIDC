@@ -19,7 +19,7 @@ function handleLogin(response){
        response.json().then(body => setTimeout(doRedirect,100));
     } else {
         response.json().then(json => {
-            if (json.metadata.release) get('release').innerHTML = new Date(json.metadata.release).toLocaleString();
+            if (json.data.release) get('release').innerHTML = new Date(json.data.release).toLocaleString();
             show(json.error);
         });
     }

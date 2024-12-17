@@ -8,9 +8,9 @@ import static java.lang.System.Logger.Level.WARNING;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.tools.Content;
 import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
-import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import java.io.File;
 import java.util.*;
@@ -19,10 +19,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 public class EncryptedUserServiceTest extends UserServiceTest {
-	private static final System.Logger           LOG = System.getLogger(EncryptedUserServiceTest.class.getSimpleName());
-	private class InMemoryUserService implements UserService {
+	private static final System.Logger	    LOG = System.getLogger(EncryptedUserServiceTest.class.getSimpleName());
+	private static class InMemoryUserService implements UserService {
 		private final PasswordHasher<String> hasher;
-		private HashMap<String, User>	     users = new HashMap<>();
+		private final HashMap<String, User> users = new HashMap<>();
 
 		public InMemoryUserService(PasswordHasher<String> hasher) {
 			this.hasher = hasher;
@@ -76,19 +76,19 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 			if (optLock.isPresent()) {
 				var lock = optLock.get();
 				LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
-				return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+				return new Error<User>(ERROR_LOCKED).addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 			}
 
 			for (var entry : users.entrySet()) {
 				var user = entry.getValue();
 				if (user.username().equals(username) && passwordMatches(password, user)) {
 					unlock(username);
-					return Payload.of(user);
+					return Content.of(user);
 				}
 			}
 			var lock = lock(username);
 			LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
-			return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
+			return new Error<User>(ERROR_LOGIN_FAILED).addData(RELEASE, lock.releaseTime());
 		}
 
 		@Override
@@ -109,20 +109,21 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 			return this;
 		}
 	}
-	private File	    storage = new File("/tmp/" + UUID.randomUUID());
+	private final File  storage = new File("/tmp/" + UUID.randomUUID());
 	private UserService userService;
-	private String	    key, salt;
 
 	@AfterEach
 	public void tearDown() {
-		if (storage.exists()) storage.delete();
+		if (storage.exists()) {
+			var ignored = storage.delete();
+		}
 	}
 
 	@BeforeEach
 	public void setup() {
 		tearDown();
-		key	            = uuid();
-		salt	            = uuid();
+		String	    key     = uuid();
+		String	    salt    = uuid();
 		InMemoryUserService backend = new InMemoryUserService(hasher());
 		userService	            = new EncryptedUserService(backend, key, salt, hasher());
 	}
