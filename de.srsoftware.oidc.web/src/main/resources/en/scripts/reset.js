@@ -10,10 +10,14 @@ function handlePasswordResponse(response){
     } else {
         setText('passBtn', 'Update failed!');
         response.text().then(text => {
-            if (text == 'invalid token') show('invalid_token');
-            if (text == 'token missing') show('missing_token');
-            if (text == 'password mismatch') show('password_mismatch');
-            if (text == 'weak password') show('weak_password');
+            if (text == 'invalid token') show('invalid_token'); else
+            if (text == 'token missing') show('missing_token'); else
+            if (text == 'password mismatch') show('password_mismatch'); else
+            if (text == 'weak password') show('weak_password'); else {
+                setText('other_error_text',text);
+                show('other_error');
+            }
+
         });
     }
     enable('passBtn');

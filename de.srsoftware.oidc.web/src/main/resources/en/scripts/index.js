@@ -11,12 +11,18 @@ function handleDash(response){
         var clients = data.authorized;
         var content = document.getElementById('content');
         var any = false;
+        var lastLetter = null;
         for (let id in clients){
             var client = clients[id];
-                if (client.landing_page){
-                var div = document.createElement("div");
-                div.innerHTML = `<button onclick="window.location.href='${client.landing_page}';">${client.name}</button>`;
-                content.append(div);
+            if (client.landing_page){
+                var initialLetter = client.name.charAt(0).toUpperCase();
+                if (initialLetter != lastLetter) {
+                    if (lastLetter) content.append(document.createElement("br"));
+                    lastLetter = initialLetter;
+                }
+                var span = document.createElement("span");
+                span.innerHTML = `<button onclick="window.location.href='${client.landing_page}';">${client.name}</button>`;
+                content.append(span);
                 any = true;
             }
         }

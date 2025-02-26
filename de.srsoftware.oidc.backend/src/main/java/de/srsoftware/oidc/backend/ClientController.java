@@ -158,7 +158,7 @@ public class ClientController extends Controller {
 			            .stream()
 			            .map(clients::getClient)
 			            .flatMap(Optional::stream)
-			            .sorted(Comparator.comparing(Client::name))
+			            .sorted(Comparator.comparing(Client::name, String.CASE_INSENSITIVE_ORDER))
 			            .map(Client::safeMap)
 			            .toList();
 		return sendContent(ex, Map.of(AUTHORZED, authorizedClients, NAME, user.realName()));
