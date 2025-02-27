@@ -15,7 +15,7 @@ function handleDash(response){
             var client = clients[id];
                 if (client.landing_page){
                 var div = document.createElement("div");
-                div.innerHTML = `<button onclick="window.location.href='${client.landing_page}';">${client.name}</button>`;
+                div.innerHTML = `<button onclick="window.open('${client.landing_page}','_blank').focus();">${client.name}</button>`;
                 content.append(div);
                 any = true;
             }

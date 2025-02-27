@@ -38,6 +38,7 @@ public class ClientController extends Controller {
 		if (optUser.isEmpty()) return invalidSessionUser(ex);
 		var user  = optUser.get();
 		var json  = json(ex);
+		LOG.log(System.Logger.Level.WARNING,"json: {0}",json);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
 		if (!json.has(CLIENT_ID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, CLIENT_ID, STATE, state));
 		var clientId  = json.getString(CLIENT_ID);
@@ -57,7 +58,7 @@ public class ClientController extends Controller {
 					return badRequest(ex, Error.message(ERROR_UNSUPPORTED_RESPONSE_TYPE, RESPONSE_TYPE, responseType, STATE, state));
 			}
 		}
-		if (!responseTypes.contains(CODE)) return badRequest(ex, Error.message(ERROR_MISSONG_CODE_RESPONSE_TYPE, STATE, state));
+		if (!responseTypes.contains(CODE)) return badRequest(ex, Error.message(ERROR_MISSING_CODE_RESPONSE_TYPE, STATE, state));
 
 		var client   = optClient.get();
 		var redirect = json.getString(REDIRECT_URI);

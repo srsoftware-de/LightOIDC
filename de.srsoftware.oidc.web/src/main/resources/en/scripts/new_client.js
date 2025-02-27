@@ -14,7 +14,7 @@ function addClient(){
         },
         body : JSON.stringify(newData),
         credentials:'include'
-    }).then(handleClientdResponse);
+    }).then(handleClientResponse);
 
     setText('button','sent…');
     setTimeout(function(){
@@ -23,7 +23,18 @@ function addClient(){
     },10000);
 }
 
-function handleClientdResponse(response){
+function handleAutoDiscover(response){
+    if (response.ok){
+        response.json().then(json => {
+            console.log(json);
+            setText('authorization',json.authorization_endpoint);
+            setText('token',json.token_endpoint);
+            setText('userinfo',json.userinfo_endpoint);
+        });
+    }
+}
+
+function handleClientResponse(response){
     if (response.ok){
         redirect("clients.html");
     } else {
@@ -36,4 +47,10 @@ function checkPermissions(){
     if (user && !user.permissions.includes('MANAGE_CLIENTS')) redirect("index.html");
 }
 
+
+document.addEventListener("DOMContentLoaded", function(event) { // wait until page loaded
 setTimeout(checkPermissions,100);
+    var autodiscover = window.location.origin+'/.well-known/openid-configuration';
+    setText('autodiscover',autodiscover);
+    fetch(autodiscover).then(handleAutoDiscover);
+});

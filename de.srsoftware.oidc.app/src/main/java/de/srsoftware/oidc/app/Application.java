@@ -56,16 +56,16 @@ public class Application {
 	private static ConnectionProvider connectionProvider = new ConnectionProvider();
 
 	public static void main(String[] args) throws Exception {
-		var            argMap      = map(args);
-		Optional<Path> basePath    = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : empty();
-		var            configDir   = configDir(APP_NAME);
-		var            defaultFile = configDir.resolve("data.json");
-		var            configFile  = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir.resolve("config.json")).toFile();
-		var            config      = new Configuration(configFile);
-		var encryptionKey = nullable(System.getenv(ENCRYPTION_KEY)).or(() -> config.get(ENCRYPTION_KEY));
-		var            passHasher  = new UuidHasher();
-		var            firstHash   = passHasher.hash(FIRST_USER_PASS, FIRST_UUID);
-		var            firstUser   = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_PERMISSIONS, MANAGE_SMTP, MANAGE_USERS);
+		var            argMap        = map(args);
+		Optional<Path> basePath      = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : empty();
+		var            configDir     = configDir(APP_NAME);
+		var            defaultFile   = configDir.resolve("data.json");
+		var            configFile    = (argMap.get(CONFIG_PATH) instanceof Path p ? p : configDir.resolve("config.json")).toFile();
+		var            config        = new Configuration(configFile);
+		var            encryptionKey = nullable(System.getenv(ENCRYPTION_KEY)).or(() -> config.get(ENCRYPTION_KEY));
+		var            passHasher    = new UuidHasher();
+		var            firstHash     = passHasher.hash(FIRST_USER_PASS, FIRST_UUID);
+		var            firstUser     = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_PERMISSIONS, MANAGE_SMTP, MANAGE_USERS);
 
 
 		FileStoreProvider fileStoreProvider = new FileStoreProvider(passHasher);
