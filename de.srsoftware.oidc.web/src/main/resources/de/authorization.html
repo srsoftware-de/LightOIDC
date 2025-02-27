@@ -11,32 +11,22 @@
 <body>
     <nav></nav>
     <div id="content" style="display: none">
-        Eine vertrauende Seite, <span id="rp">unknown</span>, hat Zugriff auf die folgenden Informationen erfragt:
+        <p>Eine vertrauende Seite, <span id="rp">unbekannt</span>, hat Zugriff auf die folgenden Informationen erfragt:</p>
         <ul id="scopes">
 
         </ul>
-        Stimmen Sie zu, diese Informationen mit <span id="rp2">unknown</span> zu teilen?
+        <p>Stimmen Sie zu, diese Informationen mit <span id="rp2">unbekannt</span> zu teilen?</p>
         <button type="button" onclick="grantAutorization(1)">Ja - für einen Tag</button>
         <button type="button" onclick="grantAutorization(7)">Ja - für eine Woche</button>
         <button type="button" onclick="grantAutorization(30)">Ja - für einen Monat</button>
         <button type="button" onclick="grantAutorization(365)">Ja - für ein Jahr</button>
-        <button type="button" onclick="denyAutorization()">No</button>
+        <button type="button" onclick="denyAutorization()">Nein</button>
     </div>
-    <div id="error_missing_parameter" class="error" style="display: none">
-        Request enthält den benötigten Parameter "<span id="parameter"></span>" nicht!
-    </div>
-    <div id="error_unknown_client" class="error" style="display: none">
-        Client "<span id="client_id"></span>" ist dem Backend nicht bekannt!
-    </div>
-    <div id="error_unsupported_response_type" class="error" style="display: none">
-        Rückgabe-Typ "<span id="response_type"></span>" wird nicht unterstützt!
-    </div>
-    <div id="error_missing_code" class="error">
-        Fehlender Rückgabe-Typ: code
-    </div>
-    <div id="error_invalid_redirect" class="error" style="display: none">
-        Ungültige Umleitung: <span id="redirect_uri"></span>
-    </div>
-    <div id="missing_scopes" class="error" style="display: none">Authorisierungs-Quelle lieferte weder eine Liste von <em>nicht-autorisierten Scopes</em> noch eine Liste von <em>authorisierten Scopes</em>! Das ist ein Server-Fehler.</div>
+    <div class="error" style="display: none" id="error_missing_parameter">Request enthält den benötigten Parameter "<span id="parameter"></span>" nicht!</div>
+    <div class="error" style="display: none" id="error_unknown_client">Client "<span id="client_id"></span>" ist dem Backend nicht bekannt!</div>
+    <div class="error" style="display: none" id="error_unsupported_response_type">Rückgabe-Typ "<span id="response_type"></span>" wird nicht unterstützt!</div>
+    <div class="error" style="display: none" id="error_missing_code">Fehlender Rückgabe-Typ: code</div>
+    <div class="error" style="display: none" id="error_invalid_redirect">Ungültige Umleitung: <span id="redirect_uri"></span></div>
+    <div class="error" style="display: none" id="missing_scopes">Authorisierungs-Quelle lieferte weder eine Liste von <em>nicht-autorisierten Scopes</em> noch eine Liste von <em>authorisierten Scopes</em>! Das ist ein Server-Fehler.</div>
 </body>
 </html>

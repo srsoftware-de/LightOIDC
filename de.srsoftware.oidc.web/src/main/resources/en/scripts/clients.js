@@ -28,7 +28,7 @@ function handleClients(response){
 }
 
 function link(url){
-    return url ? '<a href="'+url+'">'+url.split('?')[0]+'</a>': "";
+    return url ? '<a href="'+url+'" target="_blank">'+url.split('?')[0]+'</a>': "";
 }
 
 function handleRemove(response){
