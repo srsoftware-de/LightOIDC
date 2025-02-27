@@ -6,7 +6,7 @@ import static java.util.Optional.empty;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Lock;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Result;
+import de.srsoftware.tools.result.Result;
 import java.time.Instant;
 import java.util.*;
 

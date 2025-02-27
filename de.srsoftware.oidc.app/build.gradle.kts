@@ -6,10 +6,10 @@ plugins {
 
 dependencies{
     implementation("org.json:json:20240303")
-    implementation("de.srsoftware:tools.http:1.0.1")
-    implementation("de.srsoftware:tools.logging:1.0.1")
+    implementation("de.srsoftware:tools.http:1.3.0")
+    implementation("de.srsoftware:tools.logging:1.2.0")
     implementation("de.srsoftware:tools.optionals:1.0.0")
-    implementation("de.srsoftware:tools.util:1.1.0")
+    implementation("de.srsoftware:tools.util:1.3.1")
     implementation(project(":de.srsoftware.oidc.api"))
     implementation(project(":de.srsoftware.oidc.backend"))
     implementation(project(":de.srsoftware.oidc.datastore.encrypted"))
