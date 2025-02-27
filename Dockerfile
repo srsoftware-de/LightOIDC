@@ -5,7 +5,7 @@ RUN apk add bash clang-extra-tools git
 ADD . /LightOidc
 WORKDIR /LightOidc
 RUN VERSION=$(clang-format --version | sed -e "s/.* //g") \
- && sed -i "s|clangFormat(.*).style|clangFormat('$VERSION').style|g" build.gradle \
+ && sed -i "s|clangFormat(.*).style|clangFormat(\"$VERSION\").style|g" build.gradle.kts \
  && ./gradlew jar \
  && mv *app/build/libs/*.jar /lightoidc.jar
 

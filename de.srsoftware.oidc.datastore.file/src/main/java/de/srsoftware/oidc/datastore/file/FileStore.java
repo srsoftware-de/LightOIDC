@@ -10,9 +10,9 @@ import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
-import de.srsoftware.tools.Content;
 import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
@@ -198,7 +198,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 				var loadedUser = User.of(userData, userId).filter(u -> passwordMatches(password, u));
 				if (loadedUser.isPresent()) {
 					unlock(username);
-					return Content.of(loadedUser.get());
+					return Payload.of(loadedUser.get());
 				}
 			}
 			var lock = lock(username);

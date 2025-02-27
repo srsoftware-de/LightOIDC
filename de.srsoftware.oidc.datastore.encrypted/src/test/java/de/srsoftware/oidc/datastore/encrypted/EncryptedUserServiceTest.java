@@ -8,9 +8,9 @@ import static java.lang.System.Logger.Level.WARNING;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Content;
 import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import java.io.File;
 import java.util.*;
@@ -83,7 +83,7 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 				var user = entry.getValue();
 				if (user.username().equals(username) && passwordMatches(password, user)) {
 					unlock(username);
-					return Content.of(user);
+					return Payload.of(user);
 				}
 			}
 			var lock = lock(username);

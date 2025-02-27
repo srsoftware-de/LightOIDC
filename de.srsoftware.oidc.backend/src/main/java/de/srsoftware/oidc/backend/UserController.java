@@ -14,7 +14,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Content;
+import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import de.srsoftware.tools.SessionToken;
 import jakarta.mail.*;
@@ -198,7 +198,7 @@ public class UserController extends Controller {
 		var trust    = body.has(TRUST) && body.getBoolean(TRUST);
 
 		Result<User> result = users.login(username, password);
-		if (result instanceof Content<User> user) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
+		if (result instanceof Payload<User> user) return sendUserAndCookie(ex, sessions.createSession(user.get(), trust), user.get());
 		return sendContent(ex, HTTP_UNAUTHORIZED, result);
 	}
 
