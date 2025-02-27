@@ -8,10 +8,10 @@ import static java.util.Optional.empty;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.utils.Error;
-import de.srsoftware.utils.PasswordHasher;
-import de.srsoftware.utils.Payload;
-import de.srsoftware.utils.Result;
+import de.srsoftware.tools.Error;
+import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.Payload;
+import de.srsoftware.tools.Result;
 import java.util.*;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {

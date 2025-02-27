@@ -1,7 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.sqlite;
 
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 import de.srsoftware.oidc.api.SessionService;

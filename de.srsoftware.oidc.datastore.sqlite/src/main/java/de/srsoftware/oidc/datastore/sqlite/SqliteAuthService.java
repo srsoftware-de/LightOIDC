@@ -1,8 +1,8 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.sqlite;
 
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Strings.uuid;
 
 import de.srsoftware.oidc.api.AuthorizationService;
 import de.srsoftware.oidc.api.data.AuthResult;

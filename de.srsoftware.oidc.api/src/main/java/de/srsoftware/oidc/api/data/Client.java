@@ -3,7 +3,7 @@ package de.srsoftware.oidc.api.data;
 
 
 import static de.srsoftware.oidc.api.Constants.*;
-import static de.srsoftware.utils.Optionals.nullable;
+import static de.srsoftware.tools.Optionals.nullable;
 
 import java.time.Duration;
 import java.util.*;

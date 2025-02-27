@@ -1,7 +1,7 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.datastore.sqlite;
 
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 
 import de.srsoftware.oidc.api.MailConfig;
 import de.srsoftware.oidc.api.MailConfigTest;

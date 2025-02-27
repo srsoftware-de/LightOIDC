@@ -1,9 +1,9 @@
 /* © SRSoftware 2024 */
-import static de.srsoftware.utils.Strings.uuid;
+package de.srsoftware.oidc.datastore.encrypted; /* © SRSoftware 2024 */
+import static de.srsoftware.tools.Strings.uuid;
 
 import de.srsoftware.oidc.api.KeyStorage;
 import de.srsoftware.oidc.api.KeyStoreTest;
-import de.srsoftware.oidc.datastore.encrypted.EncryptedKeyStore;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;

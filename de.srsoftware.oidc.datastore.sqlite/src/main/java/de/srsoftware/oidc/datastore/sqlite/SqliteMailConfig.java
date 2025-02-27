@@ -70,114 +70,113 @@ public class SqliteMailConfig extends SqliteStore implements MailConfig {
 			try {
 				switch (currentVersion) {
 					case 0:
-					createStoreTables();
-					break;
+						createStoreTables();
+						break;
+				}
+				stmt.setInt(1, ++currentVersion);
+				stmt.execute();
+				conn.commit();
+			} catch (Exception e) {
+				conn.rollback();
+				LOG.log(System.Logger.Level.ERROR, "Failed to update at {} = {}", STORE_VERSION, currentVersion);
+				break;
 			}
-			stmt.setInt(1, ++currentVersion);
-			stmt.execute();
-			conn.commit();
 		}
-		catch (Exception e) {
-			conn.rollback();
-			LOG.log(System.Logger.Level.ERROR, "Failed to update at {} = {}", STORE_VERSION, currentVersion);
-			break;
-		}
+		conn.setAutoCommit(true);
 	}
-	conn.setAutoCommit(true);
-}
 
-@Override
-public String smtpHost() {
-	return smtpHost;
-}
-
-@Override
-public MailConfig smtpHost(String newValue) {
-	smtpHost = newValue;
-	return this;
-}
-
-@Override
-public int smtpPort() {
-	return smtpPort;
-}
-
-@Override
-public MailConfig smtpPort(int newValue) {
-	smtpPort = newValue;
-	return this;
-}
-
-@Override
-public String senderAddress() {
-	return senderAddress;
-}
-
-@Override
-public MailConfig senderAddress(String newValue) {
-	senderAddress = newValue;
-	return this;
-}
-
-@Override
-public String senderPassword() {
-	return password;
-}
-
-@Override
-public MailConfig senderPassword(String newValue) {
-	password = newValue;
-	return this;
-}
-
-@Override
-public boolean startTls() {
-	return startTls;
-}
-
-@Override
-public boolean smtpAuth() {
-	return smtpAuth;
-}
-
-@Override
-public MailConfig startTls(boolean newValue) {
-	startTls = newValue;
-	return this;
-}
-
-@Override
-public MailConfig smtpAuth(boolean newValue) {
-	smtpAuth = newValue;
-	return this;
-}
-
-@Override
-public Authenticator authenticator() {
-	if (auth == null) {
-		auth = new Authenticator() {
-			// override the getPasswordAuthentication method
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(senderAddress(), senderPassword());
-			}
-		};
+	@Override
+	public String smtpHost() {
+		return smtpHost;
 	}
-	return auth;
-}
 
-@Override
-public MailConfig save() {
-	try {
-		var stmt = conn.prepareStatement(SAVE_MAILCONFIG);
-		for (var entry : map().entrySet()) {
-			stmt.setString(1, entry.getKey());
-			stmt.setObject(2, entry.getValue());
-			stmt.setObject(3, entry.getValue());
-			stmt.execute();
-		}
+	@Override
+	public MailConfig smtpHost(String newValue) {
+		smtpHost = newValue;
 		return this;
-	} catch (SQLException e) {
-		throw new RuntimeException(e);
 	}
-}
+
+	@Override
+	public int smtpPort() {
+		return smtpPort;
+	}
+
+	@Override
+	public MailConfig smtpPort(int newValue) {
+		smtpPort = newValue;
+		return this;
+	}
+
+	@Override
+	public String senderAddress() {
+		return senderAddress;
+	}
+
+	@Override
+	public MailConfig senderAddress(String newValue) {
+		senderAddress = newValue;
+		return this;
+	}
+
+	@Override
+	public String senderPassword() {
+		return password;
+	}
+
+	@Override
+	public MailConfig senderPassword(String newValue) {
+		password = newValue;
+		return this;
+	}
+
+	@Override
+	public boolean startTls() {
+		return startTls;
+	}
+
+	@Override
+	public boolean smtpAuth() {
+		return smtpAuth;
+	}
+
+	@Override
+	public MailConfig startTls(boolean newValue) {
+		startTls = newValue;
+		return this;
+	}
+
+	@Override
+	public MailConfig smtpAuth(boolean newValue) {
+		smtpAuth = newValue;
+		return this;
+	}
+
+	@Override
+	public Authenticator authenticator() {
+		if (auth == null) {
+			auth = new Authenticator() {
+				// override the getPasswordAuthentication method
+				protected PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication(senderAddress(), senderPassword());
+				}
+			};
+		}
+		return auth;
+	}
+
+	@Override
+	public MailConfig save() {
+		try {
+			var stmt = conn.prepareStatement(SAVE_MAILCONFIG);
+			for (var entry : map().entrySet()) {
+				stmt.setString(1, entry.getKey());
+				stmt.setObject(2, entry.getValue());
+				stmt.setObject(3, entry.getValue());
+				stmt.execute();
+			}
+			return this;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

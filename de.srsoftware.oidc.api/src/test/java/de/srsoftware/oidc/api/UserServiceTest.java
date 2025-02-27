@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.utils.PasswordHasher;
-import de.srsoftware.utils.UuidHasher;
+import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.UuidHasher;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;

@@ -2,7 +2,7 @@
 package de.srsoftware.oidc.api;
 
 import static de.srsoftware.oidc.api.Constants.EXPIRATION;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 import static org.jose4j.jws.AlgorithmIdentifiers.RSA_USING_SHA256;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

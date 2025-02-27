@@ -1,24 +1,15 @@
-plugins {
-    id 'java'
-}
 
-group = 'de.srsoftware'
-
-repositories {
-    mavenCentral()
-}
+description = 'SRSoftware OIDC: api'
 
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation project(':de.srsoftware.utils')
-    implementation 'org.json:json:20240303'
-    implementation 'org.bitbucket.b_c:jose4j:0.9.6'
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
-}
 
-test {
-    useJUnitPlatform()
+    implementation 'de.srsoftware:tools.optionals:1.0.0'
+    implementation 'de.srsoftware:tools.util:1.0.2'
+    implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+    implementation 'org.json:json:20240303'
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
 }
 
 task jarTests (type: Jar) {

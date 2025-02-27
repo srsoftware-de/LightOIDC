@@ -1,13 +1,13 @@
 /* © SRSoftware 2024 */
 package de.srsoftware.oidc.api;
 
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.utils.PasswordHasher;
-import de.srsoftware.utils.UuidHasher;
+import de.srsoftware.tools.PasswordHasher;
+import de.srsoftware.tools.UuidHasher;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;

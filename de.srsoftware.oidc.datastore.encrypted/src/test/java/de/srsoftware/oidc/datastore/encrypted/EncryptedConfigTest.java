@@ -1,8 +1,8 @@
 /* © SRSoftware 2024 */
-import static de.srsoftware.utils.Strings.uuid;
+package de.srsoftware.oidc.datastore.encrypted; /* © SRSoftware 2024 */
+import static de.srsoftware.tools.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import de.srsoftware.oidc.datastore.encrypted.EncryptedConfig;
 import org.junit.jupiter.api.Test;
 
 public class EncryptedConfigTest {

@@ -4,18 +4,17 @@ package de.srsoftware.oidc.app;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.oidc.api.data.Permission.*;
-import static de.srsoftware.utils.Optionals.emptyIfBlank;
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Paths.configDir;
-import static de.srsoftware.utils.Paths.extension;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Optionals.absentIfBlank;
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Paths.configDir;
+import static de.srsoftware.tools.Paths.extension;
+import static de.srsoftware.tools.Strings.uuid;
 import static java.lang.System.Logger.Level.DEBUG;
 import static java.lang.System.Logger.Level.ERROR;
 import static java.lang.System.getenv;
 import static java.util.Optional.empty;
 
 import com.sun.net.httpserver.HttpServer;
-import de.srsoftware.logging.ColorLogger;
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.oidc.backend.*;
@@ -28,7 +27,8 @@ import de.srsoftware.oidc.datastore.file.PlaintextKeyStore;
 import de.srsoftware.oidc.datastore.sqlite.*;
 import de.srsoftware.oidc.web.Forward;
 import de.srsoftware.oidc.web.StaticPages;
-import de.srsoftware.utils.UuidHasher;
+import de.srsoftware.tools.ColorLogger;
+import de.srsoftware.tools.UuidHasher;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -108,7 +108,7 @@ public class Application {
 
 	private static AuthorizationService setupAuthService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var authServiceLocation = new File(config.getOrDefault("auth_store", defaultFile));
-		return switch (extension(authServiceLocation)){
+		return switch (extension(authServiceLocation)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteAuthService(connectionProvider.get(authServiceLocation));
 			default -> fileStoreProvider.get(authServiceLocation);
 		};
@@ -116,17 +116,17 @@ public class Application {
 
 	private static SessionService setupSessionService(Configuration config, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
 		var sessionStore = new File(config.getOrDefault("session_storage", defaultFile));
-		return switch (extension(sessionStore)){
+		return switch (extension(sessionStore)) {
 			case "db", "sqlite", "sqlite3" -> new SqliteSessionService(connectionProvider.get(sessionStore));
 			default -> fileStoreProvider.get(sessionStore);
 		};
 	}
 
 	private static MailConfig setupMailConfig(Configuration config, Optional<String> encryptionKey, Path defaultFile, FileStoreProvider fileStoreProvider) throws SQLException {
-		var        mailConfigLocation = new File(config.getOrDefault("mail_config_storage", defaultFile));
-		var mailConfig = switch (extension(mailConfigLocation)){
-			case "db", "sqlite", "sqlite3" -> new SqliteMailConfig(connectionProvider.get(mailConfigLocation));
-			default -> fileStoreProvider.get(mailConfigLocation);
+		var mailConfigLocation = new File(config.getOrDefault("mail_config_storage", defaultFile));
+		var mailConfig	       = switch (extension(mailConfigLocation)) {
+			        case "db", "sqlite", "sqlite3" -> new SqliteMailConfig(connectionProvider.get(mailConfigLocation));
+			        default -> fileStoreProvider.get(mailConfigLocation);
 		};
 
 		if (encryptionKey.isPresent()) {
@@ -137,10 +137,10 @@ public class Application {
 	}
 
 	private static UserService setupUserService(Configuration config, Optional<String> encryptionKey, Path defaultFile, FileStoreProvider fileStoreProvider, UuidHasher passHasher) throws SQLException {
-		var         userStorageLocation = new File(config.getOrDefault("user_storage", defaultFile));
-		var userService =  switch (extension(userStorageLocation).toLowerCase()){
-			case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation),passHasher);
-			default -> fileStoreProvider.get(userStorageLocation);
+		var userStorageLocation = new File(config.getOrDefault("user_storage", defaultFile));
+		var userService	        = switch (extension(userStorageLocation).toLowerCase()) {
+			        case "db", "sqlite", "sqlite3" -> new SqliteUserService(connectionProvider.get(userStorageLocation), passHasher);
+			        default -> fileStoreProvider.get(userStorageLocation);
 		};
 
 		if (encryptionKey.isPresent()) {
@@ -152,7 +152,7 @@ public class Application {
 
 	private static KeyStorage setupKeyStore(Configuration config, Optional<String> encryptionKey, Path defaultConfigDir) throws SQLException {
 		var        keyStorageLocation = new File(config.getOrDefault("key_storage", defaultConfigDir.resolve("keys")));
-		KeyStorage keyStore = null;
+		KeyStorage keyStore           = null;
 		if ((keyStorageLocation.exists() && keyStorageLocation.isDirectory()) || !keyStorageLocation.getName().contains(".")) {
 			keyStore = new PlaintextKeyStore(keyStorageLocation.toPath());
 		} else {  // SQLite
@@ -171,26 +171,26 @@ public class Application {
 		var tokens = new ArrayList<>(List.of(args));
 		var map    = new HashMap<String, Object>();
 
-		emptyIfBlank(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
-		emptyIfBlank(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
+		absentIfBlank(getenv(BASE_PATH)).map(Path::of).ifPresent(path -> map.put(BASE_PATH, path));
+		absentIfBlank(getenv(CONFIG_PATH)).map(Path::of).ifPresent(path -> map.put(CONFIG_PATH, path));
 
 		// Command line arguments override environment
 		while (!tokens.isEmpty()) {
 			var token = tokens.remove(0);
 			switch (token) {
 				case "--base":
-				if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
-				map.put(BASE_PATH, Path.of(tokens.remove(0)));
-				break;
-			case "--config":
-				if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
-				map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
-				break;
-			default:
-				LOG.log(ERROR, "Unknown option: {0}", token);
+					if (tokens.isEmpty()) throw new IllegalArgumentException("--base option requires second argument!");
+					map.put(BASE_PATH, Path.of(tokens.remove(0)));
+					break;
+				case "--config":
+					if (tokens.isEmpty()) throw new IllegalArgumentException("--config option requires second argument!");
+					map.put(CONFIG_PATH, Path.of(tokens.remove(0)));
+					break;
+				default:
+					LOG.log(ERROR, "Unknown option: {0}", token);
+			}
 		}
-	}
 
-	return map;
-}
+		return map;
+	}
 }

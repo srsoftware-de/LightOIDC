@@ -2,8 +2,8 @@
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.EXPIRATION;
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Strings.uuid;
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Strings.uuid;
 import static org.jose4j.jws.AlgorithmIdentifiers.RSA_USING_SHA256;
 
 import de.srsoftware.oidc.api.KeyManager;

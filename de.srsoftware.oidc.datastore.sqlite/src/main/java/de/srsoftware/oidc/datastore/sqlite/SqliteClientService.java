@@ -7,6 +7,7 @@ import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.data.Client;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,20 +17,25 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 	private static final String SELECT_STORE_VERSION = "SELECT * FROM metainfo WHERE key = '" + STORE_VERSION + "'";
 	private static final String SET_STORE_VERSION	 = "UPDATE metainfo SET value = ? WHERE key = '" + STORE_VERSION + "'";
 
-	private static final String CREATE_CLIENT_TABLE	    = "CREATE TABLE IF NOT EXISTS clients(id VARCHAR(255) NOT NULL PRIMARY KEY, name VARCHAR(255), secret VARCHAR(255), landing_page VARCHAR(255));";
-	private static final String CREATE_REDIRECT_TABLE   = "CREATE TABLE IF NOT EXISTS client_redirects(clientId VARCHAR(255), uri VARCHAR(255), PRIMARY KEY(clientId, uri));";
-	private static final String SAVE_CLIENT	    = "INSERT INTO clients (id, name, secret, landing_page) VALUES (?,?,?,?) ON CONFLICT DO UPDATE SET name = ?, secret = ?, landing_page = ?;";
-	private static final String SAVE_REDIRECT	    = "INSERT OR IGNORE INTO client_redirects(clientId, uri) VALUES (?, ?)";
-	private static final String DROP_OTHER_REDIRECTS    = "DELETE FROM client_redirects WHERE clientId = ? AND uri NOT IN";
-	private static final String SELECT_CLIENT	    = "SELECT * FROM clients WHERE id = ?";
-	private static final String SELECT_CLIENT_REDIRECTS = "SELECT uri FROM client_redirects WHERE clientId = ?";
-	private static final String LIST_CLIENT_REDIRECTS   = "SELECT * FROM client_redirects";
-	private static final String LIST_CLIENTS	    = "SELECT * FROM clients";
-	private static final String DELETE_CLIENT	    = "DELETE FROM clients WHERE id = ?";
-	private static final String DELETE_CLIENT_REDIRECTS = "DELETE FROM client_redirects WHERE clientId = ?";
+	private static final String ADD_FIELD_TOKEN_VALIDITY = "ALTER TABLE clients ADD COLUMN token_validity LONG";
+	private static final String CREATE_CLIENT_TABLE	     = "CREATE TABLE IF NOT EXISTS clients(id VARCHAR(255) NOT NULL PRIMARY KEY, name VARCHAR(255), secret VARCHAR(255), landing_page VARCHAR(255));";
+	private static final String CREATE_REDIRECT_TABLE    = "CREATE TABLE IF NOT EXISTS client_redirects(clientId VARCHAR(255), uri VARCHAR(255), PRIMARY KEY(clientId, uri));";
+	private static final String SAVE_CLIENT	     = "INSERT INTO clients (id, name, secret, landing_page, token_validity) VALUES (?,?,?,?,?) ON CONFLICT DO UPDATE SET name = ?, secret = ?, landing_page = ?, token_validity = ?;";
+	private static final String SAVE_REDIRECT	     = "INSERT OR IGNORE INTO client_redirects(clientId, uri) VALUES (?, ?)";
+	private static final String DROP_OTHER_REDIRECTS     = "DELETE FROM client_redirects WHERE clientId = ? AND uri NOT IN";
+	private static final String SELECT_CLIENT	     = "SELECT * FROM clients WHERE id = ?";
+	private static final String SELECT_CLIENT_REDIRECTS  = "SELECT uri FROM client_redirects WHERE clientId = ?";
+	private static final String LIST_CLIENT_REDIRECTS    = "SELECT * FROM client_redirects";
+	private static final String LIST_CLIENTS	     = "SELECT * FROM clients";
+	private static final String DELETE_CLIENT	     = "DELETE FROM clients WHERE id = ?";
+	private static final String DELETE_CLIENT_REDIRECTS  = "DELETE FROM client_redirects WHERE clientId = ?";
 
 	public SqliteClientService(Connection connection) throws SQLException {
 		super(connection);
+	}
+
+	private void addTokenValidity() throws SQLException {
+		conn.prepareStatement(ADD_FIELD_TOKEN_VALIDITY).execute();
 	}
 
 	private void createStoreTables() throws SQLException {
@@ -40,7 +46,7 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 	@Override
 	protected void initTables() throws SQLException {
 		var rs	     = conn.prepareStatement(SELECT_STORE_VERSION).executeQuery();
-		int availableVersion = 1;
+		int availableVersion = 2;
 		int currentVersion;
 		if (rs.next()) {
 			currentVersion = rs.getInt("value");
@@ -58,6 +64,9 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 				switch (currentVersion) {
 					case 0:
 						createStoreTables();
+						break;
+					case 1:
+						addTokenValidity();
 						break;
 				}
 				stmt.setInt(1, ++currentVersion);
@@ -86,10 +95,12 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 			stmt.setString(1, clientId);
 			rs = stmt.executeQuery();
 			if (rs.next()) {
-				var name    = rs.getString(NAME);
-				var secret  = rs.getString(SECRET);
-				var landing = rs.getString(LANDING_PAGE);
-				result      = Optional.of(new Client(clientId, name, secret, uris).landingPage(landing));
+				var name	  = rs.getString(NAME);
+				var secret	  = rs.getString(SECRET);
+				var landing	  = rs.getString(LANDING_PAGE);
+				var tokenValidity = rs.getLong(TOKEN_VALIDITY);
+				var client	  = new Client(clientId, name, secret, uris).landingPage(landing).tokenValidity(Duration.ofSeconds(tokenValidity));
+				result	  = Optional.of(client);
 			}
 			rs.close();
 			return result;
@@ -115,11 +126,13 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 			rs         = stmt.executeQuery();
 			var result = new ArrayList<Client>();
 			while (rs.next()) {
-				var id      = rs.getString("id");
-				var name    = rs.getString(NAME);
-				var secret  = rs.getString(SECRET);
-				var landing = rs.getString(LANDING_PAGE);
-				result.add(new Client(id, name, secret, redirects.get(id)).landingPage(landing));
+				var id	  = rs.getString("id");
+				var name	  = rs.getString(NAME);
+				var secret	  = rs.getString(SECRET);
+				var landing	  = rs.getString(LANDING_PAGE);
+				var tokenValidity = rs.getLong(TOKEN_VALIDITY);
+				var client	  = new Client(id, name, secret, redirects.get(id)).landingPage(landing).tokenValidity(Duration.ofSeconds(tokenValidity));
+				result.add(client);
 			}
 			rs.close();
 			return result;
@@ -146,14 +159,17 @@ public class SqliteClientService extends SqliteStore implements ClientService {
 	@Override
 	public ClientService save(Client client) {
 		try {
-			var stmt = conn.prepareStatement(SAVE_CLIENT);
+			var stmt	  = conn.prepareStatement(SAVE_CLIENT);
+			var tokenValidity = client.tokenValidity().getSeconds();
 			stmt.setString(1, client.id());
 			stmt.setString(2, client.name());
 			stmt.setString(3, client.secret());
 			stmt.setString(4, client.landingPage());
-			stmt.setString(5, client.name());
-			stmt.setString(6, client.secret());
-			stmt.setString(7, client.landingPage());
+			stmt.setLong(5, tokenValidity);
+			stmt.setString(6, client.name());
+			stmt.setString(7, client.secret());
+			stmt.setString(8, client.landingPage());
+			stmt.setLong(9, tokenValidity);
 			stmt.execute();
 			stmt = conn.prepareStatement(SAVE_REDIRECT);
 			stmt.setString(1, client.id());

@@ -1,11 +1,11 @@
 /* © SRSoftware 2024 */
-import static de.srsoftware.utils.Optionals.nullable;
-import static de.srsoftware.utils.Strings.uuid;
+package de.srsoftware.oidc.datastore.encrypted; /* © SRSoftware 2024 */
+import static de.srsoftware.tools.Optionals.nullable;
+import static de.srsoftware.tools.Strings.uuid;
 
 import de.srsoftware.oidc.api.ClientService;
 import de.srsoftware.oidc.api.ClientServiceTest;
 import de.srsoftware.oidc.api.data.Client;
-import de.srsoftware.oidc.datastore.encrypted.EncryptedClientService;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
