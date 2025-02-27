@@ -1,5 +1,9 @@
 description = "SRSoftware OIDC: app"
 
+plugins {
+    java
+}
+
 dependencies{
     implementation("org.json:json:20240303")
     implementation("org.xerial:sqlite-jdbc:3.46.0.0")
@@ -13,4 +17,14 @@ dependencies{
     implementation(project(":de.srsoftware.oidc.datastore.file"))
     implementation(project(":de.srsoftware.oidc.datastore.sqlite"))
     implementation(project(":de.srsoftware.oidc.web"))
+}
+
+tasks.jar {
+    manifest.attributes["Main-Class"] = "de.srsoftware.oidc.app.Application"
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+     val dependencies = configurations
+        .runtimeClasspath
+        .get()
+        .map(::zipTree) // OR .map { zipTree(it) }
+    from(dependencies)
 }
