@@ -84,4 +84,7 @@ function backendAutorization(){
     }).then(handleResponse);
 }
 
-backendAutorization();
+document.addEventListener("logged_in", function(event) { // wait until page loaded
+    backendAutorization();
+});
+

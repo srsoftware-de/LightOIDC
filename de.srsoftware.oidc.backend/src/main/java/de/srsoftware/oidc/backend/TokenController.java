@@ -27,7 +27,7 @@ import org.jose4j.lang.JoseException;
 import org.json.JSONObject;
 
 public class TokenController extends PathHandler {
-	public record Configuration(String issuer, int tokenExpirationMinutes) {
+	public record Configuration(int tokenExpirationMinutes) {
 	}
 	private final ClientService	   clients;
 	private final AuthorizationService authorizations;
@@ -115,7 +115,8 @@ public class TokenController extends PathHandler {
 		var user = optUser.get();
 
 		var    accessToken = users.accessToken(user);
-		String jwToken	   = createJWT(client, user, accessToken);
+		var    issuer	   = hostname(ex);
+		String jwToken	   = createJWT(client, user, accessToken, issuer);
 		ex.getResponseHeaders().add("Cache-Control", "no-store");
 		JSONObject response = new JSONObject();
 		response.put(ACCESS_TOKEN, accessToken.id());
@@ -126,13 +127,13 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user, AccessToken accessToken) {
+	private String createJWT(Client client, User user, AccessToken accessToken, String issuer) {
 		try {
 			PublicJsonWebKey key    = keyManager.getKey();
 			var	 algo   = key.getAlgorithm();
 			var	 atHash = this.atHash(algo, accessToken);
 			key.setUse("sig");
-			JwtClaims claims = createIdTokenClaims(user, client, atHash);
+			JwtClaims claims = createIdTokenClaims(user, client, atHash, issuer);
 
 			// A JWT is a JWS and/or a JWE with JSON claims as the payload.
 			// In this example it is a JWS so we create a JsonWebSignature object.
@@ -167,13 +168,13 @@ public class TokenController extends PathHandler {
 		}
 	}
 
-	private JwtClaims createIdTokenClaims(User user, Client client, String atHash) {
+	private JwtClaims createIdTokenClaims(User user, Client client, String atHash, String issuer) {
 		var       optNonce = authorizations.consumeNonce(user.uuid(), client.id());
 		JwtClaims claims   = new JwtClaims();
 
 		// required claims:
-		claims.setIssuer(config.issuer);  // who creates the token and signs it
-		claims.setSubject(user.uuid());	  // the subject/principal is whom the token is about
+		claims.setIssuer(issuer);	 // who creates the token and signs it
+		claims.setSubject(user.uuid());	 // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
 		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
 		claims.setIssuedAtToNow();

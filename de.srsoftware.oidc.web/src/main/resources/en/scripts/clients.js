@@ -8,17 +8,19 @@ function handleClients(response){
         return;
     }
     var clients = response.json().then(clients => {
+        var arr = [];
+        for (let id in clients) arr.push(clients[id]);
+        arr.sort((a,b) => a.name < b.name ? -1 : 1);
         var bottom = document.getElementById('bottom');
-        for (let id in clients){
+        for (let client of arr){
             var row = document.createElement("tr");
-            var client = clients[id];
             row.innerHTML = `<td>${client.name}</td>
-            <td>${id}</td>
+            <td>${client.client_id}</td>
             <td>${client.redirect_uris.join("<br/>")}</td>
             <td>${link(client.landing_page)}</td>
             <td>
-                <button type="button" onclick="edit('${id}')">Edit</button>
-                <button class="danger" onclick="remove('${id}')" type="button">Remove</button>
+                <button type="button" onclick="edit('${client.client_id}')">Edit</button>
+                <button class="danger" onclick="remove('${client.client_id}')" type="button">Remove</button>
             </td>`;
             bottom.parentNode.insertBefore(row,bottom);
         }

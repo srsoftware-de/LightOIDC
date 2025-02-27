@@ -81,7 +81,7 @@ public class Application {
 		new Forward(INDEX).bindPath(ROOT).on(server);
 		new WellKnownController().bindPath(WELL_KNOWN, "/realms/oidc" + WELL_KNOWN).on(server);
 		new UserController(mailConfig, sessionService, userService, staticPages).bindPath(API_USER).on(server);
-		var tokenControllerConfig = new TokenController.Configuration("https://lightoidc.srsoftware.de", 10);  // TODO configure or derive from hostname
+		var tokenControllerConfig = new TokenController.Configuration(10);
 		new TokenController(authService, clientService, keyManager, userService, tokenControllerConfig).bindPath(API_TOKEN).on(server);
 		new ClientController(authService, clientService, sessionService, userService).bindPath(API_CLIENT).on(server);
 		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
