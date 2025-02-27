@@ -14,9 +14,8 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Payload;
-import de.srsoftware.tools.Result;
 import de.srsoftware.tools.SessionToken;
+import de.srsoftware.tools.result.*;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.io.IOException;
@@ -228,7 +227,7 @@ public class UserController extends Controller {
 		var user = optUser.get();
 		users.updatePassword(user, newPass);
 		var session = sessions.createSession(user, false);
-		new SessionToken(session.id(), session.expiration(), session.trustBrowser()).addTo(ex);
+		new SessionToken(session.id(), "/api", session.expiration(), session.trustBrowser()).addTo(ex);
 		return sendRedirect(ex, "/");
 	}
 
@@ -267,7 +266,7 @@ public class UserController extends Controller {
 	}
 
 	private boolean sendUserAndCookie(HttpExchange ex, Session session, User user) throws IOException {
-		new SessionToken(session.id(), session.expiration(), session.trustBrowser()).addTo(ex);
+		new SessionToken(session.id(), "/api", session.expiration(), session.trustBrowser()).addTo(ex);
 		return sendContent(ex, user.map(false));
 	}
 

@@ -3,15 +3,16 @@ package de.srsoftware.oidc.datastore.encrypted; /* © SRSoftware 2024 */
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.tools.Optionals.nullable;
 import static de.srsoftware.tools.Strings.uuid;
+import static de.srsoftware.tools.result.Error.error;
 import static java.lang.System.Logger.Level.WARNING;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
-import de.srsoftware.tools.Payload;
-import de.srsoftware.tools.Result;
+import de.srsoftware.tools.result.Error;
+import de.srsoftware.tools.result.Payload;
+import de.srsoftware.tools.result.Result;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -76,7 +77,8 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 			if (optLock.isPresent()) {
 				var lock = optLock.get();
 				LOG.log(WARNING, "{} is locked after {} failed logins. Lock will be released at {}", username, lock.attempts(), lock.releaseTime());
-				return new Error<User>(ERROR_LOCKED).addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+				Error<User> err = error(ERROR_LOCKED);
+				return err.addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 			}
 
 			for (var entry : users.entrySet()) {
@@ -88,7 +90,8 @@ public class EncryptedUserServiceTest extends UserServiceTest {
 			}
 			var lock = lock(username);
 			LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
-			return new Error<User>(ERROR_LOGIN_FAILED).addData(RELEASE, lock.releaseTime());
+			Error<User> err = error(ERROR_LOGIN_FAILED);
+			return err.addData(RELEASE, lock.releaseTime());
 		}
 
 		@Override

@@ -2,16 +2,18 @@
 package de.srsoftware.oidc.datastore.encrypted;
 
 import static de.srsoftware.oidc.api.Constants.*;
+import static de.srsoftware.tools.result.Error.error;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.User;
-import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
-import de.srsoftware.tools.Payload;
-import de.srsoftware.tools.Result;
+import de.srsoftware.tools.result.*;
+import de.srsoftware.tools.result.Error;
+import de.srsoftware.tools.result.Payload;
+import de.srsoftware.tools.result.Result;
 import java.util.*;
 
 public class EncryptedUserService extends EncryptedConfig implements UserService {
@@ -98,12 +100,13 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 
 	@Override
 	public Result<User> login(String username, String password) {
-		if (username == null || username.isBlank()) return Error.of(ERROR_NO_USERNAME);
+		if (username == null || username.isBlank()) return error(ERROR_NO_USERNAME);
 		var optLock = getLock(username);
 		if (optLock.isPresent()) {
 			var lock = optLock.get();
 			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
-			return new Error<User>(ERROR_LOCKED).addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+			Error<User> err = error(ERROR_LOCKED);
+			return err.addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 		}
 		for (var encryptedUser : backend.list()) {
 			var decryptedUser = decrypt(encryptedUser);
@@ -116,7 +119,8 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 
 		var lock = lock(username);
 		LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
-		return new Error<User>(ERROR_LOGIN_FAILED).addData(RELEASE, lock.releaseTime());
+		Error<User> err = error(ERROR_LOGIN_FAILED);
+		return err.addData(RELEASE, lock.releaseTime());
 	}
 
 	@Override
