@@ -52,10 +52,10 @@ function handleResponse(response){
         response.json().then(json => {
             console.log("handleResponse → error",json);
             if (json.error) show(json.error);
-            if (json.metadata.client_id) setText('client_id',json.metadata.client_id);
-            if (json.metadata.parameter) setText('parameter',json.metadata.parameter);
-            if (json.metadata.redirect_uri) setText('redirect_uri',json.metadata.redirect_uri);
-            if (json.metadata.response_type)setText('response_type',json.metadata.response_type)
+            if (json.data.client_id) setText('client_id',json.data.client_id);
+            if (json.data.parameter) setText('parameter',json.data.parameter);
+            if (json.data.redirect_uri) setText('redirect_uri',json.data.redirect_uri);
+            if (json.data.response_type)setText('response_type',json.data.response_type)
         });
         /*if (json.error != "invalid_request_uri"){
             var url = params.get('redirect_uri') + '?' + new URLSearchParams(json).toString();

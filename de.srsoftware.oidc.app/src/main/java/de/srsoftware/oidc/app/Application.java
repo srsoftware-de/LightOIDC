@@ -48,12 +48,12 @@ public class Application {
 	public static final String  ROOT            = "/";
 	public static final String  STATIC_PATH     = "/web";
 
-	private static final String	  BASE_PATH	     = "basePath";
-	private static final String	  FAVICON	     = "/favicon.ico";
-	private static final String	  INDEX	     = STATIC_PATH + "/index.html";
-	private static final String	  WELL_KNOWN	     = "/.well-known";
-	private static System.Logger	  LOG	     = new ColorLogger("Application").setLogLevel(DEBUG);
-	private static ConnectionProvider connectionProvider = new ConnectionProvider();
+	private static final String BASE_PATH	      = "basePath";
+	private static final String FAVICON	      = "/favicon.ico";
+	private static final String INDEX	      = STATIC_PATH + "/index.html";
+	private static final String WELL_KNOWN	      = "/.well-known";
+	private static final System.Logger LOG	      = new ColorLogger("Application").setLogLevel(DEBUG);
+	private static ConnectionProvider  connectionProvider = new ConnectionProvider();
 
 	public static void main(String[] args) throws Exception {
 		var            argMap        = map(args);

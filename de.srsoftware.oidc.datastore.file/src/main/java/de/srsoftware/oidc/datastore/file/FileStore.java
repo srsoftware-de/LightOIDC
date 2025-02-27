@@ -10,9 +10,9 @@ import static java.util.Optional.empty;
 
 import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.*;
+import de.srsoftware.tools.Content;
 import de.srsoftware.tools.Error;
 import de.srsoftware.tools.PasswordHasher;
-import de.srsoftware.tools.Payload;
 import de.srsoftware.tools.Result;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
@@ -181,13 +181,13 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 
 	@Override
 	public Result<User> login(String username, String password) {
-		if (!json.has(USERS)) return Error.message(ERROR_LOGIN_FAILED);
-		if (username == null || username.isBlank()) return Error.message(ERROR_NO_USERNAME);
+		if (!json.has(USERS)) return Error.of(ERROR_LOGIN_FAILED);
+		if (username == null || username.isBlank()) return Error.of(ERROR_NO_USERNAME);
 		var optLock = getLock(username);
 		if (optLock.isPresent()) {
 			var lock = optLock.get();
 			LOG.log(WARNING, "{0} is locked after {1} failed logins. Lock will be released at {2}", username, lock.attempts(), lock.releaseTime());
-			return Error.message(ERROR_LOCKED, ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
+			return new Error<User>(ERROR_LOCKED).addData(ATTEMPTS, lock.attempts(), RELEASE, lock.releaseTime());
 		}
 		try {
 			var users = json.getJSONObject(USERS);
@@ -198,14 +198,14 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 				var loadedUser = User.of(userData, userId).filter(u -> passwordMatches(password, u));
 				if (loadedUser.isPresent()) {
 					unlock(username);
-					return Payload.of(loadedUser.get());
+					return Content.of(loadedUser.get());
 				}
 			}
 			var lock = lock(username);
 			LOG.log(WARNING, "Login failed for {0} → locking account until {1}", username, lock.releaseTime());
-			return Error.message(ERROR_LOGIN_FAILED, RELEASE, lock.releaseTime());
+			return new Error<User>(ERROR_LOGIN_FAILED).addData(RELEASE, lock.releaseTime());
 		} catch (Exception e) {
-			return Error.message(ERROR_LOGIN_FAILED);
+			return Error.of(ERROR_LOGIN_FAILED);
 		}
 	}
 
