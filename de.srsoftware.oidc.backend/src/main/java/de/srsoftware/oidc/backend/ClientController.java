@@ -38,7 +38,6 @@ public class ClientController extends Controller {
 		if (optUser.isEmpty()) return invalidSessionUser(ex);
 		var user  = optUser.get();
 		var json  = json(ex);
-		LOG.log(System.Logger.Level.WARNING,"json: {0}",json);
 		var state = json.has(STATE) ? json.getString(STATE) : null;
 		if (!json.has(CLIENT_ID)) return badRequest(ex, Error.message(ERROR_MISSING_PARAMETER, PARAM, CLIENT_ID, STATE, state));
 		var clientId  = json.getString(CLIENT_ID);
