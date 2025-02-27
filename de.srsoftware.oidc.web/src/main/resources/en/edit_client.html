@@ -38,9 +38,18 @@
                     <td><input type="text" id="landing-page" /></td>
                 </tr>
                 <tr>
+                    <th>Token validity duration</th>
+                    <td>
+                        <input type="range" id="token_validity" min="1" max="120" oninput="durationUpdate()" />
+                        <br/>
+                        <span id="days"></span> days, <span id="hours"></span> hours, <span id="minutes"></span> minutes
+                    </td>
+                </tr>
+                <tr>
                     <td></td>
                     <td><button type="button" id="button" onclick="updateClient();">Update</button></td>
                 </tr>
+
             </table>
         </fieldset>
         <fieldset class="wide">

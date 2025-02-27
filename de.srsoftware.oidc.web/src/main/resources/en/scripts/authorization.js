@@ -35,8 +35,9 @@ function handleResponse(response){
                 return;
             }
             if (json.scope){
+                var separator = json.id_token ? '#' : '?';
                 var query = Object.keys(json).map(key => `${key}=${encodeURIComponent(json[key])}`).join('&');
-                var url = params.get('redirect_uri') + '?' + query.toString();
+                var url = params.get('redirect_uri') + separator + query.toString();
                 redirect(url);
                 return;
             }
@@ -53,7 +54,7 @@ function handleResponse(response){
             if (json.error) show(json.error);
             if (json.metadata.client_id) setText('client_id',json.metadata.client_id);
             if (json.metadata.parameter) setText('parameter',json.metadata.parameter);
-             if (json.metadata.redirect_uri) setText('redirect_uri',json.metadata.redirect_uri);
+            if (json.metadata.redirect_uri) setText('redirect_uri',json.metadata.redirect_uri);
             if (json.metadata.response_type)setText('response_type',json.metadata.response_type)
         });
         /*if (json.error != "invalid_request_uri"){

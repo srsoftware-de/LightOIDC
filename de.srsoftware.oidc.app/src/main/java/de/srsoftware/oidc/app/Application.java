@@ -82,8 +82,9 @@ public class Application {
 		new WellKnownController().bindPath(WELL_KNOWN, "/realms/oidc" + WELL_KNOWN).on(server);
 		new UserController(mailConfig, sessionService, userService, staticPages).bindPath(API_USER).on(server);
 		var tokenControllerConfig = new TokenController.Configuration(10);
-		new TokenController(authService, clientService, keyManager, userService, tokenControllerConfig).bindPath(API_TOKEN).on(server);
-		new ClientController(authService, clientService, sessionService, userService).bindPath(API_CLIENT).on(server);
+		var tokenController       = new TokenController(authService, clientService, keyManager, userService, tokenControllerConfig);
+		tokenController.bindPath(API_TOKEN).on(server);
+		new ClientController(authService, clientService, sessionService, userService, tokenController).bindPath(API_CLIENT).on(server);
 		new KeyStoreController(keyStore).bindPath(JWKS).on(server);
 		new EmailController(mailConfig, sessionService, userService).bindPath(API_EMAIL).on(server);
 		server.setExecutor(Executors.newCachedThreadPool());

@@ -127,7 +127,7 @@ public class TokenController extends PathHandler {
 		return sendContent(ex, response);
 	}
 
-	private String createJWT(Client client, User user, AccessToken accessToken, String issuer) {
+	String createJWT(Client client, User user, AccessToken accessToken, String issuer) {
 		try {
 			PublicJsonWebKey key    = keyManager.getKey();
 			var	 algo   = key.getAlgorithm();
@@ -176,11 +176,12 @@ public class TokenController extends PathHandler {
 		claims.setIssuer(issuer);	 // who creates the token and signs it
 		claims.setSubject(user.uuid());	 // the subject/principal is whom the token is about
 		claims.setAudience(client.id());
-		claims.setExpirationTimeMinutesInTheFuture(config.tokenExpirationMinutes);  // time when the token will expire (10 minutes from now)
+		claims.setExpirationTimeMinutesInTheFuture(client.tokenValidity().toMinutes());	 // time when the token will expire (10 minutes from now)
 		claims.setIssuedAtToNow();
 		claims.setClaim(AT_HASH, atHash);
 		claims.setClaim(CLIENT_ID, client.id());
 		claims.setClaim(EMAIL, user.email());  // additional claims/attributes about the subject can be added
+		claims.setClaim(USER, user.username());
 
 		optNonce.ifPresent(nonce -> claims.setClaim(NONCE, nonce));
 		claims.setGeneratedJwtId();  // a unique identifier for the token

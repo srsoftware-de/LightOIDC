@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -329,6 +330,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 			}
 		var client = new Client(clientId, clientData.getString(NAME), clientData.getString(SECRET), redirectUris);
 		if (clientData.has(LANDING_PAGE)) client.landingPage(clientData.getString(LANDING_PAGE));
+		if (clientData.has(TOKEN_VALIDITY)) client.tokenValidity(Duration.ofMinutes(clientData.getLong(TOKEN_VALIDITY)));
 		return client;
 	}
 
