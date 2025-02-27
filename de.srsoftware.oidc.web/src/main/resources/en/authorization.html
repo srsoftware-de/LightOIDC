@@ -22,7 +22,21 @@
         <button type="button" onclick="grantAutorization(365)">Yes - for 1 year</button>
         <button type="button" onclick="denyAutorization()">No</button>
     </div>
-    <div id="error" class="error" style="display: none"></div>
+    <div id="error_missing_parameter" class="error">
+        Request does not contain required parameter "<span id="parameter"></span>"!
+    </div>
+    <div id="error_unknown_client" class="error">
+        Client "<span id="client_id"></span>" unknown to backend!
+    </div>
+    <div id="error_unsupported_response_type" class="error">
+        Response type "<span id="response_type"></span>" not supported!
+    </div>
+    <div id="error_missing_code" class="error">
+        Missing response type: code
+    </div>
+    <div id="error_invalid_redirect" class="error">
+        invalid redirect: <span id="redirect_uri"></span>
+    </div>
     <div id="missing_scopes" class="error" style="display: none">Authorization resource contained neither list of <em>unauthorized scopes</em> nor list of <em>authorized scopes</em>! This is a server problem.</div>
 </body>
 </html>
