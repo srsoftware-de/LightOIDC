@@ -2,9 +2,6 @@
 description = 'SRSoftware OIDC: api'
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-
     implementation 'de.srsoftware:tools.optionals:1.0.0'
     implementation 'de.srsoftware:tools.util:1.1.0'
     implementation 'org.bitbucket.b_c:jose4j:0.9.6'
