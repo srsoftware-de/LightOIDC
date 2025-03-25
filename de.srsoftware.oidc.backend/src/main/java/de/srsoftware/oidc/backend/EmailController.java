@@ -1,4 +1,4 @@
-/* © SRSoftware 2024 */
+/* © SRSoftware 2025 */
 package de.srsoftware.oidc.backend;
 
 import static de.srsoftware.oidc.api.Constants.*;

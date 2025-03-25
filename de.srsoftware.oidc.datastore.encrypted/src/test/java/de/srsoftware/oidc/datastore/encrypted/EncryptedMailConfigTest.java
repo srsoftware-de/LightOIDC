@@ -1,4 +1,4 @@
-/* © SRSoftware 2024 */
+/* © SRSoftware 2025 */
 package de.srsoftware.oidc.datastore.encrypted; /* © SRSoftware 2024 */
 import static de.srsoftware.tools.Strings.uuid;
 import static org.junit.jupiter.api.Assertions.*;
