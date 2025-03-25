@@ -12,7 +12,6 @@ spotless {
         target("**/src/**/java/**/*.java")
         removeUnusedImports()
         importOrder()
-        clangFormat("19.1.7").style("file:config/clang-format")
         licenseHeader("/* © SRSoftware 2024 */")
     }
 }
@@ -20,7 +19,7 @@ spotless {
 
 subprojects {
     group = "de.srsoftware"
-    version = "1.0-SNAPSHOT"
+    version = "1.0.0"
 
     apply(plugin = "java")
     apply(plugin = "maven-publish")
