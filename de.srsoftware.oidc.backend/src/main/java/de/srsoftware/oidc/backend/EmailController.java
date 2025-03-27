@@ -11,6 +11,7 @@ import de.srsoftware.oidc.api.MailConfig;
 import de.srsoftware.oidc.api.SessionService;
 import de.srsoftware.oidc.api.UserService;
 import de.srsoftware.oidc.api.data.Session;
+import de.srsoftware.tools.Path;
 import java.io.IOException;
 
 public class EmailController extends Controller {
@@ -24,7 +25,7 @@ public class EmailController extends Controller {
 	}
 
 	@Override
-	public boolean doGet(String path, HttpExchange ex) throws IOException {
+	public boolean doGet(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 		var session = optSession.get();
@@ -33,15 +34,15 @@ public class EmailController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/settings":
+		switch (path.pop()) {
+			case "settings":
 				return provideSettings(ex, session);
 		}
 		return notFound(ex);
 	}
 
 	@Override
-	public boolean doPost(String path, HttpExchange ex) throws IOException {
+	public boolean doPost(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 		var session = optSession.get();
@@ -50,8 +51,8 @@ public class EmailController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/settings":
+		switch (path.pop()) {
+			case "settings":
 				return saveSettings(ex, session);
 		}
 		return notFound(ex);

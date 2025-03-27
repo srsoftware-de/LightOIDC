@@ -3,6 +3,7 @@ package de.srsoftware.oidc.backend;
 
 
 import com.sun.net.httpserver.HttpExchange;
+import de.srsoftware.tools.Path;
 import de.srsoftware.tools.PathHandler;
 import java.io.IOException;
 import java.util.List;
@@ -10,9 +11,9 @@ import java.util.Map;
 
 public class WellKnownController extends PathHandler {
 	@Override
-	public boolean doGet(String path, HttpExchange ex) throws IOException {
-		switch (path) {
-			case "/openid-configuration":
+	public boolean doGet(Path path, HttpExchange ex) throws IOException {
+		switch (path.pop()) {
+			case "openid-configuration":
 				return openidConfig(ex);
 		}
 		return notFound(ex);

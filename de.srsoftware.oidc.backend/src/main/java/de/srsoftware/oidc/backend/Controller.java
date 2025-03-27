@@ -17,7 +17,7 @@ public abstract class Controller extends PathHandler {
 	}
 
 	protected Optional<Session> getSession(HttpExchange ex) {
-		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessionId -> sessions.retrieve(sessionId));
+		return SessionToken.from(ex).map(SessionToken::sessionId).flatMap(sessions::retrieve);
 	}
 
 	protected boolean invalidSessionUser(HttpExchange ex) throws IOException {

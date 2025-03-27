@@ -26,22 +26,20 @@ public class StaticPages extends PathHandler implements ResourceLoader {
 	}
 
 
-	private static final String INDEX = "en/index.html";
+	private static final String INDEX = "index.html";
 
 	@Override
-	public boolean doGet(String relativePath, HttpExchange ex) throws IOException {
+	public boolean doGet(de.srsoftware.tools.Path relativePath, HttpExchange ex) throws IOException {
+		var relPath = relativePath.toString();
 		String lang = language(ex);
-		if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
-		if (relativePath.isBlank()) {
-			relativePath = ex.getRequestURI().toString().endsWith(FAVICON) ? FAVICON : INDEX;
-		}
+		if (relPath.isBlank()) relPath = ex.getRequestURI().toString().endsWith(FAVICON) ? FAVICON : INDEX;
 		try {
-			Resource resource = loadFile(lang, relativePath).orElseThrow(() -> new FileNotFoundException());
+			Resource resource = loadFile(lang, relPath).orElseThrow(() -> new FileNotFoundException());
 			ex.getResponseHeaders().add(CONTENT_TYPE, resource.contentType());
-			LOG.log(DEBUG, "Loaded {0} for language {1}…success.", relativePath, lang);
+			LOG.log(DEBUG, "Loaded {0} for language {1}…success.", relPath, lang);
 			return sendContent(ex, resource.content());
 		} catch (FileNotFoundException fnf) {
-			LOG.log(WARNING, "Loaded {0} for language {1}…failed.", relativePath, lang);
+			LOG.log(WARNING, "Loaded {0} for language {1}…failed.", relPath, lang);
 			return notFound(ex);
 		}
 	}

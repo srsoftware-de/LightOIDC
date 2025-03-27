@@ -12,6 +12,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.AccessToken;
 import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.tools.Path;
 import de.srsoftware.tools.PathHandler;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -56,12 +57,9 @@ public class TokenController extends PathHandler {
 	}
 
 	@Override
-	public boolean doPost(String path, HttpExchange ex) throws IOException {
+	public boolean doPost(Path path, HttpExchange ex) throws IOException {
 		// pre-login paths
-		switch (path) {
-			case "/":
-				return provideToken(ex);
-		}
+		if (path.isEmpty()) return provideToken(ex);
 		return notFound(ex);
 	}
 

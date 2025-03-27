@@ -13,6 +13,7 @@ import de.srsoftware.oidc.api.data.Client;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
 import de.srsoftware.tools.Optionals;
+import de.srsoftware.tools.Path;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -124,7 +125,7 @@ public class ClientController extends Controller {
 
 
 	@Override
-	public boolean doDelete(String path, HttpExchange ex) throws IOException {
+	public boolean doDelete(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 
@@ -135,15 +136,12 @@ public class ClientController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/":
-				return deleteClient(ex, session);
-		}
+		if (path.isEmpty())	return deleteClient(ex, session);
 		return notFound(ex);
 	}
 
 	@Override
-	public boolean doGet(String path, HttpExchange ex) throws IOException {
+	public boolean doGet(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "No authorized!");
 
@@ -154,10 +152,10 @@ public class ClientController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/dash":
+		switch (path.pop()) {
+			case "dash":
 				return dashboard(ex, user);
-			case "/list":
+			case "list":
 				return list(ex, session);
 		}
 		return notFound(ex);
@@ -177,7 +175,7 @@ public class ClientController extends Controller {
 
 
 	@Override
-	public boolean doPost(String path, HttpExchange ex) throws IOException {
+	public boolean doPost(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendContent(ex, HTTP_UNAUTHORIZED, "No authorized!");
 
@@ -188,12 +186,11 @@ public class ClientController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/":
-				return load(ex, session);
-			case "/add", "/update":
+		if (path.isEmpty()) return load(ex,session);
+		switch (path.pop()) {
+			case "add", "update":
 				return save(ex, session);
-			case "/authorize":
+			case "authorize":
 				return authorize(ex, session);
 		}
 		return notFound(ex);

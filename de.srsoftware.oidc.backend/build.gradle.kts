@@ -2,7 +2,7 @@ description = "SRSoftware OIDC: backend"
 
 dependencies{
     implementation("com.sun.mail:jakarta.mail:2.0.1")
-    implementation("de.srsoftware:tools.http:1.3.0")
+    implementation("de.srsoftware:tools.http:1.5.4")
     implementation("de.srsoftware:tools.optionals:1.0.0")
     implementation("de.srsoftware:tools.result:1.0.0")
     implementation("de.srsoftware:tools.util:1.3.1")

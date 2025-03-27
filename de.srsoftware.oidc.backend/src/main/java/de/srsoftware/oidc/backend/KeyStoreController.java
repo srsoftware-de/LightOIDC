@@ -3,6 +3,7 @@ package de.srsoftware.oidc.backend;
 
 import com.sun.net.httpserver.HttpExchange;
 import de.srsoftware.oidc.api.KeyStorage;
+import de.srsoftware.tools.Path;
 import de.srsoftware.tools.PathHandler;
 import java.io.IOException;
 import org.jose4j.jwk.JsonWebKey;
@@ -18,11 +19,8 @@ public class KeyStoreController extends PathHandler {
 	}
 
 	@Override
-	public boolean doGet(String path, HttpExchange ex) throws IOException {
-		switch (path) {
-			case "/":
-				return jwksJson(ex);
-		}
+	public boolean doGet(Path path, HttpExchange ex) throws IOException {
+		if (path.isEmpty()) return jwksJson(ex);
 		return notFound(ex);
 	}
 

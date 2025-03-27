@@ -14,6 +14,7 @@ import de.srsoftware.oidc.api.*;
 import de.srsoftware.oidc.api.data.Permission;
 import de.srsoftware.oidc.api.data.Session;
 import de.srsoftware.oidc.api.data.User;
+import de.srsoftware.tools.Path;
 import de.srsoftware.tools.SessionToken;
 import de.srsoftware.tools.result.*;
 import jakarta.mail.*;
@@ -49,7 +50,7 @@ public class UserController extends Controller {
 	}
 
 	@Override
-	public boolean doDelete(String path, HttpExchange ex) throws IOException {
+	public boolean doDelete(Path path, HttpExchange ex) throws IOException {
 		var optSession = getSession(ex);
 		if (optSession.isEmpty()) return sendEmptyResponse(HTTP_UNAUTHORIZED, ex);
 		var session = optSession.get();
@@ -58,10 +59,10 @@ public class UserController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/delete":
+		switch (path.pop()) {
+			case "delete":
 				return deleteUser(ex, user);
-			case "/permission":
+			case "permission":
 				return editPermission(ex, user, true);
 		}
 		return badRequest(ex, "%s not found".formatted(path));
@@ -82,11 +83,12 @@ public class UserController extends Controller {
 	}
 
 	@Override
-	public boolean doGet(String path, HttpExchange ex) throws IOException {
-		switch (path) {
-			case "/info":
+	public boolean doGet(Path path, HttpExchange ex) throws IOException {
+		var part = path.pop();
+		switch (part) {
+			case "info":
 				return userInfo(ex);
-			case "/reset":
+			case "reset":
 				return generateResetLink(ex);
 		}
 		var optSession = getSession(ex);
@@ -97,8 +99,8 @@ public class UserController extends Controller {
 		var user = optUser.get();
 		sessions.extend(session, user);
 
-		switch (path) {
-			case "/logout":
+		switch (part) {
+			case "logout":
 				return logout(ex, session);
 		}
 
@@ -107,11 +109,12 @@ public class UserController extends Controller {
 
 
 	@Override
-	public boolean doPost(String path, HttpExchange ex) throws IOException {
+	public boolean doPost(Path pathstack, HttpExchange ex) throws IOException {
+		var path = pathstack.toString();
 		switch (path) {
-			case "/login":
+			case "login":
 				return login(ex);
-			case "/reset":
+			case "reset":
 				return resetPassword(ex);
 		}
 		var optSession = getSession(ex);
@@ -123,17 +126,17 @@ public class UserController extends Controller {
 		sessions.extend(session, user);
 
 		switch (path) {
-			case "/":
+			case "":
 				return sendUserAndCookie(ex, session, user);
-			case "/add":
+			case "add":
 				return addUser(ex, user);
-			case "/list":
+			case "list":
 				return list(ex, user);
-			case "/password":
+			case "password":
 				return updatePassword(ex, user);
-			case "/permission":
+			case "permission":
 				return editPermission(ex, user, false);
-			case "/update":
+			case "update":
 				return updateUser(ex, user);
 		}
 		return notFound(ex);
