@@ -20,7 +20,7 @@ function handleLogin(response){
     } else {
         response.json().then(json => {
             if (json.data.release) get('release').innerHTML = new Date(json.data.release).toLocaleString();
-            show(json.error);
+            show(json.message);
         });
     }
 }
