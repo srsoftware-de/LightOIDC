@@ -6,6 +6,7 @@ import static de.srsoftware.tools.Optionals.nullable;
 import static de.srsoftware.tools.Strings.uuid;
 import static de.srsoftware.tools.result.Error.error;
 import static java.lang.System.Logger.Level.*;
+import static java.text.MessageFormat.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Optional.empty;
 
@@ -45,6 +46,7 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	private Authenticator	     auth;
 
 	public FileStore(File storage, PasswordHasher<String> passwordHasher) throws IOException {
+		LOG.log(INFO,"Using data from {0}.",storage);
 		this.storageFile    = storage.toPath();
 		this.passwordHasher = passwordHasher;
 
@@ -514,5 +516,10 @@ public class FileStore implements AuthorizationService, ClientService, SessionSe
 	@Override
 	public MailConfig smtpAuth(boolean newValue) {
 		return mailConfig(SMTP_AUTH, newValue);
+	}
+
+	@Override
+	public String toString() {
+		return format("{0}({1})",getClass().getSimpleName(),storageFile);
 	}
 }

@@ -12,10 +12,12 @@ import java.util.Optional;
 import org.json.JSONObject;
 
 public class Configuration {
+	private static final System.Logger LOG = System.getLogger(Configuration.class.getSimpleName());
 	private final JSONObject json;
 	private final Path       storageFile;
 
 	public Configuration(File storage) throws IOException {
+		LOG.log(System.Logger.Level.INFO,"Using configuration from {}",storage);
 		storageFile = storage.toPath();
 		if (!storage.exists()) {
 			var parent = storage.getParentFile();

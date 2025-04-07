@@ -9,6 +9,7 @@ import static de.srsoftware.tools.Optionals.nullable;
 import static de.srsoftware.tools.Paths.configDir;
 import static de.srsoftware.tools.Strings.uuid;
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.INFO;
 import static java.lang.System.getenv;
 import static java.util.Optional.empty;
 
@@ -51,6 +52,7 @@ public class Application {
 	private static final System.Logger LOG = System.getLogger("Application");  // new ColorLogger("Application").setLogLevel(DEBUG);
 
 	public static void main(String[] args) throws Exception {
+		LOG.log(INFO,"Starting LightOIDC…");
 		var            argMap        = map(args);
 		Optional<Path> basePath      = argMap.get(BASE_PATH) instanceof Path p ? Optional.of(p) : empty();
 		var            configDir     = configDir(APP_NAME);
@@ -62,6 +64,8 @@ public class Application {
 		var            firstHash     = passHasher.hash(FIRST_USER_PASS, FIRST_UUID);
 		var            firstUser     = new User(FIRST_USER, firstHash, FIRST_USER, "%s@internal".formatted(FIRST_USER), FIRST_UUID).add(MANAGE_CLIENTS, MANAGE_PERMISSIONS, MANAGE_SMTP, MANAGE_USERS);
 
+
+		if (encryptionKey.isPresent()) LOG.log(INFO,"Encryption key is set, using encrypted database.");
 
 		FileStoreProvider fileStoreProvider = new FileStoreProvider(passHasher);
 		var	  userService	    = setupUserService(config, encryptionKey, defaultFile, fileStoreProvider, passHasher).init(firstUser);

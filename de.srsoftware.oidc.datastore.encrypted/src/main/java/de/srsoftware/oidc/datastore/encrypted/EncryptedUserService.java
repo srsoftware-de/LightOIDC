@@ -3,6 +3,7 @@ package de.srsoftware.oidc.datastore.encrypted;
 
 import static de.srsoftware.oidc.api.Constants.*;
 import static de.srsoftware.tools.result.Error.error;
+import static java.lang.System.Logger.Level.INFO;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.Optional.empty;
 
@@ -23,6 +24,7 @@ public class EncryptedUserService extends EncryptedConfig implements UserService
 
 	public EncryptedUserService(UserService backend, String key, String salt, PasswordHasher passHasher) {
 		super(key, salt);
+		LOG.log(INFO,"Adding encryption layer to {0}",backend);
 		this.backend = backend;
 		hasher       = passHasher;
 	}
